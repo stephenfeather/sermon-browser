@@ -1,3 +1,19 @@
+=== MODERNIZATION ===
+
+== Targets ==
+Wordpress 6.9+
+PHP 8.0+
+
+== ==
+
+
+
+
+
+
+
+=== OLD README FOR REFERENCE ===
+
 === Sermon Browser ===
 Contributors: mark8barnes
 Donate link: http://www.sermonbrowser.com/donate/
