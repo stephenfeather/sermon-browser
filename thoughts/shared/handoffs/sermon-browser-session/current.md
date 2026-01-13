@@ -9,13 +9,13 @@ status: active
 
 ## Ledger
 <!-- This section is extracted by SessionStart hook for quick resume -->
-**Updated:** 2026-01-13T20:40:00Z
+**Updated:** 2026-01-13T22:00:00Z
 **Goal:** Update Sermon Browser plugin for modern WordPress compatibility
 **Branch:** develop (main = release only)
 **Test:** `docker-compose up -d` then http://localhost:8080
 
 ### Now
-[->] Phase 3 VALIDATED - Ready for Phase 4 (jQuery Compatibility)
+[✓] **v0.5.0 RELEASED** - All phases complete, ready to merge to main
 
 ### This Session
 - [x] Explored codebase structure
@@ -55,9 +55,24 @@ status: active
 - [x] **Phase 3.7:** Fixed implode() argument order in frontend.php (2 locations)
 - [x] **Phase 3:** All 17 unit tests pass, syntax check passes
 - [x] **Phase 3 manual tests passed** (widgets added to footer successfully)
+- [x] **Phase 4.1:** Replaced .attr('selected/disabled') with .prop() (14 occurrences in admin.php)
+- [x] **Phase 4:** All 17 unit tests pass, syntax check passes
+- [x] **Phase 4 manual tests passed** (sermon creation, dropdowns, file selection)
+- [x] **Phase 5.1:** Added try/catch wrapper around eval() calls (2 locations in sermon.php)
+- [x] **Phase 5.2:** Replaced extract() calls with explicit variables (6 locations in frontend.php)
+- [x] **Phase 5.3:** Updated plugin headers (Version 0.46.0, Requires WP 6.0, Requires PHP 8.0)
+- [x] **Phase 5:** All 17 unit tests pass, syntax check passes
+- [x] **Phase 5 manual tests passed** (WP_DEBUG enabled, no errors)
+- [x] **Phase 6.1:** Final validation - all manual tests passed
+- [x] **Phase 6.2:** Fixed PHP 8 empty dates array error in frontend.php
+- [x] **Phase 6.3:** Fixed PHP 8 string/int comparison in query builder (one-click filter)
+- [x] **Phase 6.4:** Updated version to 0.5.0
+- [x] **Phase 6.5:** Created release commit (16e0037)
+- [x] **Phase 6:** All 17 unit tests pass, all manual tests pass
 
 ### Next
-- [ ] Phase 4: jQuery Compatibility fixes
+- [ ] Merge develop → main
+- [ ] Create GitHub release tag v0.5.0
 
 ### Decisions
 - Workflow: Research → Plan → Build (phased approach)
@@ -123,9 +138,9 @@ max_retries: 3
 - Phase 1 (Critical PHP Fixes): ✓ VALIDATED (4 fixes, manual tests passed)
 - Phase 2 (Deprecated Functions): ✓ VALIDATED (8 fixes, manual tests passed)
 - Phase 3 (Widget Modernization): ✓ VALIDATED (3 WP_Widget classes + PHP 8 fixes)
-- Phase 4 (jQuery Compatibility): ○ PENDING
-- Phase 5 (Security & Quality): ○ PENDING
-- Phase 6 (Final Validation): ○ PENDING
+- Phase 4 (jQuery Compatibility): ✓ VALIDATED (14 .attr() → .prop() fixes)
+- Phase 5 (Security & Quality): ✓ VALIDATED (eval try/catch, extract→explicit, headers)
+- Phase 6 (Final Validation): ✓ COMPLETE (v0.5.0 released)
 
 #### Validation State
 ```json
@@ -160,6 +175,21 @@ max_retries: 3
     "PHP 8 null property fix in sb_widget_popular()",
     "implode() argument order fix in frontend.php (2 locations)"
   ],
+  "phase4_fixes": [
+    ".attr('selected', 'selected') → .prop('selected', true) (12 occurrences)",
+    ".attr('disabled', 'disabled') → .prop('disabled', true) (2 occurrences)"
+  ],
+  "phase5_fixes": [
+    "eval() try/catch wrapper (2 locations in sermon.php)",
+    "extract() → explicit variables (6 locations in frontend.php)",
+    "Plugin headers: Version 0.5.0, Requires WP 6.0, Requires PHP 8.0"
+  ],
+  "phase6_fixes": [
+    "Empty dates array early return (frontend.php:857)",
+    "PHP 8 string/int comparison in query builder (sermon.php:803-817)",
+    "Version bump to 0.5.0"
+  ],
+  "release_commit": "16e0037",
   "last_test_command": "composer test",
   "last_test_exit_code": 0,
   "php_syntax_check": "pass (PHP 8.5)"
@@ -167,10 +197,11 @@ max_retries: 3
 ```
 
 #### Resume Context
-- Current focus: Phase 3 VALIDATED - Ready for Phase 4
-- Next action: Phase 4 (jQuery Compatibility)
+- Current focus: v0.5.0 RELEASED - Ready to merge to main
+- Next action: Merge develop → main, create release tag
 - Blockers: (none)
 - Branch: develop
+- Release commit: 16e0037
 - Test command: `composer test` (17 tests passing)
 
 ---
