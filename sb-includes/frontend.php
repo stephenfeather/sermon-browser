@@ -22,7 +22,15 @@ function sb_display_sermons($options = array()) {
 		'url_only' => 0,
 	);
 	$options = array_merge($default, (array) $options);
-	extract($options);
+	// Phase 5: Replace extract() with explicit variable assignments.
+	$display_preacher = $options['display_preacher'];
+	$display_passage = $options['display_passage'];
+	$display_date = $options['display_date'];
+	$preacher = $options['preacher'];
+	$service = $options['service'];
+	$series = $options['series'];
+	$limit = $options['limit'];
+	$url_only = $options['url_only'];
 	if ($url_only == 1)
 		$limit = 1;
 	$sermons = sb_get_sermons(array(
@@ -61,15 +69,32 @@ function sb_display_sermons($options = array()) {
 
 // Displays the widget
 function sb_widget_sermon($args, $widget_args=1) {
-	extract( $args, EXTR_SKIP );
+	// Phase 5: Replace extract() with explicit variable assignments.
+	$before_widget = isset($args['before_widget']) ? $args['before_widget'] : '';
+	$after_widget = isset($args['after_widget']) ? $args['after_widget'] : '';
+	$before_title = isset($args['before_title']) ? $args['before_title'] : '';
+	$after_title = isset($args['after_title']) ? $args['after_title'] : '';
+
 	if ( is_numeric($widget_args) )
 		$widget_args = array( 'number' => $widget_args );
 	$widget_args = wp_parse_args( $widget_args, array( 'number' => -1 ) );
-	extract( $widget_args, EXTR_SKIP );
+	$number = isset($widget_args['number']) ? $widget_args['number'] : -1;
+
 	$options = sb_get_option('sermons_widget_options');
 	if ( !isset($options[$number]) )
 		return;
-	extract($options[$number]);
+
+	// Extract widget-specific options.
+	$widget_opts = $options[$number];
+	$title = isset($widget_opts['title']) ? $widget_opts['title'] : '';
+	$preacher = isset($widget_opts['preacher']) ? $widget_opts['preacher'] : 0;
+	$service = isset($widget_opts['service']) ? $widget_opts['service'] : 0;
+	$series = isset($widget_opts['series']) ? $widget_opts['series'] : 0;
+	$limit = isset($widget_opts['limit']) ? $widget_opts['limit'] : 5;
+	$book = isset($widget_opts['book']) ? $widget_opts['book'] : false;
+	$preacherz = isset($widget_opts['preacherz']) ? $widget_opts['preacherz'] : false;
+	$date = isset($widget_opts['date']) ? $widget_opts['date'] : false;
+
 	echo $before_widget;
 	echo $before_title . $title . $after_title;
 	$sermons = sb_get_sermons(array(
@@ -106,7 +131,12 @@ function sb_widget_sermon($args, $widget_args=1) {
 
 // Displays the tag cloud in the sidebar
 function sb_widget_tag_cloud ($args) {
-	extract($args);
+	// Phase 5: Replace extract() with explicit variable assignments.
+	$before_widget = isset($args['before_widget']) ? $args['before_widget'] : '';
+	$after_widget = isset($args['after_widget']) ? $args['after_widget'] : '';
+	$before_title = isset($args['before_title']) ? $args['before_title'] : '';
+	$after_title = isset($args['after_title']) ? $args['after_title'] : '';
+
 	echo $before_widget;
 	echo $before_title.__('Sermon Browser tags', 'sermon-browser').$after_title;
 	sb_print_tag_clouds();
@@ -152,11 +182,14 @@ function sb_sort_object($a,$b) {
 // Displays the most popular sermons in the sidebar
 function sb_widget_popular ($args) {
 	global $wpdb;
-	extract($args);
-	if (!isset($suffix))
-		$suffix = '_w';
-	if (!isset($options))
-		$options = sb_get_option('popular_widget_options');
+	// Phase 5: Replace extract() with explicit variable assignments.
+	$before_widget = isset($args['before_widget']) ? $args['before_widget'] : '';
+	$after_widget = isset($args['after_widget']) ? $args['after_widget'] : '';
+	$before_title = isset($args['before_title']) ? $args['before_title'] : '';
+	$after_title = isset($args['after_title']) ? $args['after_title'] : '';
+	$suffix = isset($args['suffix']) ? $args['suffix'] : '_w';
+	$options = isset($args['options']) ? $args['options'] : sb_get_option('popular_widget_options');
+
 	echo $before_widget;
 	if ($options['title'] != '')
 		echo $before_title.$options['title'].$after_title;
@@ -819,6 +852,12 @@ function sb_print_filter_line ($id, $results, $filter, $display, $max_num = 7) {
 //Prints the filter line for the date parameter
 function sb_print_date_filter_line ($dates) {
 	global $more_applied;
+
+	// PHP 8 fix: Early return if dates array is empty
+	if (empty($dates)) {
+		return;
+	}
+
 	$date_output = "<div id = \"dates\" class=\"filter\">\r<span class=\"filter-heading\">".__('Date', 'sermon-browser').":</span> \r";
 	$first = $dates[0];
 	$last = end($dates);

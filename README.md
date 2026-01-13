@@ -22,9 +22,10 @@ This plugin is being updated for modern WordPress compatibility.
 **Contributors:** mark8barnes
 **Donate link:** http://www.sermonbrowser.com/donate/
 **Tags:** sermons, podcast, mp3, church, bible, audio, widget, embed, video, esv, wpmu, preach, iTunes, preacher, listen
-**Requires at least:** 3.6
-**Tested up to:** 4.9.8
-**Stable tag:** trunk
+**Requires at least:** 6.0
+**Tested up to:** 6.4
+**Requires PHP:** 8.0
+**Stable tag:** 0.5.0
 **License:** GPLv3 or later
 **License URI:** http://www.gnu.org/licenses/gpl.html
 
@@ -248,6 +249,41 @@ If you want to change the output of Sermon Browser, you'll need to edit the temp
 * `[biblepassage]` - Displays the reference of the bible passages for that sermon. Useful for utilising other bible plugins (see FAQ).
 
 ### Changelog
+
+#### 0.5.0 (January 2026)
+**Major compatibility update for modern WordPress and PHP.**
+
+* **Requires:** WordPress 6.0+, PHP 8.0+
+* **Tested up to:** WordPress 6.4 with PHP 8.2
+
+**PHP 8.x Compatibility:**
+* Fixed fatal error: Replaced `preg_replace` /e modifier with `preg_replace_callback`
+* Fixed `implode()` argument order deprecation (3 locations)
+* Fixed `(boolean)` cast deprecation - now uses `(bool)`
+* Fixed PHP 8 null property assignment in widget functions
+* Fixed PHP 8 string/int comparison change in query builder (one-click filter)
+* Fixed empty array access in date filter function
+
+**WordPress 6.x Compatibility:**
+* Replaced deprecated `is_site_admin()` with `is_super_admin()` (3 locations)
+* Replaced deprecated `WPLANG` constant with `get_locale()`
+* Replaced deprecated `strftime()` with `wp_date()` (4 locations)
+* Replaced deprecated `rightnow_end` hook with `dashboard_glance_items`
+* Converted legacy `contextual_help` filter to Help Tabs API
+
+**Widget Modernization:**
+* Converted all 3 widgets to extend `WP_Widget` class
+* Added widget settings migration routine for upgrades
+* Widgets now properly appear in Appearance > Widgets
+
+**jQuery Compatibility:**
+* Replaced `.attr()` with `.prop()` for boolean properties (14 occurrences)
+* Admin JavaScript now compatible with jQuery 3.x
+
+**Code Quality:**
+* Replaced `extract()` calls with explicit variable assignments (6 locations)
+* Added try/catch wrapper around eval() template rendering
+* Updated plugin headers with minimum requirements
 
 #### 0.45.22 (29 August 2018)
 * **Bug fix:** Sermons couldn't be deleted. Now they can.

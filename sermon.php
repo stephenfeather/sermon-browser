@@ -5,8 +5,10 @@ Plugin URI: http://www.sermonbrowser.com/
 Description: Upload sermons to your website, where they can be searched, listened to, and downloaded. Easy to use with comprehensive help and tutorials.
 Author: Mark Barnes
 Text Domain: sermon-browser
-Version: 0.45.22
+Version: 0.5.0
 Author URI: https://www.markbarnes.net/
+Requires at least: 6.0
+Requires PHP: 8.0
 
 Copyright (c) 2008-2018 Mark Barnes
 
@@ -53,7 +55,7 @@ The frontend output is inserted by sb_shortcode
 * Sets version constants and basic Wordpress hooks.
 * @package common_functions
 */
-define('SB_CURRENT_VERSION', '0.46.0-dev');
+define('SB_CURRENT_VERSION', '0.5.0');
 define('SB_DATABASE_VERSION', '1.7');
 sb_define_constants();
 
@@ -456,9 +458,18 @@ function sb_shortcode($atts, $content=null) {
 			$atts['id'] = $query[0]->id;
 		}
 		$sermon = sb_get_single_sermon((int) $atts['id']);
-		if ($sermon)
-			eval('?>'.sb_get_option('single_output'));
-		else {
+		if ($sermon) {
+			// Phase 5: Wrap eval in try/catch to prevent fatal errors from template issues.
+			try {
+				eval('?>' . sb_get_option('single_output'));
+			} catch (ParseError $e) {
+				echo '<div class="sermon-browser-error">' .
+					esc_html__('Template error', 'sermon-browser') . '</div>';
+				if (defined('WP_DEBUG') && WP_DEBUG) {
+					echo '<!-- Template parse error: ' . esc_html($e->getMessage()) . ' -->';
+				}
+			}
+		} else {
 			echo "<div class=\"sermon-browser-results\"><span class=\"error\">";
 			_e ('No sermons found.', 'sermon-browser');
 			echo "</span></div>";
@@ -481,8 +492,17 @@ function sb_shortcode($atts, $content=null) {
 			$page = 1;
 		$hide_empty = sb_get_option('hide_no_attachments');
 		$sermons = sb_get_sermons($atts, $sort_order, $page, (int)$atts['limit'], $hide_empty);
-		$output = '?>'.sb_get_option('search_output');
-		eval($output);
+		$output = '?>' . sb_get_option('search_output');
+		// Phase 5: Wrap eval in try/catch to prevent fatal errors from template issues.
+		try {
+			eval($output);
+		} catch (ParseError $e) {
+			echo '<div class="sermon-browser-error">' .
+				esc_html__('Template error', 'sermon-browser') . '</div>';
+			if (defined('WP_DEBUG') && WP_DEBUG) {
+				echo '<!-- Template parse error: ' . esc_html($e->getMessage()) . ' -->';
+			}
+		}
 	}
 	$content = ob_get_contents();
 	ob_end_clean();
@@ -775,7 +795,8 @@ function sb_create_multi_sermon_query ($filter, $order, $page = 1, $limit = 0, $
 	if ($filter['title'] != '') {
 		$cond .= "AND (m.title LIKE '%" . esc_sql($filter['title']) . "%' OR m.description LIKE '%" . esc_sql($filter['title']). "%' OR t.name LIKE '%" . esc_sql($filter['title']) . "%') ";
 	}
-	if ($filter['preacher'] != 0) {
+	// PHP 8 fix: Cast to int before comparing, since '' != 0 is TRUE in PHP 8 (string comparison)
+	if ((int)$filter['preacher'] !== 0) {
 		$cond .= 'AND m.preacher_id = ' . (int) $filter['preacher'] . ' ';
 	}
 	if ($filter['date'] != '') {
@@ -784,10 +805,10 @@ function sb_create_multi_sermon_query ($filter, $order, $page = 1, $limit = 0, $
 	if ($filter['enddate'] != '') {
 		$cond .= 'AND m.datetime <= "' . esc_sql($filter['enddate']) . '" ';
 	}
-	if ($filter['series'] != 0) {
+	if ((int)$filter['series'] !== 0) {
 		$cond .= 'AND m.series_id = ' . (int) $filter['series'] . ' ';
 	}
-	if ($filter['service'] != 0) {
+	if ((int)$filter['service'] !== 0) {
 		$cond .= 'AND m.service_id = ' . (int) $filter['service'] . ' ';
 	}
 	if ($filter['book'] != '') {
