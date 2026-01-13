@@ -1,8 +1,14 @@
 <?php
-// Error message for people using the old function
+/**
+ * Deprecated function - displays error message
+ *
+ * @deprecated Use sb_display_sermons() or the sermon browser widget instead
+ * @param array $options
+ */
 function display_sermons($options = array()) {
 	echo "This function is now deprecated. Use sb_display_sermons or the sermon browser widget, instead.";
 }
+
 // Function to display sermons for users to add to their template
 function sb_display_sermons($options = array()) {
 	$default = array(
@@ -197,6 +203,10 @@ function sb_widget_popular ($args) {
 		if ($series1) {
 			$i=1;
 			foreach ($series1 as $series) {
+				if ($series->id === null) continue;
+				if (!isset($series_final[$series->id])) {
+					$series_final[$series->id] = new stdClass();
+				}
 				$series_final[$series->id]->name = $series->name;
 				$series_final[$series->id]->rank = $i;
 				$series_final[$series->id]->id = $series->id;
@@ -204,6 +214,7 @@ function sb_widget_popular ($args) {
 			}
 			$i=1;
 			foreach ($series2 as $series) {
+				if ($series->id === null || !isset($series_final[$series->id])) continue;
 				$series_final[$series->id]->rank += $i;
 				$i++;
 			}
@@ -243,6 +254,10 @@ function sb_widget_popular ($args) {
 		if ($preachers1) {
 			$i=1;
 			foreach ($preachers1 as $preacher) {
+				if ($preacher->id === null) continue;
+				if (!isset($preachers_final[$preacher->id])) {
+					$preachers_final[$preacher->id] = new stdClass();
+				}
 				$preachers_final[$preacher->id]->name = $preacher->name;
 				$preachers_final[$preacher->id]->rank = $i;
 				$preachers_final[$preacher->id]->id = $preacher->id;
@@ -250,6 +265,7 @@ function sb_widget_popular ($args) {
 			}
 			$i=1;
 			foreach ($preachers2 as $preacher) {
+				if ($preacher->id === null || !isset($preachers_final[$preacher->id])) continue;
 				$preachers_final[$preacher->id]->rank += $i;
 				$i++;
 			}
@@ -276,7 +292,7 @@ function sb_widget_popular ($args) {
 	$jscript .= 'if (jQuery.getSbCookie() == "preachers") { jQuery("#popular_preachers_trigger'.$suffix.'").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['preachers']).'")};';
 	$jscript .= 'if (jQuery.getSbCookie() == "series") { jQuery("#popular_series_trigger'.$suffix.'").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['series']).'")};';
 	$jscript .= 'if (jQuery.getSbCookie() == "sermons") { jQuery("#popular_sermons_trigger'.$suffix.'").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['sermons']).'")};';
-	echo '<p>'.implode ($trigger, ' | ').'</p>';
+	echo '<p>'.implode(' | ', $trigger).'</p>';
 	echo '<div id="sb_popular_wrapper'.$suffix.'">'.current($output).'</div>';
 	echo '<script type="text/javascript">jQuery.setSbCookie = function (value) {
 											document.cookie = "sb_popular="+encodeURIComponent(value);
@@ -729,7 +745,7 @@ function sb_print_sameday_sermon_link($sermon) {
 	$output = array();
 	foreach ($same as $cur)
 		$output[] = '<a href="'.sb_print_sermon_link($cur, false).'">'.stripslashes($cur->title).'</a>';
-	echo implode($output, ', ');
+	echo implode(', ', $output);
 }
 
 //Gets single sermon from the database

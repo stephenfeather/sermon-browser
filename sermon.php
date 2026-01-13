@@ -216,7 +216,7 @@ function sb_sermon_init () {
 
 	// Check to see what functions are required, and only load what is needed
 	if (!is_admin()) {
-		require (SB_INCLUDES_DIR.'/frontend.php');
+		require_once (SB_INCLUDES_DIR.'/frontend.php');
 		add_action('wp_head', 'sb_add_headers', 0);
 		add_action('wp_head', 'wp_print_styles', 9);
 		add_action('admin_bar_menu', 'sb_admin_bar_menu', 45);
@@ -490,38 +490,84 @@ function sb_shortcode($atts, $content=null) {
 }
 
 /**
-* Registers the Sermon Browser widgets
-*/
+ * Registers the Sermon Browser widgets using modern WP_Widget API
+ *
+ * @since 0.46.0 - Converted from deprecated wp_register_sidebar_widget()
+ */
 function sb_widget_sermon_init() {
-	//Sermons Widget
-	if (!$options = sb_get_option('sermons_widget_options'))
-		$options = array();
-	$widget_ops = array('classname' => 'sermon', 'description' => __('Display a list of recent sermons.', 'sermon-browser'));
-	$control_ops = array('width' => 400, 'height' => 350, 'id_base' => 'sermon');
-	$name = __('Sermons', 'sermon-browser');
-	$registered = false;
-	foreach (array_keys($options) as $o) {
-		if (!isset($options[$o]['limit']))
-			continue;
-		$id = "sermon-$o";
-		$registered = true;
-		wp_register_sidebar_widget($id, $name, 'sb_widget_sermon_wrapper', $widget_ops, array('number' => $o));
-		wp_register_widget_control($id, $name, 'sb_widget_sermon_control', $control_ops, array('number' => $o));
-	}
-	if (!$registered) {
-		wp_register_sidebar_widget('sermon-1', $name, 'sb_widget_sermon_wrapper', $widget_ops, array('number' => -1));
-		wp_register_widget_control('sermon-1', $name, 'sb_widget_sermon_control', $control_ops, array('number' => -1));
-	}
-	//Tags Widget
-	wp_register_sidebar_widget('sermon-browser-tags', __('Sermon Browser tags', 'sermon-browser'), 'sb_widget_tag_cloud_wrapper');
-	//Most popular widget
-	$name = __('Most popular sermons', 'sermon-browser');
-	$description = __('Display a list of the most popular sermons, series or preachers.', 'sermon-browser');
-	$widget_ops = array('classname' => 'sermon-browser-popular', 'description' => $description);
-	$control_ops = array('width' => 400, 'height' => 350, 'id_base' => 'sermon-browser-popular');
-	wp_register_sidebar_widget( 'sermon-browser-popular', $name, 'sb_widget_popular_wrapper', $widget_ops);
-	wp_register_widget_control( 'sermon-browser-popular', $name, 'sb_widget_popular_control', $control_ops);
+	// Include frontend.php for legacy widget functions used by WP_Widget classes
+	require_once SB_INCLUDES_DIR . '/frontend.php';
+	// Include widget classes
+	require_once SB_INCLUDES_DIR . '/widget.php';
+
+	// Register modern WP_Widget classes
+	register_widget('SB_Sermons_Widget');
+	register_widget('SB_Tag_Cloud_Widget');
+	register_widget('SB_Popular_Widget');
 }
+
+/**
+ * Migrate widget settings from old format to new WP_Widget format
+ *
+ * This function preserves existing widget configurations when upgrading
+ * from the deprecated widget API to WP_Widget classes.
+ *
+ * @since 0.46.0
+ */
+function sb_migrate_widget_settings() {
+	// Check if migration already done
+	if (get_option('sb_widget_migration_v046')) {
+		return;
+	}
+
+	// Migrate Sermons widget settings
+	$old_sermon_opts = get_option('sb_widget_sermon');
+	if ($old_sermon_opts && !get_option('widget_sb_sermons')) {
+		$new_opts = array('_multiwidget' => 1);
+		$instance_num = 2; // WordPress reserves 1
+
+		foreach ((array) $old_sermon_opts as $num => $opts) {
+			if (!isset($opts['limit'])) {
+				continue;
+			}
+			$new_opts[$instance_num] = array(
+				'title' => isset($opts['title']) ? $opts['title'] : '',
+				'limit' => isset($opts['limit']) ? (int) $opts['limit'] : 5,
+				'preacher' => isset($opts['preacher']) ? (int) $opts['preacher'] : 0,
+				'service' => isset($opts['service']) ? (int) $opts['service'] : 0,
+				'series' => isset($opts['series']) ? (int) $opts['series'] : 0,
+				'show_preacher' => !empty($opts['preacherz']),
+				'show_book' => !empty($opts['book']),
+				'show_date' => !empty($opts['date']),
+			);
+			$instance_num++;
+		}
+
+		if (count($new_opts) > 1) {
+			update_option('widget_sb_sermons', $new_opts);
+		}
+	}
+
+	// Migrate Popular widget settings
+	$old_popular_opts = sb_get_option('popular_widget_options');
+	if ($old_popular_opts && !get_option('widget_sb_popular')) {
+		$new_opts = array(
+			2 => array(
+				'title' => isset($old_popular_opts['title']) ? $old_popular_opts['title'] : '',
+				'limit' => isset($old_popular_opts['limit']) ? (int) $old_popular_opts['limit'] : 5,
+				'display_sermons' => !empty($old_popular_opts['display_sermons']),
+				'display_series' => !empty($old_popular_opts['display_series']),
+				'display_preachers' => !empty($old_popular_opts['display_preachers']),
+			),
+			'_multiwidget' => 1,
+		);
+		update_option('widget_sb_popular', $new_opts);
+	}
+
+	// Mark migration complete
+	update_option('sb_widget_migration_v046', true);
+}
+add_action('admin_init', 'sb_migrate_widget_settings');
 
 /**
 * Wrapper for sb_widget_sermon in frontend.php

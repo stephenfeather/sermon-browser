@@ -9,13 +9,13 @@ status: active
 
 ## Ledger
 <!-- This section is extracted by SessionStart hook for quick resume -->
-**Updated:** 2026-01-13T03:30:00Z
+**Updated:** 2026-01-13T20:40:00Z
 **Goal:** Update Sermon Browser plugin for modern WordPress compatibility
 **Branch:** develop (main = release only)
 **Test:** `docker-compose up -d` then http://localhost:8080
 
 ### Now
-[->] Phase 2 COMPLETE - Ready for manual testing, then Phase 3 (Widget Modernization)
+[->] Phase 3 VALIDATED - Ready for Phase 4 (jQuery Compatibility)
 
 ### This Session
 - [x] Explored codebase structure
@@ -45,11 +45,19 @@ status: active
 - [x] **Phase 2.2:** Replaced (boolean) → (bool) casts (3 occurrences)
 - [x] **Phase 2.3:** Replaced rightnow_end → dashboard_glance_items (new sb_dashboard_glance function)
 - [x] **Phase 2:** All 17 unit tests pass, syntax check passes
+- [x] **Phase 2 manual tests passed** (dashboard At a Glance, date formatting)
+- [x] **Phase 3.1:** Created SB_Sermons_Widget class extending WP_Widget
+- [x] **Phase 3.2:** Created SB_Tag_Cloud_Widget class extending WP_Widget
+- [x] **Phase 3.3:** Created SB_Popular_Widget class extending WP_Widget
+- [x] **Phase 3.4:** Added sb_migrate_widget_settings() for old settings migration
+- [x] **Phase 3.5:** Updated sb_widget_sermon_init() to use register_widget()
+- [x] **Phase 3.6:** Fixed PHP 8 null property assignment in sb_widget_popular()
+- [x] **Phase 3.7:** Fixed implode() argument order in frontend.php (2 locations)
+- [x] **Phase 3:** All 17 unit tests pass, syntax check passes
+- [x] **Phase 3 manual tests passed** (widgets added to footer successfully)
 
 ### Next
-- [ ] Manual test: Verify dashboard "At a Glance" shows sermon count
-- [ ] Manual test: Verify date formatting in admin sermon list
-- [ ] Phase 3: Widget Modernization (WP_Widget conversion)
+- [ ] Phase 4: jQuery Compatibility fixes
 
 ### Decisions
 - Workflow: Research → Plan → Build (phased approach)
@@ -107,14 +115,14 @@ max_retries: 3
 **Agent:** main
 **Task:** WordPress plugin modernization
 **Started:** 2026-01-12T21:40:00Z
-**Last Updated:** 2026-01-13T03:30:00Z
+**Last Updated:** 2026-01-13T20:40:00Z
 
 #### Phase Status
 - Phase 0 (Research & Planning): ✓ VALIDATED
 - Phase 0.5 (Test Infrastructure): ✓ COMPLETE (17 tests passing)
-- Phase 1 (Critical PHP Fixes): ✓ COMPLETE (4 fixes applied)
-- Phase 2 (Deprecated Functions): ✓ COMPLETE (8 fixes applied)
-- Phase 3 (Widget Modernization): ○ PENDING
+- Phase 1 (Critical PHP Fixes): ✓ VALIDATED (4 fixes, manual tests passed)
+- Phase 2 (Deprecated Functions): ✓ VALIDATED (8 fixes, manual tests passed)
+- Phase 3 (Widget Modernization): ✓ VALIDATED (3 WP_Widget classes + PHP 8 fixes)
 - Phase 4 (jQuery Compatibility): ○ PENDING
 - Phase 5 (Security & Quality): ○ PENDING
 - Phase 6 (Final Validation): ○ PENDING
@@ -129,7 +137,8 @@ max_retries: 3
     "sb-includes/admin.php",
     "sb-includes/ajax.php",
     "sb-includes/frontend.php",
-    "sb-includes/dictionary.php"
+    "sb-includes/dictionary.php",
+    "sb-includes/widget.php"
   ],
   "phase1_fixes": [
     "preg_replace /e → sb_generate_temp_suffix()",
@@ -142,15 +151,24 @@ max_retries: 3
     "(boolean) → (bool) (3 locations)",
     "rightnow_end → dashboard_glance_items (new sb_dashboard_glance function)"
   ],
+  "phase3_fixes": [
+    "SB_Sermons_Widget class (WP_Widget)",
+    "SB_Tag_Cloud_Widget class (WP_Widget)",
+    "SB_Popular_Widget class (WP_Widget)",
+    "sb_migrate_widget_settings() for settings migration",
+    "sb_widget_sermon_init() → register_widget() API",
+    "PHP 8 null property fix in sb_widget_popular()",
+    "implode() argument order fix in frontend.php (2 locations)"
+  ],
   "last_test_command": "composer test",
   "last_test_exit_code": 0,
-  "php_syntax_check": "pass (PHP 8.2)"
+  "php_syntax_check": "pass (PHP 8.5)"
 }
 ```
 
 #### Resume Context
-- Current focus: Phase 2 COMPLETE - Ready for manual testing
-- Next action: Phase 3 (Widget Modernization)
+- Current focus: Phase 3 VALIDATED - Ready for Phase 4
+- Next action: Phase 4 (jQuery Compatibility)
 - Blockers: (none)
 - Branch: develop
 - Test command: `composer test` (17 tests passing)
