@@ -33,7 +33,8 @@
 
     <coverage>
         <report>
-            <html outputDirectory="coverage"/>
+            <clover outputFile="coverage/clover.xml"/>
+            <html outputDirectory="coverage/html"/>
             <text outputFile="php://stdout" showOnlySummary="true"/>
         </report>
     </coverage>
