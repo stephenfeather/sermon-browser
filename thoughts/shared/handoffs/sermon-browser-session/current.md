@@ -15,8 +15,24 @@ status: active
 **Test:** `docker-compose up -d` then http://localhost:8080
 
 ### Now
-[✓] **v0.5.0 RELEASED** - All phases complete, ready to merge to main
+[✓] **v0.6.0 Architecture - Phase 1 COMPLETE** - Repository Layer implemented
 
+### v0.6.0 Architecture Refactoring
+- [x] **Phase 1:** Repository Layer (v0.6.0)
+  - Created src/Contracts/RepositoryInterface.php
+  - Created src/Repositories/AbstractRepository.php
+  - Created 6 concrete repositories: Sermon, Preacher, Series, Service, File, Tag
+  - Added PSR-4 autoloading for SermonBrowser namespace
+  - 40 new unit tests (57 total tests passing)
+  - PHP 8.5 syntax check passes
+- [ ] **Phase 2:** Plugin Core + Admin Split (v0.7.0)
+- [ ] **Phase 3:** Ajax Modularization (v0.7.0)
+- [ ] **Phase 4:** Frontend Modularization (v0.8.0)
+- [ ] **Phase 5:** Template Engine (v0.8.0)
+- [ ] **Phase 6:** Widget Consolidation (v0.9.0)
+- [ ] **Phase 7:** Legacy Deprecation (v1.0.0)
+
+### v0.5.0 Modernization (COMPLETE)
 ### This Session
 - [x] Explored codebase structure
 - [x] Created continuity ledger
