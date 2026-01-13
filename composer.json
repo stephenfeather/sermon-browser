@@ -1,0 +1,37 @@
+{
+    "name": "sermon-browser/sermon-browser",
+    "description": "WordPress plugin for managing and displaying sermons",
+    "type": "wordpress-plugin",
+    "license": "GPL-3.0-or-later",
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "mockery/mockery": "^1.6",
+        "brain/monkey": "^2.6",
+        "yoast/phpunit-polyfills": "^2.0"
+    },
+    "autoload": {
+        "files": [
+            "sb-includes/functions-testable.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SermonBrowser\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite Unit",
+        "test:integration": "phpunit --testsuite Integration",
+        "test:coverage": "phpunit --coverage-html coverage"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "sort-packages": true
+    }
+}
