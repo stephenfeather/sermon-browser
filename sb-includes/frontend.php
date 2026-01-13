@@ -816,7 +816,7 @@ function sb_print_date_filter_line ($dates) {
 				if ($date->month != $previous_month) {
 					if ($count != 0)
 						$date_output .= '('.$count.'), ';
-					$date_output .= '<a href="'.sb_build_url(Array ('date' => $date->year.'-'.$date->month.'-01', 'enddate' => $date->year.'-'.$date->month.'-31'), false).'">'.strftime('%B', strtotime("{$date->year}-{$date->month}-{$date->day}")).'</a> ';
+					$date_output .= '<a href="'.sb_build_url(Array ('date' => $date->year.'-'.$date->month.'-01', 'enddate' => $date->year.'-'.$date->month.'-31'), false).'">'.wp_date('F', strtotime("{$date->year}-{$date->month}-{$date->day}")).'</a> ';
 					$previous_month = $date->month;
 					$count = 1;
 				} else
@@ -898,7 +898,7 @@ function sb_print_filters($filter) {
 						if (substr($_REQUEST['date'],0,4) == substr($_REQUEST['enddate'],0,4))
 							$output .= (int)substr($_REQUEST['date'],0,4).'&nbsp;(<a href="'.sb_url_minus_parameter('date', 'enddate').'">x</a>)';
 						if (substr($_REQUEST['date'],5,2) == substr($_REQUEST['enddate'],5,2))
-							$output .= ', '.strftime('%B', strtotime($_REQUEST['date'])).' (<a href="'.sb_build_url(Array ('date' => (int)substr($_REQUEST['date'],0,4).'-01-01', 'enddate' => (int)substr($_REQUEST['date'],0,4).'-12-31'), false).'">x</a>)';
+							$output .= ', '.wp_date('F', strtotime($_REQUEST['date'])).' (<a href="'.sb_build_url(Array ('date' => (int)substr($_REQUEST['date'],0,4).'-01-01', 'enddate' => (int)substr($_REQUEST['date'],0,4).'-12-31'), false).'">x</a>)';
 					} else {
 						$output .= '<strong>'.__(ucwords($filter_option), 'sermon-browser').'</strong>:&nbsp;*'.$filter_option.'*';
 						$output .= '&nbsp;(<a href="'.sb_url_minus_parameter($filter_option).'">x</a>)';

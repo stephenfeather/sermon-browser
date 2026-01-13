@@ -1361,7 +1361,7 @@ function sb_manage_sermons() {
 						<th style="text-align:center" scope="row"><?php echo $sermon->id ?></th>
 						<td><?php echo stripslashes($sermon->title) ?></td>
 						<td><?php echo stripslashes($sermon->pname) ?></td>
-						<td><?php echo ($sermon->datetime == '1970-01-01 00:00:00') ? __('Unknown', 'sermon-browser') : strftime('%d %b %y', strtotime($sermon->datetime)); ?></td>
+						<td><?php echo ($sermon->datetime == '1970-01-01 00:00:00') ? __('Unknown', 'sermon-browser') : wp_date('d M y', strtotime($sermon->datetime)); ?></td>
 						<td><?php echo stripslashes($sermon->sname) ?></td>
 						<td><?php echo stripslashes($sermon->ssname) ?></td>
 						<td><?php echo sb_sermon_stats($sermon->id) ?></td>
@@ -2290,6 +2290,35 @@ function sb_rightnow () {
 }
 
 /**
+ * Displays sermon count in the "At a Glance" dashboard widget.
+ *
+ * Replaces the deprecated rightnow_end hook with dashboard_glance_items filter.
+ *
+ * @since 0.46.0
+ * @param array $items Existing glance items.
+ * @return array Modified glance items with sermon count.
+ */
+function sb_dashboard_glance( $items ) {
+	global $wpdb;
+
+	$sermon_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}sb_sermons" );
+
+	if ( $sermon_count > 0 ) {
+		$text = sprintf(
+			_n( '%s Sermon', '%s Sermons', $sermon_count, 'sermon-browser' ),
+			number_format_i18n( $sermon_count )
+		);
+		$items[] = sprintf(
+			'<a class="sermon-count" href="%s">%s</a>',
+			esc_url( admin_url( 'admin.php?page=sermon-browser/sermon.php' ) ),
+			esc_html( $text )
+		);
+	}
+
+	return $items;
+}
+
+/**
 * Find new files uploaded by FTP
 */
 function sb_scan_dir() {
@@ -2495,9 +2524,9 @@ function sb_widget_popular_control() {
 
 	$title = esc_attr($options['title']);
 	$limit = esc_attr($options['limit']);
-	$display_sermons = (boolean) esc_attr($options['display_sermons']);
-	$display_series = (boolean) esc_attr($options['display_series']);
-	$display_preachers = (boolean) esc_attr($options['display_preachers']);
+	$display_sermons = (bool) esc_attr($options['display_sermons']);
+	$display_series = (bool) esc_attr($options['display_series']);
+	$display_preachers = (bool) esc_attr($options['display_preachers']);
 
 ?>
 		<p><?php _e('Title:'); ?> <input class="widefat" id="widget-popular-title" name="widget-popular-title" type="text" value="<?php echo $title; ?>" /></p>

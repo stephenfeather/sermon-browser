@@ -226,7 +226,7 @@ function sb_sermon_init () {
 	} else {
 		require (SB_INCLUDES_DIR.'/admin.php');
 		add_action ('admin_menu', 'sb_add_pages');
-		add_action ('rightnow_end', 'sb_rightnow');
+		add_filter('dashboard_glance_items', 'sb_dashboard_glance');
 		add_action('admin_init', 'sb_add_admin_headers');
 		// Phase 1: Use Help Tabs API instead of deprecated contextual_help filter.
 		add_action('current_screen', 'sb_add_help_tabs');

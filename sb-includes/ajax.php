@@ -126,7 +126,7 @@ if (isset($_POST['pname'])) { // preacher
 			<th style="text-align:center" scope="row"><?php echo $sermon->id ?></th>
 			<td><?php echo stripslashes($sermon->title) ?></td>
 			<td><?php echo stripslashes($sermon->pname) ?></td>
-			<td><?php echo ($sermon->datetime == '1970-01-01 00:00:00') ? __('Unknown', 'sermon-browser') : strftime('%d %b %y', strtotime($sermon->datetime)); ?></td>
+			<td><?php echo ($sermon->datetime == '1970-01-01 00:00:00') ? __('Unknown', 'sermon-browser') : wp_date('d M y', strtotime($sermon->datetime)); ?></td>
 			<td><?php echo stripslashes($sermon->sname) ?></td>
 			<td><?php echo stripslashes($sermon->ssname) ?></td>
 			<td><?php echo sb_sermon_stats($sermon->id) ?></td>
