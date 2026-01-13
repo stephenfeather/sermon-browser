@@ -53,9 +53,12 @@ The frontend output is inserted by sb_shortcode
 * Sets version constants and basic Wordpress hooks.
 * @package common_functions
 */
-define('SB_CURRENT_VERSION', '0.45.21');
+define('SB_CURRENT_VERSION', '0.46.0-dev');
 define('SB_DATABASE_VERSION', '1.7');
 sb_define_constants();
+
+// Load testable helper functions (Phase 1 modernization).
+require_once SB_INCLUDES_DIR . '/functions-testable.php';
 add_action ('plugins_loaded', 'sb_hijack');
 add_action ('init', 'sb_sermon_init');
 add_action ('widgets_init', 'sb_widget_sermon_init');
@@ -148,9 +151,10 @@ function sb_sermon_init () {
 			load_plugin_textdomain('sermon-browser', '', 'sermon-browser/sb-includes');
 	}
 
-    if(defined('WPLANG')){
-		if (WPLANG != '')
-			setlocale(LC_ALL, WPLANG.'.UTF-8');
+    // Phase 1: Use get_locale() instead of deprecated WPLANG constant.
+    $locale_string = sb_get_locale_string();
+    if (!empty($locale_string)) {
+        setlocale(LC_ALL, $locale_string);
     }
 
 	//Display the podcast if that's what's requested
@@ -224,7 +228,8 @@ function sb_sermon_init () {
 		add_action ('admin_menu', 'sb_add_pages');
 		add_action ('rightnow_end', 'sb_rightnow');
 		add_action('admin_init', 'sb_add_admin_headers');
-		add_filter('contextual_help', 'sb_add_contextual_help');
+		// Phase 1: Use Help Tabs API instead of deprecated contextual_help filter.
+		add_action('current_screen', 'sb_add_help_tabs');
 		if (defined('SAVEQUERIES') && SAVEQUERIES)
 			add_action('admin_footer', 'sb_footer_stats');
 	}
@@ -260,13 +265,16 @@ function sb_add_pages() {
 function sb_return_kbytes($val) {
 	$val = trim($val);
 	$last = strtolower($val[strlen($val)-1]);
+	// Phase 1: Cast to int before multiplication to avoid PHP 8 warning.
+	$num = (int) $val;
 	switch($last) {
 		case 'g':
-			$val *= 1024;
+			$num *= 1024;
+			// Fall through intentionally.
 		case 'm':
-			$val *= 1024;
+			$num *= 1024;
 	}
-   return intval($val);
+	return $num;
 }
 
 /**

@@ -30,7 +30,7 @@ function sb_search_results_dictionary() {
 		'[podcasticon]' => '<img alt="Subscribe to full podcast" title="Subscribe to full podcast" class="podcasticon" src="<?php echo SB_PLUGIN_URL ?>/sb-includes/icons/podcast.png"/>',
 		'[podcasticon_for_search]' => '<img alt="Subscribe to custom podcast" title="Subscribe to custom podcast" class="podcasticon" src="<?php echo SB_PLUGIN_URL ?>/sb-includes/icons/podcast_custom.png"/>',
 		'[editlink]' => '<?php sb_edit_link($sermon->id) ?>',
-		'[creditlink]' => '<div id="poweredbysermonbrowser">Powered by <a href="http://www.sermonbrowser.com/">Sermon Browser</a></div>',
+		'[creditlink]' => '<div id="poweredbysermonbrowser">Powered by Sermon Browser</div>',
 	);
 }
 
@@ -45,7 +45,8 @@ function sb_sermon_page_dictionary() {
 		'[service_link]' => '<a href="<?php sb_print_service_link($sermon["Sermon"]) ?>"><?php echo stripslashes($sermon["Sermon"]->service) ?></a>',
 		'[date]' => '<?php echo sb_formatted_date ($sermon["Sermon"]) ?>',
 		'[passages_loop]' => '<?php $ref_output = array(); for ($i = 0; $i < count($sermon["Sermon"]->start); $i++): ?>',
-		'[/passages_loop]' => '<?php endfor; echo implode($ref_output, ", "); ?>',
+		// Phase 1: Fixed implode() argument order (separator, array).
+		'[/passages_loop]' => '<?php endfor; echo implode(", ", $ref_output); ?>',
 		'[passage]' => '<?php $ref_output[] = sb_get_books($sermon["Sermon"]->start[$i], $sermon["Sermon"]->end[$i]) ?>',
 		'[files_loop]' => '<?php $media = sb_get_stuff($sermon["Sermon"]); foreach ((array) $media as $media_type => $media_names) { if (is_array($media_names) && $media_type != "Code") { foreach ((array)$media_names as $media_name) {  ?>',
 		'[/files_loop]' => '<?php } } } ?>',
@@ -71,7 +72,7 @@ function sb_sermon_page_dictionary() {
 		'[synodaltext]' => '<?php for ($i = 0; $i < count($sermon["Sermon"]->start); $i++): echo sb_add_bible_text ($sermon["Sermon"]->start[$i], $sermon["Sermon"]->end[$i], "synodal"); endfor ?>',
 		'[biblepassage]' => '<?php for ($i = 0; $i < count($sermon["Sermon"]->start); $i++): sb_print_bible_passage ($sermon["Sermon"]->start[$i], $sermon["Sermon"]->end[$i]); endfor ?>',
 		'[editlink]' => '<?php sb_edit_link($sermon["Sermon"]->id) ?>',
-		'[creditlink]' => '<div id="poweredbysermonbrowser">Powered by <a href="http://www.sermonbrowser.com/">Sermon Browser</a></div>',
+		'[creditlink]' => '<div id="poweredbysermonbrowser">Powered by Sermon Browser</div>',
 	);
 }
 

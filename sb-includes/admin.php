@@ -92,7 +92,8 @@ function sb_options() {
 		   switch ($checkSermonUpload) {
 			case "unwriteable":
 				echo '<div id="message" class="updated fade"><p><b>';
-				if (IS_MU AND !is_site_admin()) {
+				// Phase 1: Use sb_is_super_admin() instead of deprecated is_site_admin().
+				if (IS_MU AND !sb_is_super_admin()) {
 					_e('Upload is disabled. Please contact your administrator.', 'sermon-browser');
 				} else {
 					_e('Error: The upload folder is not writeable. You need to CHMOD the folder to 666 or 777.', 'sermon-browser');
@@ -101,7 +102,8 @@ function sb_options() {
 				break;
 			case "notexist":
 				echo '<div id="message" class="updated fade"><p><b>';
-				if (IS_MU AND !is_site_admin()) {
+				// Phase 1: Use sb_is_super_admin() instead of deprecated is_site_admin().
+				if (IS_MU AND !sb_is_super_admin()) {
 					_e('Upload is disabled. Please contact your administrator.', 'sermon-browser');
 				} else {
 					_e('Error: The upload folder you have specified does not exist.', 'sermon-browser');
@@ -192,7 +194,8 @@ function sb_options() {
 		<br style="clear:both"/>
 		<table border="0" class="widefat">
 			<?php
-				if (!IS_MU OR is_site_admin()) {
+				// Phase 1: Use sb_is_super_admin() instead of deprecated is_site_admin().
+				if (!IS_MU OR sb_is_super_admin()) {
 			?>
 			<tr>
                         <td align="right" style="vertical-align:middle"><?php _e( 'Upload folder', 'sermon-browser' ) ?>
@@ -1547,7 +1550,8 @@ function sb_new_sermon() {
 			if ($file_data->type == 'url') {
 				$filename = substr($file_data->name, strrpos ($file_data->name, '/')+1);
 				$sermonUploadDir = SB_ABSPATH.sb_get_option('upload_dir');
-				$tempfilename = $sermonUploadDir.preg_replace('/([ ])/e', 'chr(rand(97,122))', '		').'.mp3';
+				// Phase 1: Use helper function instead of deprecated preg_replace /e modifier.
+				$tempfilename = $sermonUploadDir . sb_generate_temp_suffix(2) . '.mp3';
 				if ($tempfile = @fopen($tempfilename, 'wb'))
 					{if ($remote_file = @fopen($file_data->name, 'r')) {
 						$remote_contents = '';
@@ -2603,39 +2607,67 @@ function sb_print_upload_form () {
 </table>
 <?php }
 
-function sb_add_contextual_help($help) {
-	if (!isset($_GET['page']))
-		{return $help;}
-	else {
-		$out = '<h5>'.__('SermonBrowser Help', 'sermon-browser')."</h5>\n";
-		$out .= '<div class="metabox-prefs"><p>';
-		switch ($_GET['page']) {
-			case 'sermon-browser/sermon.php':
-				$out .= __('From this page you can edit or delete any of your sermons. The most recent sermons are found at the top. Use the filter options to quickly find the one you want.', 'sermon-browser');
-				break;
-			case 'sermon-browser/new_sermon.php':
-			case 'sermon-browser/files.php':
-			case 'sermon-browser/preachers.php':
-			case 'sermon-browser/manage.php':
-			case 'sermon-browser/options.php':
-				$out .= __('It&#146;s important that these options are set correctly, as otherwise SermonBrowser won&#146;t behave as you expect.', 'sermon-browser').'<ul>';
-				$out .= '<li>'.__('The upload folder would normally be <b>wp-content/uploads/sermons</b>', 'sermon-browser').'</li>';
-				$out .= '<li>'.__('You should only change the public podcast feed if you re-direct your podcast using a service like Feedburner. Otherwise it should be the same as the private podcast feed.', 'sermon-browser').'</li>';
-				$out .= '<li>'.__('The MP3 shortcode you need will be in the documation of your favourite MP3 plugin. Use the tag %SERMONURL% in place of the URL of the MP3 file (e.g. [haiku url="%SERMONURL%"] or [audio:%SERMONURL%]).', 'sermon-browser').'</li></ul>';
-				break;
-			case 'sermon-browser/templates.php':
-				$out .= sprintf(__('Template editing is one of the most powerful features of SermonBrowser. Be sure to look at the complete list of %stemplate tags%s.', 'sermon-browser'), '<a href="http://www.sermonbrowser.com/customisation/">', '</a>');
-				break;
-			case 'sermon-browser/uninstall.php':
-			case 'sermon-browser/help.php':
-		}
+/**
+ * Add help tabs to SermonBrowser admin pages.
+ *
+ * Phase 1: Replaces deprecated contextual_help filter with Help Tabs API.
+ *
+ * @param WP_Screen $screen Current screen object.
+ */
+function sb_add_help_tabs($screen) {
+	if (!isset($_GET['page'])) {
+		return;
 	}
-	$out.= '</p><p><a href="http://www.sermonbrowser.com/tutorials/">'.__('Tutorial Screencasts').'</a>';
-	$out.= ' | <a href="http://www.sermonbrowser.com/faq/">'.__('Frequently Asked Questions').'</a>';
-	$out.= ' | <a href="http://www.sermonbrowser.com/forum/">'.__('Support Forum').'</a>';
-	$out.= ' | <a href="http://www.sermonbrowser.com/customisation/">'.__('Shortcode syntax').'</a>';
-	$out.= ' | <a href="http://www.sermonbrowser.com/donate/">'.__('Donate').'</a>';
-	$out.= '</p></div>';
-	return $out;
+
+	$page = $_GET['page'];
+
+	// Only process sermon-browser pages.
+	if (strpos($page, 'sermon-browser/') !== 0) {
+		return;
+	}
+
+	$content = '';
+	switch ($page) {
+		case 'sermon-browser/sermon.php':
+			$content = __('From this page you can edit or delete any of your sermons. The most recent sermons are found at the top. Use the filter options to quickly find the one you want.', 'sermon-browser');
+			break;
+		case 'sermon-browser/new_sermon.php':
+		case 'sermon-browser/files.php':
+		case 'sermon-browser/preachers.php':
+		case 'sermon-browser/manage.php':
+		case 'sermon-browser/options.php':
+			$content = __('It&#146;s important that these options are set correctly, as otherwise SermonBrowser won&#146;t behave as you expect.', 'sermon-browser') . '<ul>';
+			$content .= '<li>' . __('The upload folder would normally be <b>wp-content/uploads/sermons</b>', 'sermon-browser') . '</li>';
+			$content .= '<li>' . __('You should only change the public podcast feed if you re-direct your podcast using a service like Feedburner. Otherwise it should be the same as the private podcast feed.', 'sermon-browser') . '</li>';
+			$content .= '<li>' . __('The MP3 shortcode you need will be in the documation of your favourite MP3 plugin. Use the tag %SERMONURL% in place of the URL of the MP3 file (e.g. [haiku url="%SERMONURL%"] or [audio:%SERMONURL%]).', 'sermon-browser') . '</li></ul>';
+			break;
+		case 'sermon-browser/templates.php':
+			$content = sprintf(__('Template editing is one of the most powerful features of SermonBrowser. Be sure to look at the complete list of %stemplate tags%s.', 'sermon-browser'), '<a href="http://www.sermonbrowser.com/customisation/">', '</a>');
+			break;
+	}
+
+	if (!empty($content)) {
+		$screen->add_help_tab(array(
+			'id'      => 'sermon-browser-help',
+			'title'   => __('SermonBrowser Help', 'sermon-browser'),
+			'content' => '<p>' . $content . '</p>',
+		));
+	}
+
+	// Add sidebar with useful links.
+	$sidebar = '<p><strong>' . __('For more information:', 'sermon-browser') . '</strong></p>';
+	$sidebar .= '<p><a href="http://www.sermonbrowser.com/tutorials/">' . __('Tutorial Screencasts', 'sermon-browser') . '</a></p>';
+	$sidebar .= '<p><a href="http://www.sermonbrowser.com/faq/">' . __('Frequently Asked Questions', 'sermon-browser') . '</a></p>';
+	$sidebar .= '<p><a href="http://www.sermonbrowser.com/forum/">' . __('Support Forum', 'sermon-browser') . '</a></p>';
+	$sidebar .= '<p><a href="http://www.sermonbrowser.com/customisation/">' . __('Shortcode syntax', 'sermon-browser') . '</a></p>';
+	$sidebar .= '<p><a href="http://www.sermonbrowser.com/donate/">' . __('Donate', 'sermon-browser') . '</a></p>';
+
+	$screen->set_help_sidebar($sidebar);
+}
+
+// Keep old function for backward compatibility but mark as deprecated.
+function sb_add_contextual_help($help) {
+	_deprecated_function(__FUNCTION__, '0.46.0', 'sb_add_help_tabs');
+	return $help;
 }
 ?>
