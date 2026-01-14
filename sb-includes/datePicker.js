@@ -15,26 +15,27 @@ jQuery.datePicker = function()
     // so that firebug console.log statements don't break IE
     if (window.console == undefined) { window.console = {log:function(){}}; }
 
-    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    var navLinks = {p:'Prev', n:'Next', c:'Close', b:'Choose date'};
-    var dateFormat = 'dmy';
-    var dateSeparator = "/";
-    var _drawingMonth = false;
-    var _firstDayOfWeek;
-    var _firstDate;
-    var _lastDate;
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    let navLinks = {p:'Prev', n:'Next', c:'Close', b:'Choose date'};
+    let dateFormat = 'dmy';
+    let dateSeparator = "/";
+    let _drawingMonth = false;
+    let _firstDayOfWeek;
+    let _firstDate;
+    let _lastDate;
 
-    var _selectedDate;
-    var _openCal;
+    let _selectedDate;
+    let _openCal;
 
-    var _zeroPad = function(num) {
-        var s = '0'+num;
+    const _zeroPad = function(num) {
+        const s = '0'+num;
         return s.substring(s.length-2)
         //return ('0'+num).substring(-2); // doesn't work on IE :(
     };
-    var _strToDate = function(dIn)
+    const _strToDate = function(dIn)
     {
+        let dParts;
         switch (dateFormat) {
             case 'ymd':
                 dParts = dIn.split(dateSeparator);
@@ -44,7 +45,7 @@ jQuery.datePicker = function()
                 return new Date(dParts[2], Number(dParts[1])-1, Number(dParts[0]));
             case 'dmmy':
                 dParts = dIn.split(dateSeparator);
-                for (var m=0; m<12; m++) {
+                for (let m=0; m<12; m++) {
                     if (dParts[1].toLowerCase() == months[m].substr(0,3).toLowerCase())  {
                         return new Date(Number(dParts[2]), m, Number(dParts[0]));
                     }
@@ -52,16 +53,16 @@ jQuery.datePicker = function()
                 return undefined;
             case 'mdy':
             default:
-                var parts = parts ? parts : [2, 1, 0];
+                const parts = [2, 1, 0];
                 dParts = dIn.split(dateSeparator);
                 return new Date(dParts[2], Number(dParts[0])-1, Number(dParts[1]));
         }
     };
-    var _dateToStr = function(d)
+    const _dateToStr = function(d)
     {
-        var dY = d.getFullYear();
-        var dM = _zeroPad(d.getMonth()+1);
-        var dD = _zeroPad(d.getDate());
+        const dY = d.getFullYear();
+        const dM = _zeroPad(d.getMonth()+1);
+        const dD = _zeroPad(d.getDate());
         switch (dateFormat) {
             case 'ymd':
                 return dY + dateSeparator + dM + dateSeparator + dD;
@@ -75,9 +76,10 @@ jQuery.datePicker = function()
         }
     };
 
-    var _getCalendarDiv = function(dIn)
+    const _getCalendarDiv = function(dIn)
     {
-        var today = new Date();
+        const today = new Date();
+        let d;
         if (dIn == undefined) {
             // start from this month.
             d = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -93,17 +95,17 @@ jQuery.datePicker = function()
             d = new Date(_lastDate.getFullYear(), _lastDate.getMonth(), 1);;
         }
 
-        var jCalDiv = jQuery("<div></div>").attr('class','popup-calendar');
-        var firstMonth = true;
-        var firstDate = _firstDate.getDate();
+        const jCalDiv = jQuery("<div></div>").attr('class','popup-calendar');
+        let firstMonth = true;
+        const firstDate = _firstDate.getDate();
 
         // create prev and next links
-        var prevLinkDiv = '';
+        let prevLinkDiv = '';
         if (!(d.getMonth() == _firstDate.getMonth() && d.getFullYear() == _firstDate.getFullYear())) {
             // not in first display month so show a previous link
             firstMonth = false;
-            var lastMonth = d.getMonth() == 0 ? new Date(d.getFullYear()-1, 11, 1) : new Date(d.getFullYear(), d.getMonth()-1, 1);
-            var prevLink = jQuery("<a></a>").attr('href', 'javascript:;').html(navLinks.p).click(function()
+            const lastMonth = d.getMonth() == 0 ? new Date(d.getFullYear()-1, 11, 1) : new Date(d.getFullYear(), d.getMonth()-1, 1);
+            const prevLink = jQuery("<a></a>").attr('href', 'javascript:;').html(navLinks.p).click(function()
             {
                 jQuery.datePicker.changeMonth(lastMonth, this);
                 return false;
@@ -111,14 +113,14 @@ jQuery.datePicker = function()
             prevLinkDiv = jQuery("<div></div>").attr('class','link-prev').html('&lt;').append(prevLink);
         }
 
-        var finalMonth = true;
-        var lastDate = _lastDate.getDate();
-        nextLinkDiv = '';
+        let finalMonth = true;
+        const lastDate = _lastDate.getDate();
+        let nextLinkDiv = '';
         if (!(d.getMonth() == _lastDate.getMonth() && d.getFullYear() == _lastDate.getFullYear())) {
             // in the last month - no next link
             finalMonth = false;
-            var nextMonth = new Date(d.getFullYear(), d.getMonth()+1, 1);
-            var nextLink = jQuery("<a></a>").attr('href', 'javascript:;').html(navLinks.n).click(function()
+            const nextMonth = new Date(d.getFullYear(), d.getMonth()+1, 1);
+            const nextLink = jQuery("<a></a>").attr('href', 'javascript:;').html(navLinks.n).click(function()
             {
                 jQuery.datePicker.changeMonth(nextMonth, this);
                 return false;
@@ -126,7 +128,7 @@ jQuery.datePicker = function()
             nextLinkDiv = jQuery("<div></div>").attr('class','link-next').html('&gt;').prepend(nextLink);
         }
 
-        var closeLink = jQuery("<a></a>").attr('href','javascript:;').html(navLinks.c).click(function()
+        const closeLink = jQuery("<a></a>").attr('href','javascript:;').html(navLinks.c).click(function()
         {
             jQuery.datePicker.closeCalendar();
         });
@@ -135,30 +137,31 @@ jQuery.datePicker = function()
             jQuery("<div></div>").attr('class', 'link-close').append(closeLink),
             jQuery("<h3></h3>").html(months[d.getMonth()] + ' ' + d.getFullYear())
         ).append(prevLinkDiv).append(nextLinkDiv).append("<br/>");
-        var headRow = jQuery("<tr></tr>");
-        for (var i=_firstDayOfWeek; i<_firstDayOfWeek+7; i++) {
-            var weekday = i%7;
-            var day = days[weekday];
+        const headRow = jQuery("<tr></tr>");
+        for (let i=_firstDayOfWeek; i<_firstDayOfWeek+7; i++) {
+            const weekday = i%7;
+            const day = days[weekday];
             headRow.append(
                 jQuery("<th></th>").attr({'scope':'col', 'abbr':day, 'title':day, 'class':(weekday == 0 || weekday == 6 ? 'weekend' : 'weekday')}).html(day.substr(0, 1))
             );
         }
 
-        var tBody = jQuery("<tbody></tbody>");
+        const tBody = jQuery("<tbody></tbody>");
 
-        var lastDay = (new Date(d.getFullYear(), d.getMonth()+1, 0)).getDate();
-        var curDay = _firstDayOfWeek - d.getDay();
+        const lastDay = (new Date(d.getFullYear(), d.getMonth()+1, 0)).getDate();
+        let curDay = _firstDayOfWeek - d.getDay();
         if (curDay > 0) curDay -= 7;
 
-        var todayDate = (new Date()).getDate();
-        var thisMonth = d.getMonth() == today.getMonth() && d.getFullYear() == today.getFullYear();
+        const todayDate = (new Date()).getDate();
+        const thisMonth = d.getMonth() == today.getMonth() && d.getFullYear() == today.getFullYear();
 
-        var w = 0;
+        let w = 0;
         while (w++<6) {
-            var thisRow = jQuery("<tr></tr>");
-            for (var i=0; i<7; i++) {
-                var weekday = (_firstDayOfWeek + i) % 7;
-                var atts = {'class':(weekday == 0 || weekday == 6 ? 'weekend ' : 'weekday ')};
+            const thisRow = jQuery("<tr></tr>");
+            for (let i=0; i<7; i++) {
+                const weekday = (_firstDayOfWeek + i) % 7;
+                const atts = {'class':(weekday == 0 || weekday == 6 ? 'weekend ' : 'weekday ')};
+                let dayStr;
 
                 if (curDay < 0 || curDay >= lastDay) {
                     dayStr = ' ';
@@ -170,7 +173,7 @@ jQuery.datePicker = function()
                     atts['class'] += 'inactive';
                 } else {
                     d.setDate(curDay+1);
-                    var dStr = _dateToStr(d);
+                    const dStr = _dateToStr(d);
                     dayStr = jQuery("<a></a>").attr({'href':'javascript:;', 'rel':dStr}).html(curDay+1).click(function(e)
                     {
                         jQuery.datePicker.selectDate(jQuery.attr(this, 'rel'), this);
@@ -198,7 +201,7 @@ jQuery.datePicker = function()
         if (jQuery.browser.msie) {
 
             // we put a styled iframe behind the calendar so HTML SELECT elements don't show through
-            var iframe = [    '<iframe class="bgiframe" tabindex="-1" src="blank.html" ',
+            const iframe = [    '<iframe class="bgiframe" tabindex="-1" src="blank.html" ',
                              'style="display:block; position:absolute;',
                             'top: 0;',
                             'left:0;',
@@ -211,7 +214,7 @@ jQuery.datePicker = function()
         jCalDiv.css({'display':'block'});
         return jCalDiv[0];
     };
-    var _draw = function(c)
+    const _draw = function(c)
     {
         // explicitly empty the calendar before removing it to reduce the (MASSIVE!) memory leak in IE
         // still not perfect but a lot better!
@@ -225,7 +228,7 @@ jQuery.datePicker = function()
         jQuery('div.popup-calendar', _openCal[0]).remove();
         _openCal.append(c);
     };
-    var _closeDatePicker = function()
+    const _closeDatePicker = function()
     {
         jQuery('div.popup-calendar a', _openCal).unbind();
         jQuery('div.popup-calendar', _openCal).empty();
@@ -242,21 +245,21 @@ jQuery.datePicker = function()
         delete _openCal;
         _openCal = null;
     };
-    var _handleKeys = function(e)
+    const _handleKeys = function(e)
     {
-        var key = e.keyCode ? e.keyCode : (e.which ? e.which: 0);
+        const key = e.keyCode ? e.keyCode : (e.which ? e.which: 0);
         //console.log('KEY!! ' + key);
         if (key == 27) {
             _closeDatePicker();
         }
         return false;
     };
-    var _checkMouse = function(e)
+    const _checkMouse = function(e)
     {
         if (!_drawingMonth) {
-            var target = jQuery.browser.msie ? window.event.srcElement : e.target;
+            const target = jQuery.browser.msie ? window.event.srcElement : e.target;
             //console.log(jQuery(target));
-            var cp = jQuery(target).findClosestParent('div.popup-calendar-wrapper');
+            const cp = jQuery(target).findClosestParent('div.popup-calendar-wrapper');
             if (cp.get(0).className != 'date-picker-holder') {
                 _closeDatePicker();
             }
@@ -274,14 +277,14 @@ jQuery.datePicker = function()
                 _closeDatePicker();
             }
             this.blur();
-            var input = jQuery('input', jQuery(this).findClosestParent('input')[0])[0];
-            
+            const input = jQuery('input', jQuery(this).findClosestParent('input')[0])[0];
+
             _firstDate = input._startDate;
             _lastDate = input._endDate;
             _firstDayOfWeek = input._firstDayOfWeek;
             _openCal = jQuery(this).parent().find('>div.popup-calendar-wrapper');
-            
-            var d = jQuery(input).val();
+
+            const d = jQuery(input).val();
             if (d != '') {
                 if (_dateToStr(_strToDate(d)) == d) {
                     _selectedDate = d;
@@ -312,8 +315,8 @@ jQuery.datePicker = function()
         },
         selectDate: function(d, ele)
         {
-            selectedDate = d;
-            var $theInput = jQuery('input', jQuery(ele).findClosestParent('input')[0]);
+            const selectedDate = d;
+            const $theInput = jQuery('input', jQuery(ele).findClosestParent('input')[0]);
             $theInput.val(d);
             $theInput.trigger('change');
             _closeDatePicker(ele);
@@ -385,7 +388,7 @@ jQuery.datePicker = function()
 }();
 jQuery.fn.findClosestParent = function(s)
 {
-    var ele = this;
+    let ele = this;
     while (true) {
         if (jQuery(s, ele[0]).length > 0) {
             return (ele);
@@ -402,8 +405,8 @@ jQuery.fn.datePicker = function(a)
         if(this.nodeName.toLowerCase() != 'input') return;
         jQuery.datePicker.setDateWindow(this, a);
         if (!jQuery.datePicker.isInited(this)) {
-            var chooseDate = jQuery.datePicker.getChooseDateStr();
-            var calBut;
+            const chooseDate = jQuery.datePicker.getChooseDateStr();
+            let calBut;
             if(a && a.inputClick){
                 calBut = jQuery(this).attr('title', chooseDate).addClass('date-picker');
             }
