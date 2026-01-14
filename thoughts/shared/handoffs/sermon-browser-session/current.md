@@ -9,12 +9,21 @@ status: active
 
 ## Ledger
 <!-- This section is extracted by SessionStart hook for quick resume -->
-**Updated:** 2026-01-13T22:00:00Z
+**Updated:** 2026-01-13T19:09:00Z
 **Goal:** Update Sermon Browser plugin for modern WordPress compatibility
 **Branch:** develop (main = release only)
 **Test:** `docker-compose up -d` then http://localhost:8080
 
 ### Now
+[→] **JavaScript Remediation Handoff Created** - 141 SonarQube issues ready for agent processing
+
+### Active Handoffs
+- **JavaScript Issues:** `thoughts/shared/handoffs/sermon-browser-session/2026-01-13_19-06_javascript-sonarqube-remediation.yaml`
+  - 141 issues across `sb-includes/64.js` (44) and `sb-includes/datePicker.js` (97)
+  - Priority: 8 BLOCKER, 79 CRITICAL, 18 MAJOR, 36 MINOR
+  - Resume: `/resume_handoff thoughts/shared/handoffs/sermon-browser-session/2026-01-13_19-06_javascript-sonarqube-remediation.yaml`
+
+### Previous Milestone
 [✓] **v0.6.0 Architecture - Phase 1 COMPLETE** - Repository Layer implemented
 
 ### v0.6.0 Architecture Refactoring
@@ -85,10 +94,15 @@ status: active
 - [x] **Phase 6.4:** Updated version to 0.5.0
 - [x] **Phase 6.5:** Created release commit (16e0037)
 - [x] **Phase 6:** All 17 unit tests pass, all manual tests pass
+- [x] Created JavaScript remediation handoff (141 SonarQube issues)
+  - Extracted JS issues from baseline CSV to `sonarqube_js_issues.csv`
+  - Created YAML handoff with priority order and rule breakdown
 
 ### Next
 - [ ] Merge develop → main
 - [ ] Create GitHub release tag v0.5.0
+- [ ] Fix JavaScript SonarQube issues (resume handoff for agent processing)
+  - `/resume_handoff thoughts/shared/handoffs/sermon-browser-session/2026-01-13_19-06_javascript-sonarqube-remediation.yaml`
 
 ### Decisions
 - Workflow: Research → Plan → Build (phased approach)
@@ -122,6 +136,15 @@ All Phase 1 and Phase 2 deprecations have been fixed.
   - phpMyAdmin at http://localhost:8081
   - Plugin auto-mounted to wp-content/plugins/sermon-browser
   - Custom PHP config: upload_max_filesize=64M, post_max_size=64M
+
+### Static Analysis
+- **SonarQube** running against the repository
+- Run local analysis: `composer sonar` (includes coverage reports)
+- Requires: `SONAR_TOKEN` environment variable
+- Issue exports:
+  - `sonarqube_base_issues.csv` - Issues from old codebase (baseline, 872 issues)
+  - `sonarqube_issues.csv` - Issues found since Jan 1, 2026 (new/introduced)
+  - `sonarqube_js_issues.csv` - JavaScript issues extracted (141 issues, 2 files)
 
 ### Workflow State
 pattern: phased-modernization

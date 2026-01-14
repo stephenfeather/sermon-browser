@@ -1,0 +1,134 @@
+---
+session: sermon-browser-session
+date: 2026-01-13
+status: partial
+outcome: PARTIAL_PLUS
+---
+
+goal: Fix 141 JavaScript SonarQube issues across 2 files (64.js, datePicker.js)
+now: Start with BLOCKER issues (8) then CRITICAL (79) in priority order
+test: npx eslint sb-includes/*.js --format compact
+
+source_data:
+  baseline_csv: sonarqube_base_issues.csv
+  extracted_csv: sonarqube_js_issues.csv  # 141 JS issues extracted
+
+issue_summary:
+  total: 141
+  by_severity:
+    BLOCKER: 8
+    CRITICAL: 79
+    MAJOR: 18
+    MINOR: 36
+  by_file:
+    sb-includes/64.js: 44
+    sb-includes/datePicker.js: 97
+
+rule_breakdown:
+  - rule: S3504
+    count: 76
+    severity: CRITICAL
+    message: "Unexpected var, use let or const instead"
+    fix: "Replace var with let/const based on reassignment"
+
+  - rule: S7758
+    count: 20
+    severity: MINOR
+    message: "Prefer codePointAt/fromCodePoint over charCodeAt/fromCharCode"
+    fix: "Modern Unicode-safe string methods"
+
+  - rule: S2703
+    count: 8
+    severity: BLOCKER
+    message: "Missing variable declaration (implicit global)"
+    fix: "Add let/const to undeclared variables"
+    lines: [115, 132]  # in 64.js: c1, c2, c3
+
+  - rule: S1874
+    count: 5
+    severity: MAJOR
+    message: "Deprecated API usage"
+
+  - rule: S125
+    count: 5
+    severity: MINOR
+    message: "Remove commented-out code"
+
+  - rule: S6535
+    count: 3
+    severity: MAJOR
+    message: "Unnecessary escape characters in regex"
+    line: 54  # in 64.js
+
+  - rule: S7773
+    count: 2
+    severity: MINOR
+    message: "Prefer Number.isNaN over isNaN"
+    lines: [32, 34]  # in 64.js
+
+  - rule: S7781
+    count: 2
+    severity: MINOR
+    message: "Prefer String#replaceAll() over String#replace()"
+
+  - rule: S7764
+    count: 2
+    severity: MINOR
+    message: "Prefer globalThis over window"
+
+  - rule: other
+    count: 16
+    note: "Single-instance rules including S930, S2814, S2392, etc."
+
+priority_order:
+  - step: 1
+    target: "BLOCKER S2703 - implicit globals in 64.js"
+    files: [sb-includes/64.js]
+    lines: [115, 132]
+    action: "Add 'let' to c1, c2, c3 declarations"
+
+  - step: 2
+    target: "CRITICAL S3504 - var to let/const (76 issues)"
+    strategy: |
+      - Analyze each var for reassignment
+      - Use const for never-reassigned
+      - Use let for reassigned variables
+      - Test after each file
+
+  - step: 3
+    target: "MAJOR issues (18)"
+    rules: [S1874, S6535]
+
+  - step: 4
+    target: "MINOR modernization (36)"
+    rules: [S7758, S7773, S7781, S7764]
+
+blockers: []
+
+questions:
+  - "Should 64.js be replaced with modern btoa/atob built-ins?"
+  - "Is datePicker.js from a library or can it be modernized/replaced?"
+
+decisions:
+  - preserve_functionality: "Fix issues without changing behavior"
+  - test_strategy: "Manual browser testing since no JS test suite exists"
+
+findings:
+  - legacy_code: "Both files date from 2008, use ES3/ES5 patterns"
+  - base64_custom: "64.js is custom Base64 implementation"
+  - datepicker_custom: "datePicker.js appears to be custom widget"
+
+worked: []
+failed: []
+
+next:
+  - "Fix 8 BLOCKER S2703 issues (implicit globals) in 64.js:115,132"
+  - "Convert 76 var declarations to let/const (S3504)"
+  - "Fix 3 unnecessary regex escapes in 64.js:54 (S6535)"
+  - "Consider replacing 64.js with native btoa/atob"
+  - "Run eslint after each batch to verify fixes"
+
+files:
+  created: [sonarqube_js_issues.csv]
+  modified: []
+  to_fix: [sb-includes/64.js, sb-includes/datePicker.js]
