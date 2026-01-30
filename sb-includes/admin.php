@@ -22,6 +22,24 @@ use SermonBrowser\Facades\Book;
 function sb_add_admin_headers() {
 	if ( isset( $_REQUEST['page'] ) && substr( $_REQUEST['page'], 14 ) == 'sermon-browser' ) {
 		wp_enqueue_script('jquery');
+
+		// Enqueue admin AJAX module (Phase 3).
+		wp_enqueue_script(
+			'sb-admin-ajax',
+			SB_PLUGIN_URL . '/assets/js/admin-ajax.js',
+			array('jquery'),
+			SB_CURRENT_VERSION,
+			true
+		);
+
+		// Localize nonces for AJAX handlers.
+		wp_localize_script('sb-admin-ajax', 'sbAjaxSettings', array(
+			'ajaxUrl'       => admin_url('admin-ajax.php'),
+			'preacherNonce' => wp_create_nonce('sb_preacher_nonce'),
+			'seriesNonce'   => wp_create_nonce('sb_series_nonce'),
+			'serviceNonce'  => wp_create_nonce('sb_service_nonce'),
+			'fileNonce'     => wp_create_nonce('sb_file_nonce'),
+		));
 	}
 	if (isset($_REQUEST['page']) && $_REQUEST['page'] == 'sermon-browser/new_sermon.php') {
 		wp_enqueue_script('jquery-ui-datepicker');
@@ -748,74 +766,74 @@ function sb_manage_everything() {
 				if (s == null) { break;	}
 			}
 			if (s != null) {
-				jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {sname: s, sermon: 1}, function(r) {
-					if (r) {
-						sz = s.match(/(.*?)@(.*)/)[1];
-						t = s.match(/(.*?)@(.*)/)[2];
+				SBAdmin.service.create(s).done(function(response) {
+					SBAdmin.handleResponse(response, function(data) {
+						var sz = s.match(/(.*?)@(.*)/)[1];
+						var t = s.match(/(.*?)@(.*)/)[2];
 						jQuery('#Services-list').append('\
-							<tr style="display:none" class="Services" id="rowServices' + r + '">\
-								<th style="text-align:center" scope="row">' + r + '</th>\
-								<td id="Services' + r + '">' + sz + '</td>\
+							<tr style="display:none" class="Services" id="rowServices' + data.id + '">\
+								<th style="text-align:center" scope="row">' + data.id + '</th>\
+								<td id="Services' + data.id + '">' + sz + '</td>\
 								<td style="text-align:center">' + t + '</td>\
 								<td style="text-align:center">\
-									<a id="linkServices' + r + '" href="javascript:renameServices(' + r + ', \'' + sz + '\')">Edit</a> | <a onclick="return confirm(\'Are you sure?\');" href="javascript:deleteServices(' + r + ')">Delete</a>\
+									<a id="linkServices' + data.id + '" href="javascript:renameServices(' + data.id + ', \'' + sz + '\')">Edit</a> | <a onclick="return confirm(\'Are you sure?\');" href="javascript:deleteServices(' + data.id + ')">Delete</a>\
 								</td>\
 							</tr>\
 						');
-						jQuery('#rowServices' + r).fadeIn(function() {
+						jQuery('#rowServices' + data.id).fadeIn(function() {
 							updateClass('Services');
 						});
-					};
+					});
 				});
 			}
 		}
 		function createNewSeries(s) {
 			var ss = prompt("<?php _e("New series' name?", 'sermon-browser')?>", "<?php _e("Series' name", 'sermon-browser')?>");
 			if (ss != null) {
-				jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {ssname: ss, sermon: 1}, function(r) {
-					if (r) {
+				SBAdmin.series.create(ss).done(function(response) {
+					SBAdmin.handleResponse(response, function(data) {
 						jQuery('#Series-list').append('\
-							<tr style="display:none" class="Series" id="rowSeries' + r + '">\
-								<th style="text-align:center" scope="row">' + r + '</th>\
-								<td id="Series' + r + '">' + ss + '</td>\
+							<tr style="display:none" class="Series" id="rowSeries' + data.id + '">\
+								<th style="text-align:center" scope="row">' + data.id + '</th>\
+								<td id="Series' + data.id + '">' + data.name + '</td>\
 								<td style="text-align:center">\
-									<a id="linkSeries' + r + '" href="javascript:renameSeries(' + r + ', \'' + ss + '\')">Rename</a> | <a onclick="return confirm(\'Are you sure?\');" href="javascript:deleteSeries(' + r + ')">Delete</a>\
+									<a id="linkSeries' + data.id + '" href="javascript:renameSeries(' + data.id + ', \'' + data.name + '\')">Rename</a> | <a onclick="return confirm(\'Are you sure?\');" href="javascript:deleteSeries(' + data.id + ')">Delete</a>\
 								</td>\
 							</tr>\
 						');
-						jQuery('#rowSeries' + r).fadeIn(function() {
+						jQuery('#rowSeries' + data.id).fadeIn(function() {
 							updateClass('Series');
 						});
-					};
+					});
 				});
 			}
 		}
 		function deleteSeries(id) {
-			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {ssname: 'dummy', ssid: id, del: 1, sermon: 1}, function(r) {
-				if (r) {
+			SBAdmin.series.delete(id).done(function(response) {
+				SBAdmin.handleResponse(response, function() {
 					jQuery('#rowSeries' + id).fadeOut(function() {
 						updateClass('Series');
 					});
-				};
+				});
 			});
 		}
 		function deleteServices(id) {
-			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {sname: 'dummy', sid: id, del: 1, sermon: 1}, function(r) {
-				if (r) {
+			SBAdmin.service.delete(id).done(function(response) {
+				SBAdmin.handleResponse(response, function() {
 					jQuery('#rowServices' + id).fadeOut(function() {
 						updateClass('Services');
 					});
-				};
+				});
 			});
 		}
 		function renameSeries(id, old) {
 			var ss = prompt("<?php _e("New series' name?", 'sermon-browser')?>", old);
 			if (ss != null) {
-				jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {ssid: id, ssname: ss, sermon: 1}, function(r) {
-					if (r) {
-						jQuery('#Series' + id).text(ss);
-						jQuery('#linkSeries' + id).attr('href', 'javascript:renameSeries(' + id + ', "' + ss + '")');
-					};
+				SBAdmin.series.update(id, ss).done(function(response) {
+					SBAdmin.handleResponse(response, function(data) {
+						jQuery('#Series' + id).text(data.name);
+						jQuery('#linkSeries' + id).attr('href', 'javascript:renameSeries(' + id + ', "' + data.name + '")');
+					});
 				});
 			}
 		}
@@ -826,14 +844,12 @@ function sb_manage_everything() {
 				if (s == null) { break;	}
 			}
 			if (s != null) {
-				jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {sid: id, sname: s, sermon: 1}, function(r) {
-					if (r) {
-						sz = s.match(/(.*?)@(.*)/)[1];
-						t = s.match(/(.*?)@(.*)/)[2];
-						jQuery('#Services' + id).text(sz);
-						jQuery('#time' + id).text(t);
-						jQuery('#linkServices' + id).attr('href', 'javascript:renameServices(' + id + ', "' + s + '")');
-					};
+				SBAdmin.service.update(id, s).done(function(response) {
+					SBAdmin.handleResponse(response, function(data) {
+						jQuery('#Services' + id).text(data.name);
+						jQuery('#time' + id).text(data.time);
+						jQuery('#linkServices' + id).attr('href', 'javascript:renameServices(' + id + ', "' + data.name + ' @ ' + data.time + '")');
+					});
 				});
 			}
 		}
@@ -1015,48 +1031,40 @@ function sb_files() {
 		function rename(id, old) {
 			var f = prompt("<?php _e('New file name?', 'sermon-browser') ?>", old);
 			if (f != null) {
-				jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/uploads.php'); ?>', {fid: id, oname: old, fname: f, sermon: 1}, function(r) {
-					if (r) {
-						if (r == 'renamed') {
-							jQuery('#' + id).text(f.substring(0,f.lastIndexOf(".")));
-							jQuery('#link' + id).attr('href', 'javascript:rename(' + id + ', "' + f + '")');
-							jQuery('#s' + id).text(f.substring(0,f.lastIndexOf(".")));
-							jQuery('#slink' + id).attr('href', 'javascript:rename(' + id + ', "' + f + '")');
-						} else {
-							if (r == 'forbidden') {
-								alert('<?php _e('You are not permitted files with that extension.', 'sermon-browser') ?>');
-							} else {
-								alert('<?php _e('The script is unable to rename your file.', 'sermon-browser') ?>');
-							}
-						}
-					};
+				SBAdmin.file.rename(id, f, old).done(function(response) {
+					SBAdmin.handleResponse(response, function(data) {
+						jQuery('#' + id).text(f.substring(0,f.lastIndexOf(".")));
+						jQuery('#link' + id).attr('href', 'javascript:rename(' + id + ', "' + data.name + '")');
+						jQuery('#s' + id).text(f.substring(0,f.lastIndexOf(".")));
+						jQuery('#slink' + id).attr('href', 'javascript:rename(' + id + ', "' + data.name + '")');
+					}, function(message) {
+						alert(message || '<?php _e('The script is unable to rename your file.', 'sermon-browser') ?>');
+					});
 				});
 			}
 		}
 		function kill(id, f) {
-			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>', {fname: f, fid: id, del: 1, sermon: 1}, function(r) {
-				if (r) {
-					if (r == 'deleted') {
-						jQuery('#file' + id).fadeOut(function() {
-							jQuery('.file:visible').each(function(i) {
-								jQuery(this).removeClass('alternate');
-								if (++i % 2 == 0) {
-									jQuery(this).addClass('alternate');
-								}
-							});
+			SBAdmin.file.delete(id, f).done(function(response) {
+				SBAdmin.handleResponse(response, function() {
+					jQuery('#file' + id).fadeOut(function() {
+						jQuery('.file:visible').each(function(i) {
+							jQuery(this).removeClass('alternate');
+							if (++i % 2 == 0) {
+								jQuery(this).addClass('alternate');
+							}
 						});
-						jQuery('#sfile' + id).fadeOut(function() {
-							jQuery('.file:visible').each(function(i) {
-								jQuery(this).removeClass('alternate');
-								if (++i % 2 == 0) {
-									jQuery(this).addClass('alternate');
-								}
-							});
+					});
+					jQuery('#sfile' + id).fadeOut(function() {
+						jQuery('.file:visible').each(function(i) {
+							jQuery(this).removeClass('alternate');
+							if (++i % 2 == 0) {
+								jQuery(this).addClass('alternate');
+							}
 						});
-					} else {
-						alert('<?php _e('The script is unable to delete your file.', 'sermon-browser') ?>');
-					}
-				};
+					});
+				}, function(message) {
+					alert(message || '<?php _e('The script is unable to delete your file.', 'sermon-browser') ?>');
+				});
 			});
 		}
 		function fetchU(st) {
@@ -1696,11 +1704,11 @@ function sb_new_sermon() {
 			if (jQuery('#preacher')[0].value != 'newPreacher') return;
 			var p = prompt("<?php _e("New preacher's name?", 'sermon-browser')?>", "<?php _e("Preacher's name", 'sermon-browser')?>");
 			if (p != null) {
-				jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {pname: p, sermon: 1}, function(r) {
-					if (r) {
-						jQuery('#preacher option:first').before('<option value="' + r + '">' + p + '</option>');
-						jQuery("#preacher option[value='" + r + "']").prop('selected', true);
-					};
+				SBAdmin.preacher.create(p).done(function(response) {
+					SBAdmin.handleResponse(response, function(data) {
+						jQuery('#preacher option:first').before('<option value="' + data.id + '">' + data.name + '</option>');
+						jQuery("#preacher option[value='" + data.id + "']").prop('selected', true);
+					});
 				});
 			}
 		}
@@ -1717,12 +1725,12 @@ function sb_new_sermon() {
 				if (s == null) { break;	}
 			}
 			if (s != null) {
-				jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {sname: s, sermon: 1}, function(r) {
-					if (r) {
-						jQuery('#service option:first').before('<option value="' + r + '">' + s.match(/(.*?)@/)[1] + '</option>');
-						jQuery("#service option[value='" + r + "']").prop('selected', true);
-						jQuery('#time').val(s.match(/(.*?)@\s*(.*)/)[2]);
-					};
+				SBAdmin.service.create(s).done(function(response) {
+					SBAdmin.handleResponse(response, function(data) {
+						jQuery('#service option:first').before('<option value="' + data.id + '">' + data.name + '</option>');
+						jQuery("#service option[value='" + data.id + "']").prop('selected', true);
+						jQuery('#time').val(data.time);
+					});
 				});
 			}
 		}
@@ -1730,11 +1738,11 @@ function sb_new_sermon() {
 			if (jQuery('#series')[0].value != 'newSeries') return;
 			var ss = prompt("<?php _e("New series' name?", 'sermon-browser')?>", "<?php _e("Series' name", 'sermon-browser')?>");
 			if (ss != null) {
-				jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {ssname: ss, sermon: 1}, function(r) {
-					if (r) {
-						jQuery('#series option:first').before('<option value="' + r + '">' + ss + '</option>');
-						jQuery("#series option[value='" + r + "']").prop('selected', true);
-					};
+				SBAdmin.series.create(ss).done(function(response) {
+					SBAdmin.handleResponse(response, function(data) {
+						jQuery('#series option:first').before('<option value="' + data.id + '">' + data.name + '</option>');
+						jQuery("#series option[value='" + data.id + "']").prop('selected', true);
+					});
 				});
 			}
 		}
