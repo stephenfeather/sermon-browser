@@ -9,37 +9,43 @@ status: active
 
 ## Ledger
 <!-- This section is extracted by SessionStart hook for quick resume -->
-**Updated:** 2026-01-13T19:09:00Z
+**Updated:** 2026-01-30T16:30:00Z
 **Goal:** Update Sermon Browser plugin for modern WordPress compatibility
 **Branch:** develop (main = release only)
 **Test:** `docker-compose up -d` then http://localhost:8080
 
 ### Now
-[→] **JavaScript Remediation Handoff Created** - 141 SonarQube issues ready for agent processing
+[→] **Phase 2 work in worktree** - Check `feature/phase2-admin-split` at `/Users/stephenfeather/Development/sermon-browser-phase2`
 
 ### Active Handoffs
-- **JavaScript Issues:** `thoughts/shared/handoffs/sermon-browser-session/2026-01-13_19-06_javascript-sonarqube-remediation.yaml`
-  - 141 issues across `sb-includes/64.js` (44) and `sb-includes/datePicker.js` (97)
-  - Priority: 8 BLOCKER, 79 CRITICAL, 18 MAJOR, 36 MINOR
-  - Resume: `/resume_handoff thoughts/shared/handoffs/sermon-browser-session/2026-01-13_19-06_javascript-sonarqube-remediation.yaml`
+- **Phase 2 Worktree:** `feature/phase2-admin-split` branch
+  - Latest: `7e2e7c4 Extract admin pages to modular classes`
+  - Handoff: `thoughts/shared/handoffs/sermon-browser-session/2026-01-30_15-45_phase2-complete.yaml`
+
+### Obsolete Handoffs
+- ~~**JavaScript Issues:** `2026-01-13_19-06_javascript-sonarqube-remediation.yaml`~~
+  - **OBSOLETE** - Files deleted in commit `e3f92d3` (2026-01-30)
+  - Removed: `64.js`, `datePicker.js`, `datepicker.css` (673 lines total)
+  - Replaced with native `atob()` and jQuery UI Datepicker
+  - 155 SonarQube issues eliminated by deletion
 
 ### Previous Milestone
 [✓] **v0.6.0 Architecture - Phase 1 COMPLETE** - Repository Layer implemented
 
-### v0.6.0 Architecture Refactoring
-- [x] **Phase 1:** Repository Layer (v0.6.0)
-  - Created src/Contracts/RepositoryInterface.php
-  - Created src/Repositories/AbstractRepository.php
-  - Created 6 concrete repositories: Sermon, Preacher, Series, Service, File, Tag
-  - Added PSR-4 autoloading for SermonBrowser namespace
-  - 40 new unit tests (57 total tests passing)
-  - PHP 8.5 syntax check passes
-- [ ] **Phase 2:** Plugin Core + Admin Split (v0.7.0)
-- [ ] **Phase 3:** Ajax Modularization (v0.7.0)
-- [ ] **Phase 4:** Frontend Modularization (v0.8.0)
-- [ ] **Phase 5:** Template Engine (v0.8.0)
-- [ ] **Phase 6:** Widget Consolidation (v0.9.0)
-- [ ] **Phase 7:** Legacy Deprecation (v1.0.0)
+### v0.6.0 Architecture Refactoring (per refactor-master-plan.md)
+- [x] **Phase 1:** Repository Layer ✓ COMPLETE
+  - Container, Facades, 7 Repositories, 57 tests passing
+- [~] **Phase 2:** Split Monolithic Files - IN PROGRESS (worktree)
+  - Branch: `feature/phase2-admin-split`
+  - Extracting admin.php → `src/Admin/Pages/*.php`
+- [~] **Phase 3:** JS Modernization - ~60% COMPLETE
+  - ✅ Removed legacy JS files (673 lines) - commit `e3f92d3`
+  - ✅ Added ESLint 9 config
+  - ⏸️ Build pipeline (@wordpress/scripts) - deferred to Phase 5
+  - ⏸️ Inline JS extraction (~360 lines) - deferred to Phase 5
+- [ ] **Phase 4:** REST API
+- [ ] **Phase 5:** Gutenberg Blocks (triggers remaining Phase 3 work)
+- [ ] **Phase 6:** Remove eval() Templates
 
 ### v0.5.0 Modernization (COMPLETE)
 ### This Session
@@ -99,11 +105,10 @@ status: active
   - Created YAML handoff with priority order and rule breakdown
 
 ### Next
+- [ ] Merge Phase 2 worktree → develop when ready
 - [ ] Merge develop → main
 - [x] Create GitHub release tag v0.5.0
-- [ ] Fix JavaScript SonarQube issues (resume handoff for agent processing)
-  - `/resume_handoff thoughts/shared/handoffs/sermon-browser-session/2026-01-13_19-06_javascript-sonarqube-remediation.yaml`
-  - **BLOCKED:** Cannot start until all current work is committed and SonarQube runs as a GitHub Action (need fresh baseline)
+- [x] ~~Fix JavaScript SonarQube issues~~ - RESOLVED by file deletion (commit `e3f92d3`)
 
 ### Decisions
 - Workflow: Research → Plan → Build (phased approach)
