@@ -13,6 +13,7 @@ use SermonBrowser\Facades\Service;
 use SermonBrowser\Facades\Sermon;
 use SermonBrowser\Facades\File;
 use SermonBrowser\Facades\Tag;
+use SermonBrowser\Facades\Book;
 
 
 /**
@@ -68,16 +69,12 @@ function sb_options() {
 		}
 		$books = sb_get_default('bible_books');
 		$eng_books = sb_get_default('eng_bible_books');
-		// Reset bible books database
-		$wpdb->query("TRUNCATE TABLE {$wpdb->prefix}sb_books");
-		for ($i=0; $i < count($books); $i++) {
-			$wpdb->query("INSERT INTO {$wpdb->prefix}sb_books VALUES (null, '$books[$i]')");
-			$wpdb->query("UPDATE {$wpdb->prefix}sb_books_sermons SET book_name='{$books[$i]}' WHERE book_name='{$eng_books[$i]}'");
-		}
+		// Reset bible books database using Book facade
+		Book::resetBooksForLocale($books, $eng_books);
 		// Rewrite booknames for non-English locales
 		if ($books != $eng_books) {
-			$sermon_books = $wpdb->get_results("SELECT id, start, end FROM {$wpdb->prefix}sb_sermons");
-			 foreach ($sermon_books as $sermon_book) {
+			$sermon_books = Book::getSermonsWithVerseData();
+			foreach ($sermon_books as $sermon_book) {
 				$start_verse = unserialize($sermon_book->start);
 				$end_verse = unserialize($sermon_book->end);
 				$start_index = array_search( $start_verse[0]['book'], $eng_books, true );
@@ -88,9 +85,9 @@ function sb_options() {
 				if ( $end_index !== false ) {
 					$end_verse[0]['book'] = $books[$end_index];
 				}
-				$sermon_book->start = serialize ($start_verse);
-				$sermon_book->end = serialize ($end_verse);
-				$wpdb->query("UPDATE {$wpdb->prefix}sb_sermons SET start='{$sermon_book->start}', end='{$sermon_book->end}' WHERE id={$sermon_book->id}");
+				$sermon_book->start = serialize($start_verse);
+				$sermon_book->end = serialize($end_verse);
+				Book::updateSermonVerseData((int) $sermon_book->id, $sermon_book->start, $sermon_book->end);
 			}
 		}
 
@@ -1278,7 +1275,7 @@ function sb_manage_sermons() {
 		$mid = (int) $_GET['mid'];
 		Sermon::delete($mid);
 		Tag::detachAllFromSermon($mid);
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_books_sermons WHERE sermon_id = $mid;");
+		Book::deleteBySermonId($mid);
 		File::unlinkFromSermon($mid);
 		File::deleteNonFilesBySermon($mid);
 		sb_delete_unused_tags();
@@ -1488,14 +1485,18 @@ function sb_new_sermon() {
 			File::unlinkFromSermon($id);
 			File::deleteNonFilesBySermon($id);
 		}
-		// deal with books
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_books_sermons WHERE sermon_id = $id;");
-		if (isset($startz)) {foreach ($startz as $i => $st) {
-			$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_books_sermons VALUES(null, %s, %s, %s, $i, 'start', $id);", $st['book'], $st['chapter'], $st['verse']));
-		}}
-		if (isset($endz)) {foreach ($endz as $i => $ed) {
-			$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_books_sermons VALUES(null, %s, %s, %s, $i, 'end', $id);", $ed['book'], $ed['chapter'], $ed['verse']));
-		}}
+		// deal with books using Book facade
+		Book::deleteBySermonId($id);
+		if (isset($startz)) {
+			foreach ($startz as $i => $st) {
+				Book::insertPassageRef($st['book'], $st['chapter'], $st['verse'], (int) $i, 'start', $id);
+			}
+		}
+		if (isset($endz)) {
+			foreach ($endz as $i => $ed) {
+				Book::insertPassageRef($ed['book'], $ed['chapter'], $ed['verse'], (int) $i, 'end', $id);
+			}
+		}
 		// now previously uploaded files
 		foreach ($_POST['file'] as $uid => $file) {
 			if ($file != 0)

@@ -18,6 +18,7 @@ use SermonBrowser\Repositories\SeriesRepository;
 use SermonBrowser\Repositories\ServiceRepository;
 use SermonBrowser\Repositories\FileRepository;
 use SermonBrowser\Repositories\TagRepository;
+use SermonBrowser\Repositories\BookRepository;
 
 /**
  * Class Container
@@ -119,6 +120,16 @@ class Container
     public function tags(): TagRepository
     {
         return $this->resolve(TagRepository::class);
+    }
+
+    /**
+     * Get the Book repository.
+     *
+     * @return BookRepository
+     */
+    public function books(): BookRepository
+    {
+        return $this->resolve(BookRepository::class);
     }
 
     /**
