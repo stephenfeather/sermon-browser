@@ -11,13 +11,13 @@
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Phase 1: Repository Layer | ✅ COMPLETE | Facades + AJAX handlers done |
-| Phase 2: Split Monoliths | 🔄 PARTIAL | AJAX extracted; admin pages remain |
+| Phase 2: Split Monoliths | ✅ COMPLETE | Admin pages extracted + wired |
 | Phase 3: JS Modernization | ✅ COMPLETE | Legacy JS removed (673 lines) |
-| Phase 4: REST API | ✅ COMPLETE | 65 tests failing (class loading) |
+| Phase 4: REST API | ✅ COMPLETE | 167 tests, all endpoints |
 | Phase 5: Gutenberg Blocks | ⏳ NOT STARTED | - |
 | Phase 6: Remove eval() | ⏳ NOT STARTED | - |
 
-**Tests:** 64 passing (AJAX + Repository)
+**Tests:** 248 passing (Repository + AJAX + REST)
 
 ## Workflow Requirements
 
@@ -217,17 +217,41 @@ src/
       UninstallPage.php              # sb_uninstall() (121 lines)
 ```
 
+### Completed Work - Wiring (2026-01-30)
+
+| Commit | Date | Change |
+|--------|------|--------|
+| `f6896d4` | Jan 30 | **Wire admin.php functions to Page classes** |
+
+**All 10 admin page functions now delegate to Page classes:**
+- `sb_options()` → `OptionsPage::render()`
+- `sb_uninstall()` → `UninstallPage::render()`
+- `sb_templates()` → `TemplatesPage::render()`
+- `sb_manage_preachers()` → `PreachersPage::render()`
+- `sb_manage_everything()` → `SeriesServicesPage::render()`
+- `sb_files()` → `FilesPage::render()`
+- `sb_manage_sermons()` → `SermonsPage::render()`
+- `sb_new_sermon()` → `SermonEditorPage::render()`
+- `sb_help()` → `HelpPage::render()`
+- `sb_japan()` → `HelpPage::renderJapan()`
+
+**admin.php reduced from ~2,600 lines to 474 lines** (82% reduction).
+
+**Page classes updated to use Facades** instead of raw $wpdb queries:
+- `FilesPage.php` - uses `File` facade
+- `OptionsPage.php` - uses `Book` facade
+- `SermonEditorPage.php` - uses `Service`, `File`, `Series`, `Preacher`, `Tag`, `Sermon`, `Book` facades
+
 ### Remaining Work
 
 | Task | Priority | Status |
 |------|----------|--------|
-| Wire admin.php functions to Page classes | High | Not started |
-| Update sermon.php to use Plugin::boot() | Medium | Not started |
-| Add tests for Page classes | Medium | Not started |
+| Update sermon.php to use Plugin::boot() | Low | Deferred |
+| Add tests for Page classes | Low | Optional |
 
-### Current State (Partial)
+### Current State (Complete)
 
-**admin.php still contains full implementations** - wrapper functions need to delegate to Page classes.
+**admin.php is now a thin wrapper** - all 10 page functions delegate to `src/Admin/Pages/*.php` classes.
 
 **admin.php contains 24 functions (VERIFIED):**
 
@@ -996,23 +1020,19 @@ wp sermon rebuild-stats
 
 ### Immediate Priority
 
-1. **Fix REST API tests** - Investigate `PreachersController` class not found (65 failing tests)
-2. **Frontend Modularization** - Convert `frontend.php` to use Facades:
+1. **Frontend Modularization** - Convert `frontend.php` to use Facades:
    - `sb_get_single_sermon()` → Sermon facade
    - `sb_widget_popular()` → Sermon/Series/Preacher facades
    - `sb_print_filters()` → Repository queries via facades
    - `sb_print_tag_clouds()` → Tag facade
 
-### Next
-
-3. **Complete Phase 2** - Extract admin page classes to `src/Admin/Pages/`
-4. **Manual testing** - Verify all AJAX operations work correctly
+2. **Manual testing** - Verify all AJAX operations and admin pages work correctly
 
 ### Future
 
-5. **Phase 5** - Gutenberg blocks (requires `@wordpress/scripts` build pipeline)
-6. **Phase 6** - Remove eval() templates (security improvement)
+3. **Phase 5** - Gutenberg blocks (requires `@wordpress/scripts` build pipeline)
+4. **Phase 6** - Remove eval() templates (security improvement)
 
 ---
 
-*Last updated: 2026-01-30*
+*Last updated: 2026-01-30 (Phase 2 wiring complete)*
