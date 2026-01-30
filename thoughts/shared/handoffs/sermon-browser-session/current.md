@@ -100,9 +100,10 @@ status: active
 
 ### Next
 - [ ] Merge develop → main
-- [ ] Create GitHub release tag v0.5.0
+- [x] Create GitHub release tag v0.5.0
 - [ ] Fix JavaScript SonarQube issues (resume handoff for agent processing)
   - `/resume_handoff thoughts/shared/handoffs/sermon-browser-session/2026-01-13_19-06_javascript-sonarqube-remediation.yaml`
+  - **BLOCKED:** Cannot start until all current work is committed and SonarQube runs as a GitHub Action (need fresh baseline)
 
 ### Decisions
 - Workflow: Research → Plan → Build (phased approach)

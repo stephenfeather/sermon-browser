@@ -291,134 +291,148 @@ SermonBrowser\Plugin::boot();
 ## Phase 3: Modernize JavaScript
 
 ### Goals
-- Introduce a build pipeline (Webpack or Vite)
-- Migrate from jQuery to vanilla JS or lightweight alternatives
-- Convert to ES6+ modules
+- Introduce a build pipeline (@wordpress/scripts)
+- Extract inline JavaScript to ES6+ modules
 - Enable proper dependency management
+- Prepare infrastructure for Phase 5 Gutenberg blocks
 
-### Current State
+### Current State (VERIFIED 2026-01-30)
 
-**JavaScript files (VERIFIED):**
-```
-sb-includes/
-  datePicker.js    # 429 lines (claimed 17k - VERIFY)
-  64.js            # Base64 encoding utility
-```
+**CORRECTION: No separate JS files exist.** All JavaScript is inline in PHP files:
 
-**datePicker.js analysis:**
-- Appears to be a date picker implementation
-- Heavy jQuery dependency (`jQuery(...)` throughout)
-- Mixed concerns: DOM manipulation, date logic, UI rendering
-- No module system (global scope pollution)
+| File | Script Blocks | Lines | Content |
+|------|---------------|-------|---------|
+| `admin.php` | 16 | ~300 | Form handling, AJAX, dynamic UI |
+| `frontend.php` | 5 | ~50 | Cookie handling, datepicker init |
+| `ajax.php` | 2 | ~10 | Minor inline scripts |
 
-**64.js analysis:**
-- Base64 encode/decode utilities
-- Recently modernized for Unicode support (per git log)
-- Self-contained, minimal dependencies
+**Major inline blocks in admin.php:**
+- Lines 1665-1770: Sermon editor (createNewPreacher, createNewService, createNewSeries, addPassage, addFile, etc.)
+- Lines 1008-1100: File manager
+- Lines 455-461, 529-534: Form confirmation dialogs
+
+**Dependencies (WordPress bundled):**
+- jQuery
+- jQuery UI Datepicker
 
 **No build infrastructure:**
 - No `package.json` for frontend
 - No bundler configuration
-- Scripts loaded directly via `wp_enqueue_script()`
+- Scripts loaded via `wp_enqueue_script('jquery')` and `wp_enqueue_script('jquery-ui-datepicker')`
 
 ### Target State
 
 ```
 assets/
   src/
-    js/
-      components/
-        DatePicker.js              # ES6 class
-        SermonForm.js              # Form handling
-        FileUploader.js            # Upload UI
-        AdminTable.js              # Sortable tables
+    admin/
+      index.js                     # Admin entry point
+      sermon-editor.js             # From admin.php:1665-1770
+      file-manager.js              # From admin.php:1008-1100
+      preacher-form.js             # Preacher CRUD
       utils/
-        base64.js                  # From 64.js
-        api.js                     # Fetch wrapper
-      admin.js                     # Admin bundle entry
-      frontend.js                  # Frontend bundle entry
-    css/
-      admin.scss
-      frontend.scss
-      components/
-        _datepicker.scss
-  dist/                            # Built output (gitignored)
-    admin.bundle.js
-    frontend.bundle.js
-    admin.css
-    frontend.css
+        ajax.js                    # Centralized WP AJAX wrapper
+        confirm.js                 # Form confirmation dialogs
+    frontend/
+      index.js                     # Frontend entry point
+      cookie-manager.js            # From frontend.php:330-350
+      filter-form.js               # Search/filter handling
+  build/                           # Compiled output (gitignored)
+    admin.js
+    admin.asset.php                # Auto-generated dependencies
+    frontend.js
+    frontend.asset.php
 package.json
-vite.config.js                     # or webpack.config.js
 ```
 
-### Key Decisions Needed
+### Key Decisions (CONFIRMED)
 
-1. **Build tool**: Webpack, Vite, or wp-scripts (@wordpress/scripts)?
-   - Recommendation: **Vite** for speed and simplicity
-   - Alternative: **@wordpress/scripts** for tighter WP integration
+1. **Build tool**: ✅ **@wordpress/scripts** (not Vite)
+   - Phase 5 adds Gutenberg blocks - wp-scripts handles this natively
+   - Auto-generates `.asset.php` dependency files
+   - Handles WordPress script dependencies (`wp.i18n`, `wp.element`)
+   - Official WordPress tooling = long-term support
 
-2. **jQuery replacement strategy**:
-   - Option A: Remove entirely, use vanilla JS
-   - Option B: Keep for WordPress admin compatibility
-   - Recommendation: **Option B** initially - WordPress admin uses jQuery; gradually reduce usage
+2. **jQuery strategy**: ✅ **Keep jQuery** initially
+   - WordPress admin bundles jQuery
+   - Gradual migration to vanilla JS in future phases
+   - Focus on extraction and modularization first
 
-3. **Date picker replacement**:
-   - Option A: Rewrite custom picker in vanilla JS
-   - Option B: Use existing library (Flatpickr, Pikaday)
-   - Recommendation: **Flatpickr** - small, no dependencies, accessible
+3. **Date picker**: ✅ **Keep jQuery UI Datepicker**
+   - Already bundled with WordPress
+   - Works well, no need to replace
+   - Flatpickr migration is optional enhancement
 
-4. **TypeScript**: Adopt TypeScript or stay with JS?
-   - Recommendation: Plain JS with JSDoc for now; TS in future
+4. **TypeScript**: ✅ **Plain JS with JSDoc**
+   - Lower barrier, faster iteration
+   - JSDoc provides IDE support without compilation
 
 ### Dependencies
-- None (can run parallel to PHP refactoring)
+- **Phase 2 should complete first** - admin.php is being refactored; extracting JS now would create merge conflicts
+- Alternative: Start with frontend.php JS (smaller, less churn from Phase 2)
 
 ### Implementation Steps
 
 1. **Set up build infrastructure**
    ```bash
-   npm init
-   npm install --save-dev vite @vitejs/plugin-legacy
+   npm init -y
+   npm install --save-dev @wordpress/scripts
    ```
 
-2. **Create vite.config.js**
-   ```js
-   export default {
-     build: {
-       outDir: 'assets/dist',
-       rollupOptions: {
-         input: {
-           admin: 'assets/src/js/admin.js',
-           frontend: 'assets/src/js/frontend.js'
-         }
-       }
+2. **Add npm scripts to package.json**
+   ```json
+   {
+     "scripts": {
+       "build": "wp-scripts build assets/src/admin/index.js assets/src/frontend/index.js --output-path=assets/build",
+       "start": "wp-scripts start assets/src/admin/index.js assets/src/frontend/index.js --output-path=assets/build"
      }
    }
    ```
 
-3. **Migrate 64.js first** (simplest)
-   - Convert to ES6 module
-   - Export functions
-   - Add to admin.js bundle
+3. **Extract frontend JS first** (smaller, independent of Phase 2)
+   - `frontend.php:330-350` → `frontend/cookie-manager.js`
+   - Use `wp_localize_script()` for PHP variables
 
-4. **Replace datePicker.js**
-   - Install Flatpickr: `npm install flatpickr`
-   - Create wrapper component
-   - Style to match existing UI
+4. **Extract admin JS** (after Phase 2 stabilizes)
+   - `admin.php:1665-1770` → `admin/sermon-editor.js` (~100 lines)
+   - `admin.php:1008-1100` → `admin/file-manager.js`
+   - Replace `<?php echo $var ?>` with `wp_localize_script()` data
 
-5. **Update wp_enqueue_script calls**
-   - Point to bundled output
-   - Add build step to deployment
+5. **Update PHP enqueue**
+   ```php
+   $asset = require plugin_dir_path(__FILE__) . 'assets/build/admin.asset.php';
+   wp_enqueue_script(
+       'sermon-browser-admin',
+       plugins_url('assets/build/admin.js', __FILE__),
+       $asset['dependencies'],
+       $asset['version']
+   );
+   wp_localize_script('sermon-browser-admin', 'sbAdmin', [
+       'ajaxUrl' => admin_url('admin-ajax.php'),
+       'nonce' => wp_create_nonce('sb_admin'),
+       'i18n' => [
+           'newPreacher' => __("New preacher's name?", 'sermon-browser'),
+           // ... other strings
+       ]
+   ]);
+   ```
 
-6. **Add npm scripts to composer.json** or create Makefile
+6. **Add to .gitignore**
+   ```
+   /assets/build/
+   /node_modules/
+   ```
+
+7. **Update CI/CD** to run `npm run build` before deployment
 
 ### Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Build failures in production | Medium | High | CI/CD pipeline with build step |
-| jQuery removal breaks functionality | High | Medium | Gradual migration, extensive testing |
-| Browser compatibility | Medium | Medium | Use @vitejs/plugin-legacy |
+| PHP variables in JS | High | Medium | Use `wp_localize_script()` for all data |
+| i18n strings in JS | High | Medium | Use `wp_set_script_translations()` |
+| Merge conflicts with Phase 2 | Medium | High | Extract frontend JS first; wait for Phase 2 |
+| Build failures in CI | Low | High | Add npm build to GitHub Actions |
 
 ### Estimated Scope
 **Medium** - 2-3 weeks of focused work
