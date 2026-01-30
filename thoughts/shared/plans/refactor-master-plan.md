@@ -446,123 +446,102 @@ eslint.config.js                   # Already exists
 ## Phase 4: Add REST API
 
 ### Goals
-- Create RESTful endpoints for all sermon operations
-- Enable headless/decoupled usage
-- Support modern JavaScript consumption
+- ~~Create RESTful endpoints for all sermon operations~~ ✅ DONE
+- ~~Enable headless/decoupled usage~~ ✅ DONE
+- ~~Support modern JavaScript consumption~~ ✅ DONE
 - Maintain backward compatibility with existing shortcodes
 
-### Current State
+### Completed Work (as of 2026-01-30)
 
-**No REST API exists (VERIFIED)**
-- All data access via shortcodes and admin pages
-- AJAX handlers in `sb-includes/ajax.php` use `admin-ajax.php`
-- No `register_rest_route()` calls found
+| Commit | Date | Change | Files Added |
+|--------|------|--------|-------------|
+| `ad2dcb5` | Jan 30 | **Add REST API layer (Phase 4)** | **24 files, 8,189 lines** |
 
-**Existing AJAX endpoints handle:**
-- Sermon search/filter
-- Series/Service CRUD (inline)
-- File operations
-- Preacher image upload
-
-### Target State
-
+**Files created:**
 ```
-src/
-  REST/
-    RestController.php               # Base controller with auth helpers
-    Endpoints/
-      SermonsController.php          # /wp-json/sermon-browser/v1/sermons
-      PreachersController.php        # /wp-json/sermon-browser/v1/preachers
-      SeriesController.php           # /wp-json/sermon-browser/v1/series
-      ServicesController.php         # /wp-json/sermon-browser/v1/services
-      FilesController.php            # /wp-json/sermon-browser/v1/files
-      TagsController.php             # /wp-json/sermon-browser/v1/tags
-      SearchController.php           # /wp-json/sermon-browser/v1/search
+src/REST/
+  RestController.php               # Base controller with auth helpers
+  RestApiRegistry.php              # Controller registration on rest_api_init
+  Endpoints/
+    SermonsController.php          # Full CRUD
+    PreachersController.php        # Full CRUD
+    SeriesController.php           # Full CRUD + /sermons
+    ServicesController.php         # Full CRUD
+    FilesController.php            # CRUD + /sermons/{id}/files
+    TagsController.php             # Read-only + /{name}/sermons
+    SearchController.php           # Combined search endpoint
 ```
 
-**Endpoints:**
+**Tests created:**
 ```
-GET    /sermons              # List with pagination, filters
-GET    /sermons/{id}         # Single sermon with relations
-POST   /sermons              # Create (auth required)
-PUT    /sermons/{id}         # Update (auth required)
-DELETE /sermons/{id}         # Delete (auth required)
-
-GET    /sermons/{id}/files   # Files for sermon
-POST   /sermons/{id}/files   # Attach file (auth required)
-
-GET    /preachers            # List all
-GET    /preachers/{id}       # Single with sermon count
-POST   /preachers            # Create (auth required)
-
-GET    /series               # List all
-GET    /series/{id}/sermons  # Sermons in series
-
-GET    /search?q=...&preacher=...&series=...  # Search/filter
-
-GET    /tags                 # Tag cloud data
-GET    /tags/{name}/sermons  # Sermons with tag
+tests/Unit/REST/
+  RestControllerTest.php           # 17 tests
+  RestApiRegistryTest.php          # 9 tests
+  Endpoints/
+    SermonsControllerTest.php      # 23 tests
+    PreachersControllerTest.php    # 20 tests
+    SeriesControllerTest.php       # 26 tests
+    ServicesControllerTest.php     # 19 tests
+    FilesControllerTest.php        # 23 tests
+    TagsControllerTest.php         # 16 tests
+    SearchControllerTest.php       # 14 tests
 ```
 
-### Key Decisions Needed
+**Result:** 167 new tests (240 total, 664 assertions).
 
-1. **Authentication**: WordPress cookie auth, Application Passwords, or custom tokens?
-   - Recommendation: **WordPress native** (cookie + nonce for logged-in, Application Passwords for external)
+### Current State (VERIFIED 2026-01-30)
 
-2. **Permission model**: Map to existing WordPress capabilities or custom?
-   - Recommendation: Use existing (`publish_posts`, `manage_categories`, etc.)
+**REST API fully implemented:**
 
-3. **Response format**: Include related data (embedded) or links (HAL-style)?
-   - Recommendation: **Embedded** by default with `?_embed` parameter
+| Endpoint | Methods | Auth |
+|----------|---------|------|
+| `/sermon-browser/v1/sermons` | GET, POST, PUT, DELETE | edit_posts for write |
+| `/sermon-browser/v1/sermons/{id}/files` | GET, POST | edit_posts for POST |
+| `/sermon-browser/v1/preachers` | GET, POST, PUT, DELETE | edit_posts for write |
+| `/sermon-browser/v1/series` | GET, POST, PUT, DELETE | edit_posts for write |
+| `/sermon-browser/v1/series/{id}/sermons` | GET | public |
+| `/sermon-browser/v1/services` | GET, POST, PUT, DELETE | edit_posts for write |
+| `/sermon-browser/v1/files` | GET, DELETE | edit_posts for DELETE |
+| `/sermon-browser/v1/tags` | GET | public |
+| `/sermon-browser/v1/tags/{name}/sermons` | GET | public |
+| `/sermon-browser/v1/search` | GET | public |
 
-4. **Pagination**: Offset-based or cursor-based?
-   - Recommendation: Offset-based (matches WordPress standard, simpler)
+**Features:**
+- Pagination with `page` and `per_page` params (max 100)
+- Standard WP headers: `X-WP-Total`, `X-WP-TotalPages`
+- Filter support: `preacher`, `series`, `service`, `search`
+- Uses existing Facades for data access
 
-5. **Rate limiting**: Implement or rely on hosting?
-   - Recommendation: Skip initially; add if needed
+### Key Decisions (CONFIRMED)
+
+1. **Authentication**: ✅ **WordPress native** (cookie + nonce)
+2. **Permission model**: ✅ **edit_posts** capability for write operations
+3. **Response format**: ✅ **Embedded** relations by default
+4. **Pagination**: ✅ **Offset-based** (matches WordPress standard)
+5. **Rate limiting**: ✅ **Skipped** (rely on hosting)
+
+### Remaining Work
+
+| Task | Priority | Status |
+|------|----------|--------|
+| Update AJAX handlers to use REST internally | Low | Not started |
+| Add OpenAPI/Swagger documentation | Low | Not started |
+
+**Note:** AJAX handlers can remain as-is for backward compatibility. REST API provides modern alternative.
 
 ### Dependencies
-- Phase 1 (Repositories provide data access)
-
-### Implementation Steps
-
-1. **Create base RestController**
-   ```php
-   abstract class RestController extends WP_REST_Controller {
-       protected $namespace = 'sermon-browser/v1';
-       // Common auth, pagination, response formatting
-   }
-   ```
-
-2. **Implement SermonsController first**
-   - Full CRUD operations
-   - Use SermonRepository
-   - Add comprehensive tests
-
-3. **Implement read-only endpoints**
-   - Preachers, Series, Services, Tags
-   - Lower risk, useful for frontend
-
-4. **Implement SearchController**
-   - Complex query building
-   - Match existing filter capabilities
-
-5. **Update AJAX handlers** to call REST endpoints internally
-   - Maintains backward compatibility
-   - Single source of truth
-
-6. **Document API** with inline PHPDoc (auto-generates REST schema)
+- Phase 1 (Repositories provide data access) ✅ COMPLETE
 
 ### Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Security vulnerabilities | Medium | Critical | Permission checks, input validation, capability tests |
-| Breaking AJAX consumers | Low | Medium | Keep admin-ajax.php handlers as wrappers |
-| Performance issues | Medium | Medium | Caching headers, pagination limits |
+| Security vulnerabilities | Low | Critical | ✅ Permission checks implemented |
+| Breaking AJAX consumers | Low | Medium | ✅ AJAX handlers preserved |
+| Performance issues | Low | Medium | ✅ Pagination limits enforced |
 
 ### Estimated Scope
-**Large** - 4-5 weeks of focused work
+**COMPLETE** - Implemented in 1 session with TDD
 
 ---
 
