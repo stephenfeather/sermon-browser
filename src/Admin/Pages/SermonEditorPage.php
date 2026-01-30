@@ -12,6 +12,14 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Facades\Service;
+use SermonBrowser\Facades\File;
+use SermonBrowser\Facades\Series;
+use SermonBrowser\Facades\Preacher;
+use SermonBrowser\Facades\Tag;
+use SermonBrowser\Facades\Sermon;
+use SermonBrowser\Facades\Book;
+
 /**
  * Class SermonEditorPage
  *
@@ -124,9 +132,8 @@ class SermonEditorPage
         $override = (isset($_POST['override']) && $_POST['override'] === 'on') ? 1 : 0;
         if ($date) {
             if (!$override) {
-                $service_time = $this->wpdb->get_var(
-                    "SELECT time FROM {$this->wpdb->prefix}sb_services WHERE id={$service_id}"
-                );
+                $service = Service::find($service_id);
+                $service_time = $service ? $service->time : null;
                 if ($service_time) {
                     $date = $date - strtotime('00:00') + strtotime($service_time);
                 }

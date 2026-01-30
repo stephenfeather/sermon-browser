@@ -12,6 +12,13 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Facades\Sermon;
+use SermonBrowser\Facades\Preacher;
+use SermonBrowser\Facades\Series;
+use SermonBrowser\Facades\Tag;
+use SermonBrowser\Facades\Book;
+use SermonBrowser\Facades\File;
+
 /**
  * Class SermonsPage
  *
@@ -19,22 +26,6 @@ namespace SermonBrowser\Admin\Pages;
  */
 class SermonsPage
 {
-    /**
-     * WordPress database instance.
-     *
-     * @var \wpdb
-     */
-    private $wpdb;
-
-    /**
-     * Constructor.
-     */
-    public function __construct()
-    {
-        global $wpdb;
-        $this->wpdb = $wpdb;
-    }
-
     /**
      * Render the sermons page.
      *
@@ -52,10 +43,10 @@ class SermonsPage
         $this->handleSavedMessage();
         $this->handleDeletion();
 
-        $cnt = $this->getSermonCount();
-        $sermons = $this->getSermons();
-        $preachers = $this->getPreachers();
-        $series = $this->getSeries();
+        $cnt = Sermon::count();
+        $sermons = Sermon::findForAdminList((int) sb_get_option('sermons_per_page'));
+        $preachers = Preacher::findAllSorted();
+        $series = Series::findAllSorted();
 
         $this->renderPage($cnt, $sermons, $preachers, $series);
     }
@@ -111,74 +102,16 @@ class SermonsPage
 
         $mid = (int) $_GET['mid'];
 
-        $this->wpdb->query("DELETE FROM {$this->wpdb->prefix}sb_sermons WHERE id = $mid;");
-        $this->wpdb->query("DELETE FROM {$this->wpdb->prefix}sb_sermons_tags WHERE sermon_id = $mid;");
-        $this->wpdb->query("DELETE FROM {$this->wpdb->prefix}sb_books_sermons WHERE sermon_id = $mid;");
-        $this->wpdb->query("UPDATE {$this->wpdb->prefix}sb_stuff SET sermon_id = 0 WHERE sermon_id = $mid AND type = 'file';");
-        $this->wpdb->query("DELETE FROM {$this->wpdb->prefix}sb_stuff WHERE sermon_id = $mid AND type <> 'file';");
-
+        // Use Facades for deletion operations.
+        Sermon::delete($mid);
+        Tag::detachAllFromSermon($mid);
+        Book::deleteBySermonId($mid);
+        File::unlinkFromSermon($mid);
+        File::deleteNonFilesBySermon($mid);
         sb_delete_unused_tags();
 
         echo '<div id="message" class="updated fade"><p><b>' .
             __('Sermon removed from database.', 'sermon-browser') . '</b></div>';
-    }
-
-    /**
-     * Get total sermon count.
-     *
-     * @return int
-     */
-    private function getSermonCount(): int
-    {
-        $cnt = $this->wpdb->get_row(
-            "SELECT COUNT(*) FROM {$this->wpdb->prefix}sb_sermons",
-            ARRAY_A
-        );
-        return (int) $cnt['COUNT(*)'];
-    }
-
-    /**
-     * Get sermons list.
-     *
-     * @return array
-     */
-    private function getSermons(): array
-    {
-        $results = $this->wpdb->get_results(
-            "SELECT m.id, m.title, m.datetime, p.name as pname, s.name as sname, ss.name as ssname
-            FROM {$this->wpdb->prefix}sb_sermons as m
-            LEFT JOIN {$this->wpdb->prefix}sb_preachers as p ON m.preacher_id = p.id
-            LEFT JOIN {$this->wpdb->prefix}sb_services as s ON m.service_id = s.id
-            LEFT JOIN {$this->wpdb->prefix}sb_series as ss ON m.series_id = ss.id
-            ORDER BY m.datetime desc, s.time desc LIMIT 0, " . sb_get_option('sermons_per_page')
-        );
-        return is_array($results) ? $results : [];
-    }
-
-    /**
-     * Get all preachers.
-     *
-     * @return array
-     */
-    private function getPreachers(): array
-    {
-        $results = $this->wpdb->get_results(
-            "SELECT * FROM {$this->wpdb->prefix}sb_preachers ORDER BY name;"
-        );
-        return is_array($results) ? $results : [];
-    }
-
-    /**
-     * Get all series.
-     *
-     * @return array
-     */
-    private function getSeries(): array
-    {
-        $results = $this->wpdb->get_results(
-            "SELECT * FROM {$this->wpdb->prefix}sb_series ORDER BY name;"
-        );
-        return is_array($results) ? $results : [];
     }
 
     /**
@@ -199,34 +132,33 @@ class SermonsPage
     }
 
     /**
-     * Render JavaScript for AJAX pagination.
+     * Render JavaScript for AJAX pagination using SBAdmin module.
      *
      * @param int $cnt Total sermon count.
      * @return void
      */
     private function renderScript(int $cnt): void
     {
-        $sermonsPerPage = sb_get_option('sermons_per_page');
-        $adminUrl = admin_url('admin.php?page=sermon-browser/sermon.php');
         ?>
     <script>
-        function fetch(st) {
-            jQuery.post('<?php echo $adminUrl; ?>', {fetch: st + 1, sermon: 1, title: jQuery('#search').val(), preacher: jQuery('#preacher').val(), series: jQuery('#series').val() }, function(r) {
-                if (r) {
-                    jQuery('#the-list').html(r);
-                    if (st >= <?php echo $sermonsPerPage; ?>) {
-                        x = st - <?php echo $sermonsPerPage; ?>;
-                        jQuery('#left').html('<a href="javascript:fetch(' + x + ')">&laquo; Previous</a>');
+        var currentSermonPage = 1;
+        function fetch(page) {
+            if (typeof page === 'undefined') page = 1;
+            SBAdmin.sermon.list(page, {
+                title: jQuery('#search').val(),
+                preacher: jQuery('#preacher').val(),
+                series: jQuery('#series').val()
+            }).done(function(response) {
+                SBAdmin.handleResponse(response, function(data) {
+                    currentSermonPage = data.page;
+                    if (data.items.length > 0) {
+                        jQuery('#the-list').html(SBAdmin.sermon.renderRows(data.items));
                     } else {
-                        jQuery('#left').html('');
+                        jQuery('#the-list').html('<tr><td colspan="8">' + SBAdmin.i18n.noResults + '</td></tr>');
                     }
-                    if (st + <?php echo $sermonsPerPage; ?> <= <?php echo $cnt; ?>) {
-                        y = st + <?php echo $sermonsPerPage; ?>;
-                        jQuery('#right').html('<a href="javascript:fetch(' + y + ')">Next &raquo;</a>');
-                    } else {
-                        jQuery('#right').html('');
-                    }
-                };
+                    jQuery('#left').html(data.has_prev ? '<a href="javascript:fetch(' + (data.page - 1) + ')">' + SBAdmin.i18n.previous + '</a>' : '');
+                    jQuery('#right').html(data.has_next ? '<a href="javascript:fetch(' + (data.page + 1) + ')">' + SBAdmin.i18n.next + '</a>' : '');
+                });
             });
         }
     </script>

@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Facades\Series;
+use SermonBrowser\Facades\Service;
+
 /**
  * Class SeriesServicesPage
  *
@@ -19,22 +22,6 @@ namespace SermonBrowser\Admin\Pages;
  */
 class SeriesServicesPage
 {
-    /**
-     * WordPress database instance.
-     *
-     * @var \wpdb
-     */
-    private $wpdb;
-
-    /**
-     * Constructor.
-     */
-    public function __construct()
-    {
-        global $wpdb;
-        $this->wpdb = $wpdb;
-    }
-
     /**
      * Render the series/services page.
      *
@@ -47,9 +34,9 @@ class SeriesServicesPage
             wp_die(__("You do not have the correct permissions to manage the series and services database", 'sermon-browser'));
         }
 
-        // Load data.
-        $series = $this->loadSeries();
-        $services = $this->loadServices();
+        // Load data using Facades.
+        $series = Series::findAllWithSermonCount();
+        $services = Service::findAllWithSermonCount();
 
         $toManage = [
             'Series' => ['data' => $series],
@@ -58,7 +45,7 @@ class SeriesServicesPage
 
         sb_do_alerts();
 
-        // Render JavaScript.
+        // Render JavaScript using SBAdmin module.
         $this->renderJavaScript();
 
         // Render anchor.
@@ -71,49 +58,12 @@ class SeriesServicesPage
     }
 
     /**
-     * Load series data with sermon counts.
-     *
-     * @return array
-     */
-    private function loadSeries(): array
-    {
-        return $this->wpdb->get_results(
-            "SELECT {$this->wpdb->prefix}sb_series.*,
-                    COUNT({$this->wpdb->prefix}sb_sermons.id) AS sermon_count
-             FROM {$this->wpdb->prefix}sb_series
-             LEFT JOIN {$this->wpdb->prefix}sb_sermons
-                ON series_id = {$this->wpdb->prefix}sb_series.id
-             GROUP BY {$this->wpdb->prefix}sb_series.id
-             ORDER BY name ASC"
-        );
-    }
-
-    /**
-     * Load services data with sermon counts.
-     *
-     * @return array
-     */
-    private function loadServices(): array
-    {
-        return $this->wpdb->get_results(
-            "SELECT {$this->wpdb->prefix}sb_services.*,
-                    COUNT({$this->wpdb->prefix}sb_sermons.id) AS sermon_count
-             FROM {$this->wpdb->prefix}sb_services
-             LEFT JOIN {$this->wpdb->prefix}sb_sermons
-                ON service_id = {$this->wpdb->prefix}sb_services.id
-             GROUP BY {$this->wpdb->prefix}sb_services.id
-             ORDER BY name ASC"
-        );
-    }
-
-    /**
-     * Render the JavaScript for AJAX operations.
+     * Render the JavaScript for AJAX operations using SBAdmin module.
      *
      * @return void
      */
     private function renderJavaScript(): void
     {
-        $ajaxUrl = admin_url('admin.php?page=sermon-browser/sermon.php');
         ?>
         <script type="text/javascript">
             //<![CDATA[
@@ -129,82 +79,82 @@ class SeriesServicesPage
             function createNewServices(s) {
                 var s = 'lol';
                 while ((s.indexOf('@') == -1) || (s.match(/(.*?)@(.*)/)[2].match(/[0-9]{1,2}:[0-9]{1,2}/) == null)) {
-                    s = prompt("<?php echo esc_js(__("New service's name @ default time?", 'sermon-browser')); ?>", "<?php echo esc_js(__("Service's name @ 18:00", 'sermon-browser')); ?>");
+                    s = prompt("<?php _e("New service's name @ default time?", 'sermon-browser'); ?>", "<?php _e("Service's name @ 18:00", 'sermon-browser'); ?>");
                     if (s == null) { break; }
                 }
                 if (s != null) {
-                    jQuery.post('<?php echo esc_url($ajaxUrl); ?>', {sname: s, sermon: 1}, function(r) {
-                        if (r) {
-                            sz = s.match(/(.*?)@(.*)/)[1];
-                            t = s.match(/(.*?)@(.*)/)[2];
+                    SBAdmin.service.create(s).done(function(response) {
+                        SBAdmin.handleResponse(response, function(data) {
+                            var sz = s.match(/(.*?)@(.*)/)[1];
+                            var t = s.match(/(.*?)@(.*)/)[2];
                             jQuery('#Services-list').append('\
-                                <tr style="display:none" class="Services" id="rowServices' + r + '">\
-                                    <th style="text-align:center" scope="row">' + r + '</th>\
-                                    <td id="Services' + r + '">' + sz + '</td>\
+                                <tr style="display:none" class="Services" id="rowServices' + data.id + '">\
+                                    <th style="text-align:center" scope="row">' + data.id + '</th>\
+                                    <td id="Services' + data.id + '">' + sz + '</td>\
                                     <td style="text-align:center">' + t + '</td>\
                                     <td style="text-align:center">\
-                                        <a id="linkServices' + r + '" href="javascript:renameServices(' + r + ', \'' + sz + '\')">Edit</a> | <a onclick="return confirm(\'Are you sure?\');" href="javascript:deleteServices(' + r + ')">Delete</a>\
+                                        <a id="linkServices' + data.id + '" href="javascript:renameServices(' + data.id + ', \'' + sz + '\')">Edit</a> | <a onclick="return confirm(\'Are you sure?\');" href="javascript:deleteServices(' + data.id + ')">Delete</a>\
                                     </td>\
                                 </tr>\
                             ');
-                            jQuery('#rowServices' + r).fadeIn(function() {
+                            jQuery('#rowServices' + data.id).fadeIn(function() {
                                 updateClass('Services');
                             });
-                        };
+                        });
                     });
                 }
             }
 
             function createNewSeries(s) {
-                var ss = prompt("<?php echo esc_js(__("New series' name?", 'sermon-browser')); ?>", "<?php echo esc_js(__("Series' name", 'sermon-browser')); ?>");
+                var ss = prompt("<?php _e("New series' name?", 'sermon-browser'); ?>", "<?php _e("Series' name", 'sermon-browser'); ?>");
                 if (ss != null) {
-                    jQuery.post('<?php echo esc_url($ajaxUrl); ?>', {ssname: ss, sermon: 1}, function(r) {
-                        if (r) {
+                    SBAdmin.series.create(ss).done(function(response) {
+                        SBAdmin.handleResponse(response, function(data) {
                             jQuery('#Series-list').append('\
-                                <tr style="display:none" class="Series" id="rowSeries' + r + '">\
-                                    <th style="text-align:center" scope="row">' + r + '</th>\
-                                    <td id="Series' + r + '">' + ss + '</td>\
+                                <tr style="display:none" class="Series" id="rowSeries' + data.id + '">\
+                                    <th style="text-align:center" scope="row">' + data.id + '</th>\
+                                    <td id="Series' + data.id + '">' + data.name + '</td>\
                                     <td style="text-align:center">\
-                                        <a id="linkSeries' + r + '" href="javascript:renameSeries(' + r + ', \'' + ss + '\')">Rename</a> | <a onclick="return confirm(\'Are you sure?\');" href="javascript:deleteSeries(' + r + ')">Delete</a>\
+                                        <a id="linkSeries' + data.id + '" href="javascript:renameSeries(' + data.id + ', \'' + data.name + '\')">Rename</a> | <a onclick="return confirm(\'Are you sure?\');" href="javascript:deleteSeries(' + data.id + ')">Delete</a>\
                                     </td>\
                                 </tr>\
                             ');
-                            jQuery('#rowSeries' + r).fadeIn(function() {
+                            jQuery('#rowSeries' + data.id).fadeIn(function() {
                                 updateClass('Series');
                             });
-                        };
+                        });
                     });
                 }
             }
 
             function deleteSeries(id) {
-                jQuery.post('<?php echo esc_url($ajaxUrl); ?>', {ssname: 'dummy', ssid: id, del: 1, sermon: 1}, function(r) {
-                    if (r) {
+                SBAdmin.series.delete(id).done(function(response) {
+                    SBAdmin.handleResponse(response, function() {
                         jQuery('#rowSeries' + id).fadeOut(function() {
                             updateClass('Series');
                         });
-                    };
+                    });
                 });
             }
 
             function deleteServices(id) {
-                jQuery.post('<?php echo esc_url($ajaxUrl); ?>', {sname: 'dummy', sid: id, del: 1, sermon: 1}, function(r) {
-                    if (r) {
+                SBAdmin.service.delete(id).done(function(response) {
+                    SBAdmin.handleResponse(response, function() {
                         jQuery('#rowServices' + id).fadeOut(function() {
                             updateClass('Services');
                         });
-                    };
+                    });
                 });
             }
 
             function renameSeries(id, old) {
-                var ss = prompt("<?php echo esc_js(__("New series' name?", 'sermon-browser')); ?>", old);
+                var ss = prompt("<?php _e("New series' name?", 'sermon-browser'); ?>", old);
                 if (ss != null) {
-                    jQuery.post('<?php echo esc_url($ajaxUrl); ?>', {ssid: id, ssname: ss, sermon: 1}, function(r) {
-                        if (r) {
-                            jQuery('#Series' + id).text(ss);
-                            jQuery('#linkSeries' + id).attr('href', 'javascript:renameSeries(' + id + ', "' + ss + '")');
-                        };
+                    SBAdmin.series.update(id, ss).done(function(response) {
+                        SBAdmin.handleResponse(response, function(data) {
+                            jQuery('#Series' + id).text(data.name);
+                            jQuery('#linkSeries' + id).attr('href', 'javascript:renameSeries(' + id + ', "' + data.name + '")');
+                        });
                     });
                 }
             }
@@ -212,18 +162,16 @@ class SeriesServicesPage
             function renameServices(id, old) {
                 var s = 'lol';
                 while ((s.indexOf('@') == -1) || (s.match(/(.*?)@(.*)/)[2].match(/[0-9]{1,2}:[0-9]{1,2}/) == null)) {
-                    s = prompt("<?php echo esc_js(__("New service's name @ default time?", 'sermon-browser')); ?>", old);
+                    s = prompt("<?php _e("New service's name @ default time?", 'sermon-browser'); ?>", old);
                     if (s == null) { break; }
                 }
                 if (s != null) {
-                    jQuery.post('<?php echo esc_url($ajaxUrl); ?>', {sid: id, sname: s, sermon: 1}, function(r) {
-                        if (r) {
-                            sz = s.match(/(.*?)@(.*)/)[1];
-                            t = s.match(/(.*?)@(.*)/)[2];
-                            jQuery('#Services' + id).text(sz);
-                            jQuery('#time' + id).text(t);
-                            jQuery('#linkServices' + id).attr('href', 'javascript:renameServices(' + id + ', "' + s + '")');
-                        };
+                    SBAdmin.service.update(id, s).done(function(response) {
+                        SBAdmin.handleResponse(response, function(data) {
+                            jQuery('#Services' + id).text(data.name);
+                            jQuery('#time' + id).text(data.time);
+                            jQuery('#linkServices' + id).attr('href', 'javascript:renameServices(' + id + ', "' + data.name + ' @ ' + data.time + '")');
+                        });
                     });
                 }
             }

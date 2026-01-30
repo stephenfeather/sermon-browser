@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Facades\File;
+
 /**
  * Class FilesPage
  *
@@ -19,13 +21,6 @@ namespace SermonBrowser\Admin\Pages;
  */
 class FilesPage
 {
-    /**
-     * WordPress database instance.
-     *
-     * @var \wpdb
-     */
-    private $wpdb;
-
     /**
      * File types array.
      *
@@ -38,8 +33,7 @@ class FilesPage
      */
     public function __construct()
     {
-        global $wpdb, $filetypes;
-        $this->wpdb = $wpdb;
+        global $filetypes;
         $this->filetypes = $filetypes ?? [];
     }
 
@@ -113,12 +107,15 @@ class FilesPage
         if ($_POST['import_type'] === 'download') {
             $this->downloadRemoteFile($url);
         } else {
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_stuff VALUES (null, 'url', %s, 0, 0, 0)",
-                $url
-            ));
+            $fileId = File::create([
+                'type' => 'url',
+                'name' => $url,
+                'sermon_id' => 0,
+                'count' => 0,
+                'ccount' => 0,
+            ]);
             echo "<script>document.location = '" .
-                admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $this->wpdb->insert_id) .
+                admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $fileId) .
                 "';</script>";
             die();
         }
@@ -154,13 +151,16 @@ class FilesPage
             fclose($remote_file);
             fclose($file);
 
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_stuff VALUES (null, 'file', %s, 0, 0, 0)",
-                $filename
-            ));
+            $fileId = File::create([
+                'type' => 'file',
+                'name' => $filename,
+                'sermon_id' => 0,
+                'count' => 0,
+                'ccount' => 0,
+            ]);
 
             echo "<script>document.location = '" .
-                admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $this->wpdb->insert_id) .
+                admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $fileId) .
                 "';</script>";
         }
     }
@@ -203,10 +203,7 @@ class FilesPage
         $prefix = '';
         $dest = SB_ABSPATH . sb_get_option('upload_dir') . $prefix . $filename;
 
-        if ($this->wpdb->get_var($this->wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->wpdb->prefix}sb_stuff WHERE name = %s",
-            $filename
-        )) != 0) {
+        if (File::existsByName($filename)) {
             echo '<div id="message" class="updated fade"><p><b>' .
                 __($filename . ' already exists.', 'sermon-browser') .
                 '</b></div>';
@@ -215,14 +212,17 @@ class FilesPage
 
         if (move_uploaded_file($_FILES['upload']['tmp_name'], $dest)) {
             $filename = $prefix . $filename;
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_stuff VALUES (null, 'file', %s, 0, 0, 0)",
-                $filename
-            ));
+            $fileId = File::create([
+                'type' => 'file',
+                'name' => $filename,
+                'sermon_id' => 0,
+                'count' => 0,
+                'ccount' => 0,
+            ]);
 
             if (sb_import_options_set()) {
                 echo "<script>document.location = '" .
-                    admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $this->wpdb->insert_id) .
+                    admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $fileId) .
                     "';</script>";
             } else {
                 echo '<div id="message" class="updated fade"><p><b>' .
@@ -244,39 +244,28 @@ class FilesPage
             wp_die(__('Access denied.', 'sermon-browser'));
         }
 
-        $unlinked = $this->wpdb->get_results(
-            "SELECT f.*, s.title FROM {$this->wpdb->prefix}sb_stuff AS f " .
-            "LEFT JOIN {$this->wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id " .
-            "WHERE f.sermon_id = 0 AND f.type = 'file' ORDER BY f.name;"
-        );
+        // Get all files (unlinked and linked).
+        $unlinked = File::findUnlinkedWithTitle(0);
+        $linked = File::findLinkedWithTitle(0);
 
-        $linked = $this->wpdb->get_results(
-            "SELECT f.*, s.title FROM {$this->wpdb->prefix}sb_stuff AS f " .
-            "LEFT JOIN {$this->wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id " .
-            "WHERE f.sermon_id <> 0 AND f.type = 'file' ORDER BY f.name;"
-        );
+        $wanted = [];
 
-        $wanted = [-1];
-
-        foreach ((array) $unlinked as $k => $file) {
+        foreach ((array) $unlinked as $file) {
             if (!file_exists(SB_ABSPATH . sb_get_option('upload_dir') . $file->name)) {
                 $wanted[] = $file->id;
             }
         }
 
-        foreach ((array) $linked as $k => $file) {
+        foreach ((array) $linked as $file) {
             if (!file_exists(SB_ABSPATH . sb_get_option('upload_dir') . $file->name)) {
                 $wanted[] = $file->id;
             }
         }
 
-        $this->wpdb->query(
-            "DELETE FROM {$this->wpdb->prefix}sb_stuff WHERE id IN (" .
-            implode(', ', (array) $wanted) . ")"
-        );
-        $this->wpdb->query(
-            "DELETE FROM {$this->wpdb->prefix}sb_stuff WHERE type != 'file' AND sermon_id=0"
-        );
+        if (!empty($wanted)) {
+            File::deleteByIds($wanted);
+        }
+        File::deleteOrphanedNonFiles();
     }
 
     /**
@@ -286,35 +275,16 @@ class FilesPage
      */
     private function loadFileData(): array
     {
-        $unlinked = $this->wpdb->get_results(
-            "SELECT f.*, s.title FROM {$this->wpdb->prefix}sb_stuff AS f " .
-            "LEFT JOIN {$this->wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id " .
-            "WHERE f.sermon_id = 0 AND f.type = 'file' ORDER BY f.name LIMIT 10;"
-        );
-
-        $linked = $this->wpdb->get_results(
-            "SELECT f.*, s.title FROM {$this->wpdb->prefix}sb_stuff AS f " .
-            "LEFT JOIN {$this->wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id " .
-            "WHERE f.sermon_id <> 0 AND f.type = 'file' ORDER BY f.name LIMIT 10;"
-        );
-
-        $cntu = $this->wpdb->get_row(
-            "SELECT COUNT(*) as cntu FROM {$this->wpdb->prefix}sb_stuff " .
-            "WHERE sermon_id = 0 AND type = 'file'",
-            ARRAY_A
-        );
-
-        $cntl = $this->wpdb->get_row(
-            "SELECT COUNT(*) as cntl FROM {$this->wpdb->prefix}sb_stuff " .
-            "WHERE sermon_id <> 0 AND type = 'file'",
-            ARRAY_A
-        );
+        $unlinked = File::findUnlinkedWithTitle(10);
+        $linked = File::findLinkedWithTitle(10);
+        $cntu = File::countUnlinked();
+        $cntl = File::countLinked();
 
         return [
             'unlinked' => $unlinked,
             'linked' => $linked,
-            'cntu' => (int) ($cntu['cntu'] ?? 0),
-            'cntl' => (int) ($cntl['cntl'] ?? 0),
+            'cntu' => $cntu,
+            'cntl' => $cntl,
         ];
     }
 
@@ -341,93 +311,85 @@ class FilesPage
             function rename(id, old) {
                 var f = prompt("<?php _e('New file name?', 'sermon-browser') ?>", old);
                 if (f != null) {
-                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/uploads.php'); ?>', {fid: id, oname: old, fname: f, sermon: 1}, function(r) {
-                        if (r) {
-                            if (r == 'renamed') {
-                                jQuery('#' + id).text(f.substring(0,f.lastIndexOf(".")));
-                                jQuery('#link' + id).attr('href', 'javascript:rename(' + id + ', "' + f + '")');
-                                jQuery('#s' + id).text(f.substring(0,f.lastIndexOf(".")));
-                                jQuery('#slink' + id).attr('href', 'javascript:rename(' + id + ', "' + f + '")');
-                            } else {
-                                if (r == 'forbidden') {
-                                    alert('<?php _e('You are not permitted files with that extension.', 'sermon-browser') ?>');
-                                } else {
-                                    alert('<?php _e('The script is unable to rename your file.', 'sermon-browser') ?>');
-                                }
-                            }
-                        };
+                    SBAdmin.file.rename(id, f, old).done(function(response) {
+                        SBAdmin.handleResponse(response, function(data) {
+                            jQuery('#' + id).text(f.substring(0,f.lastIndexOf(".")));
+                            jQuery('#link' + id).attr('href', 'javascript:rename(' + id + ', "' + data.name + '")');
+                            jQuery('#s' + id).text(f.substring(0,f.lastIndexOf(".")));
+                            jQuery('#slink' + id).attr('href', 'javascript:rename(' + id + ', "' + data.name + '")');
+                        }, function(message) {
+                            alert(message || '<?php _e('The script is unable to rename your file.', 'sermon-browser') ?>');
+                        });
                     });
                 }
             }
             function kill(id, f) {
-                jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>', {fname: f, fid: id, del: 1, sermon: 1}, function(r) {
-                    if (r) {
-                        if (r == 'deleted') {
-                            jQuery('#file' + id).fadeOut(function() {
-                                jQuery('.file:visible').each(function(i) {
-                                    jQuery(this).removeClass('alternate');
-                                    if (++i % 2 == 0) {
-                                        jQuery(this).addClass('alternate');
-                                    }
-                                });
+                SBAdmin.file.delete(id, f).done(function(response) {
+                    SBAdmin.handleResponse(response, function() {
+                        jQuery('#file' + id).fadeOut(function() {
+                            jQuery('.file:visible').each(function(i) {
+                                jQuery(this).removeClass('alternate');
+                                if (++i % 2 == 0) {
+                                    jQuery(this).addClass('alternate');
+                                }
                             });
-                            jQuery('#sfile' + id).fadeOut(function() {
-                                jQuery('.file:visible').each(function(i) {
-                                    jQuery(this).removeClass('alternate');
-                                    if (++i % 2 == 0) {
-                                        jQuery(this).addClass('alternate');
-                                    }
-                                });
+                        });
+                        jQuery('#sfile' + id).fadeOut(function() {
+                            jQuery('.file:visible').each(function(i) {
+                                jQuery(this).removeClass('alternate');
+                                if (++i % 2 == 0) {
+                                    jQuery(this).addClass('alternate');
+                                }
                             });
-                        } else {
-                            alert('<?php _e('The script is unable to delete your file.', 'sermon-browser') ?>');
-                        }
-                    };
+                        });
+                    }, function(message) {
+                        alert(message || '<?php _e('The script is unable to delete your file.', 'sermon-browser') ?>');
+                    });
                 });
             }
-            function fetchU(st) {
-                jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/uploads.php'); ?>', {fetchU: st + 1, sermon: 1}, function(r) {
-                    if (r) {
-                        jQuery('#the-list-u').html(r);
-                        if (st >= <?php echo $sermonsPerPage ?>) {
-                            x = st - <?php echo $sermonsPerPage ?>;
-                            jQuery('#uleft').html('<a href="javascript:fetchU(' + x + ')">&laquo; <?php _e('Previous', 'sermon-browser') ?></a>');
+            var currentUnlinkedPage = 1;
+            var currentLinkedPage = 1;
+            function fetchU(page) {
+                if (typeof page === 'undefined') page = 1;
+                SBAdmin.filePagination.unlinked(page).done(function(response) {
+                    SBAdmin.handleResponse(response, function(data) {
+                        currentUnlinkedPage = data.page;
+                        if (data.items.length > 0) {
+                            jQuery('#the-list-u').html(SBAdmin.filePagination.renderRows(data.items));
                         } else {
-                            jQuery('#uleft').html('');
+                            jQuery('#the-list-u').html(SBAdmin.filePagination.renderNoResults());
                         }
-                        if (st + <?php echo $sermonsPerPage ?> <= <?php echo $cntu ?>) {
-                            y = st + <?php echo $sermonsPerPage ?>;
-                            jQuery('#uright').html('<a href="javascript:fetchU(' + y + ')"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
-                        } else {
-                            jQuery('#uright').html('');
-                        }
-                    };
+                        jQuery('#uleft').html(data.has_prev ? '<a href="javascript:fetchU(' + (data.page - 1) + ')">' + SBAdmin.i18n.previous + '</a>' : '');
+                        jQuery('#uright').html(data.has_next ? '<a href="javascript:fetchU(' + (data.page + 1) + ')">' + SBAdmin.i18n.next + '</a>' : '');
+                    });
                 });
             }
-            function fetchL(st) {
-                jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>', {fetchL: st + 1, sermon: 1}, function(r) {
-                    if (r) {
-                        jQuery('#the-list-l').html(r);
-                        if (st >= <?php echo $sermonsPerPage ?>) {
-                            x = st - <?php echo $sermonsPerPage ?>;
-                            jQuery('#left').html('<a href="javascript:fetchL(' + x + ')">&laquo; <?php _e('Previous', 'sermon-browser') ?></a>');
+            function fetchL(page) {
+                if (typeof page === 'undefined') page = 1;
+                SBAdmin.filePagination.linked(page).done(function(response) {
+                    SBAdmin.handleResponse(response, function(data) {
+                        currentLinkedPage = data.page;
+                        if (data.items.length > 0) {
+                            jQuery('#the-list-l').html(SBAdmin.filePagination.renderRows(data.items));
                         } else {
-                            jQuery('#left').html('');
+                            jQuery('#the-list-l').html(SBAdmin.filePagination.renderNoResults());
                         }
-                        if (st + <?php echo $sermonsPerPage ?> <= <?php echo $cntl ?>) {
-                            y = st + <?php echo $sermonsPerPage ?>;
-                            jQuery('#right').html('<a href="javascript:fetchL(' + y + ')"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
-                        } else {
-                            jQuery('#right').html('');
-                        }
-                    };
+                        jQuery('#left').html(data.has_prev ? '<a href="javascript:fetchL(' + (data.page - 1) + ')">' + SBAdmin.i18n.previous + '</a>' : '');
+                        jQuery('#right').html(data.has_next ? '<a href="javascript:fetchL(' + (data.page + 1) + ')">' + SBAdmin.i18n.next + '</a>' : '');
+                    });
                 });
             }
             function findNow() {
-                jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>', {search: jQuery('#search').val(), sermon: 1}, function(r) {
-                    if (r) {
-                        jQuery('#the-list-s').html(r);
-                    };
+                var searchTerm = jQuery('#search').val();
+                if (!searchTerm) return;
+                SBAdmin.filePagination.search(searchTerm).done(function(response) {
+                    SBAdmin.handleResponse(response, function(data) {
+                        if (data.items.length > 0) {
+                            jQuery('#the-list-s').html(SBAdmin.filePagination.renderRows(data.items));
+                        } else {
+                            jQuery('#the-list-s').html(SBAdmin.filePagination.renderNoResults());
+                        }
+                    });
                 });
             }
         </script>
@@ -550,10 +512,10 @@ class FilesPage
         </div>
         <script>
             <?php if ($cntu > $sermonsPerPage): ?>
-                jQuery('#uright').html('<a href="javascript:fetchU(<?php echo $sermonsPerPage ?>)">Next &raquo;</a>');
+                jQuery('#uright').html('<a href="javascript:fetchU(2)"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
             <?php endif ?>
             <?php if ($cntl > $sermonsPerPage): ?>
-                jQuery('#right').html('<a href="javascript:fetchL(<?php echo $sermonsPerPage ?>)">Next &raquo;</a>');
+                jQuery('#right').html('<a href="javascript:fetchL(2)"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
             <?php endif ?>
         </script>
         <?php

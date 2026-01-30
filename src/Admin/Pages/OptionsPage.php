@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Facades\Book;
+
 /**
  * Class OptionsPage
  *
@@ -20,19 +22,10 @@ namespace SermonBrowser\Admin\Pages;
 class OptionsPage
 {
     /**
-     * WordPress database instance.
-     *
-     * @var \wpdb
-     */
-    private $wpdb;
-
-    /**
      * Constructor.
      */
     public function __construct()
     {
-        global $wpdb;
-        $this->wpdb = $wpdb;
     }
 
     /**
@@ -188,15 +181,8 @@ class OptionsPage
         $books = sb_get_default('bible_books');
         $eng_books = sb_get_default('eng_bible_books');
 
-        // Truncate and repopulate bible books table.
-        $this->wpdb->query("TRUNCATE TABLE {$this->wpdb->prefix}sb_books");
-
-        for ($i = 0; $i < count($books); $i++) {
-            $this->wpdb->query("INSERT INTO {$this->wpdb->prefix}sb_books VALUES (null, '{$books[$i]}')");
-            $this->wpdb->query(
-                "UPDATE {$this->wpdb->prefix}sb_books_sermons SET book_name='{$books[$i]}' WHERE book_name='{$eng_books[$i]}'"
-            );
-        }
+        // Reset bible books using Book Facade.
+        Book::resetBooksForLocale($books, $eng_books);
 
         // Rewrite book names for non-English locales.
         if ($books !== $eng_books) {
@@ -213,9 +199,7 @@ class OptionsPage
      */
     private function rewriteSermonBookNames(array $books, array $eng_books): void
     {
-        $sermon_books = $this->wpdb->get_results(
-            "SELECT id, start, end FROM {$this->wpdb->prefix}sb_sermons"
-        );
+        $sermon_books = Book::getSermonsWithVerseData();
 
         foreach ($sermon_books as $sermon_book) {
             $start_verse = unserialize($sermon_book->start);
@@ -235,9 +219,7 @@ class OptionsPage
             $sermon_book->start = serialize($start_verse);
             $sermon_book->end = serialize($end_verse);
 
-            $this->wpdb->query(
-                "UPDATE {$this->wpdb->prefix}sb_sermons SET start='{$sermon_book->start}', end='{$sermon_book->end}' WHERE id={$sermon_book->id}"
-            );
+            Book::updateSermonVerseData((int) $sermon_book->id, $sermon_book->start, $sermon_book->end);
         }
     }
 

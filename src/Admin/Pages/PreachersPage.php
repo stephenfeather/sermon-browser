@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Facades\Preacher;
+
 /**
  * Class PreachersPage
  *
@@ -19,13 +21,6 @@ namespace SermonBrowser\Admin\Pages;
  */
 class PreachersPage
 {
-    /**
-     * WordPress database instance.
-     *
-     * @var \wpdb
-     */
-    private $wpdb;
-
     /**
      * Upload directory path.
      *
@@ -38,8 +33,6 @@ class PreachersPage
      */
     public function __construct()
     {
-        global $wpdb;
-        $this->wpdb = $wpdb;
         $this->uploadDir = sb_get_option('upload_dir');
     }
 
@@ -105,30 +98,14 @@ class PreachersPage
 
         // Handle remove checkbox.
         if (isset($_POST['remove'])) {
-            $this->wpdb->query($this->wpdb->prepare(
-                "UPDATE {$this->wpdb->prefix}sb_preachers SET name = %s, description = %s, image = '' WHERE id = %d",
-                $name,
-                $description,
-                $pid
-            ));
+            Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => '']);
             @unlink(SB_ABSPATH . sb_get_option('upload_dir') . 'images/' . sanitize_file_name($_POST['old']));
         } elseif ($pid === 0) {
             // Insert new preacher.
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_preachers VALUES (null, %s, %s, %s)",
-                $name,
-                $description,
-                $filename
-            ));
+            Preacher::create(['name' => $name, 'description' => $description, 'image' => $filename]);
         } else {
             // Update existing preacher.
-            $this->wpdb->query($this->wpdb->prepare(
-                "UPDATE {$this->wpdb->prefix}sb_preachers SET name = %s, description = %s, image = %s WHERE id = %d",
-                $name,
-                $description,
-                $filename,
-                $pid
-            ));
+            Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => $filename]);
 
             // Delete old image if changed.
             if ($_POST['old'] !== $filename) {
@@ -153,12 +130,7 @@ class PreachersPage
     {
         if (empty($_FILES['upload']['name'])) {
             // No new upload - get existing image.
-            $p = $this->wpdb->get_row(
-                $this->wpdb->prepare(
-                    "SELECT image FROM {$this->wpdb->prefix}sb_preachers WHERE id = %d",
-                    $pid
-                )
-            );
+            $p = Preacher::find($pid);
             return $p ? $p->image : '';
         }
 
@@ -207,12 +179,7 @@ class PreachersPage
         $pid = (int) $_GET['pid'];
 
         // Check if preacher has sermons.
-        $sermonCount = $this->wpdb->get_var($this->wpdb->prepare(
-            "SELECT COUNT(*) FROM {$this->wpdb->prefix}sb_sermons WHERE preacher_id = %d",
-            $pid
-        ));
-
-        if ($sermonCount > 0) {
+        if (Preacher::hasSermons($pid)) {
             echo '<div id="message" class="updated fade"><p><b>' .
                 __("You cannot delete this preacher until you first delete any sermons they have preached.", 'sermon-browser') .
                 '</b></div>';
@@ -220,20 +187,13 @@ class PreachersPage
         }
 
         // Get and delete image.
-        $p = $this->wpdb->get_row($this->wpdb->prepare(
-            "SELECT image FROM {$this->wpdb->prefix}sb_preachers WHERE id = %d",
-            $pid
-        ));
-
+        $p = Preacher::find($pid);
         if ($p && $p->image) {
             @unlink(SB_ABSPATH . sb_get_option('upload_dir') . 'images/' . $p->image);
         }
 
         // Delete preacher.
-        $this->wpdb->query($this->wpdb->prepare(
-            "DELETE FROM {$this->wpdb->prefix}sb_preachers WHERE id = %d",
-            $pid
-        ));
+        Preacher::delete($pid);
     }
 
     /**
@@ -247,10 +207,7 @@ class PreachersPage
         $isEdit = ($_GET['act'] === 'edit');
 
         if ($isEdit) {
-            $preacher = $this->wpdb->get_row($this->wpdb->prepare(
-                "SELECT * FROM {$this->wpdb->prefix}sb_preachers WHERE id = %d",
-                (int) $_GET['pid']
-            ));
+            $preacher = Preacher::find((int) $_GET['pid']);
         }
 
         $pid = isset($_GET['pid']) ? (int) $_GET['pid'] : 0;
@@ -352,15 +309,7 @@ class PreachersPage
      */
     private function renderListView(): void
     {
-        $preachers = $this->wpdb->get_results(
-            "SELECT {$this->wpdb->prefix}sb_preachers.*,
-                    COUNT({$this->wpdb->prefix}sb_sermons.id) AS sermon_count
-             FROM {$this->wpdb->prefix}sb_preachers
-             LEFT JOIN {$this->wpdb->prefix}sb_sermons
-                ON {$this->wpdb->prefix}sb_preachers.id = preacher_id
-             GROUP BY {$this->wpdb->prefix}sb_preachers.id
-             ORDER BY name ASC"
-        );
+        $preachers = Preacher::findAllWithSermonCount();
         ?>
         <div class="wrap">
             <a href="http://www.sermonbrowser.com/">
