@@ -1,0 +1,74 @@
+---
+session: sermon-browser-session
+date: 2026-01-30
+status: complete
+outcome: SUCCEEDED
+---
+
+goal: Phase 1 Repository Integration - Migrate admin.php $wpdb to Facades
+now: Run tests to verify migrations, consider frontend.php migration
+
+test: php -l sb-includes/admin.php && composer test
+
+done_this_session:
+  - task: Migrated Preacher $wpdb calls to Facades (16 queries)
+    files: [sb-includes/admin.php]
+  - task: Migrated Series/Service $wpdb calls to Facades (15 queries)
+    files: [sb-includes/admin.php]
+  - task: Migrated File $wpdb calls to Facades (35 queries)
+    files: [sb-includes/admin.php, src/Repositories/FileRepository.php, src/Facades/File.php]
+  - task: Migrated Sermon $wpdb calls to Facades (23 queries)
+    files: [sb-includes/admin.php, src/Repositories/SermonRepository.php, src/Facades/Sermon.php]
+  - task: Migrated Tag $wpdb calls to Facades (16 queries)
+    files: [sb-includes/admin.php, src/Repositories/TagRepository.php, src/Facades/Tag.php]
+  - task: Added 15+ new FileRepository methods for linked/unlinked files
+    files: [src/Repositories/FileRepository.php]
+  - task: Added findForAdminList to SermonRepository
+    files: [src/Repositories/SermonRepository.php]
+
+blockers: []
+
+questions:
+  - Should BookRepository be created for sb_books and sb_books_sermons tables?
+  - Should frontend.php migration be done in Phase 1 or deferred to Phase 6?
+
+decisions:
+  - deferred_books: Left book-sermon pivot operations as $wpdb (7 queries) - complex locale migration
+  - deferred_locale_migration: Left sb_options locale code as raw $wpdb - rarely used edge case
+  - facade_method_naming: Used legacy column aliases (pname, sname, ssname) for backward compat
+
+findings:
+  - migration_reduction: 107 to 19 $wpdb calls (82% reduction)
+  - remaining_global_wpdb: 10 are harmless `global $wpdb;` declarations
+  - remaining_books: 7 book-related queries deferred for future BookRepository
+
+worked:
+  - FileRepository methods for linked/unlinked file operations
+  - Tag::findOrCreate pattern for tag processing
+  - Sermon::findForAdminList with legacy column aliases
+
+failed: []
+
+next:
+  - Run composer test to verify migrations work correctly
+  - Clean up unused `global $wpdb;` declarations in admin.php
+  - Consider creating BookRepository for remaining 7 queries
+  - Merge feature branch when tests pass
+
+files:
+  created: []
+  modified:
+    - sb-includes/admin.php
+    - src/Facades/File.php
+    - src/Facades/Sermon.php
+    - src/Facades/Tag.php
+    - src/Repositories/FileRepository.php
+    - src/Repositories/SermonRepository.php
+    - src/Repositories/TagRepository.php
+
+worktree:
+  location: /Users/stephenfeather/Development/sermon-browser-phase1
+  branch: feature/phase1-repository-integration
+  commits:
+    - 0dab501: Replace $wpdb calls with Facades in sermon.php
+    - 5ee9ecc: Replace $wpdb calls with Facades in admin.php

@@ -7,6 +7,13 @@
 * @package admin_functions
 */
 
+use SermonBrowser\Facades\Preacher;
+use SermonBrowser\Facades\Series;
+use SermonBrowser\Facades\Service;
+use SermonBrowser\Facades\Sermon;
+use SermonBrowser\Facades\File;
+use SermonBrowser\Facades\Tag;
+
 
 /**
 * Adds javascript and CSS where required in admin
@@ -24,21 +31,9 @@ function sb_add_admin_headers() {
 }
 
 /**
- * Display the options page and handle changes.
- *
- * @since 0.6.0 Refactored to use OptionsPage class.
- */
+* Display the options page and handle changes
+*/
 function sb_options() {
-    $page = new \SermonBrowser\Admin\Pages\OptionsPage();
-    $page->render();
-}
-
-/**
- * Legacy sb_options implementation.
- *
- * @deprecated 0.6.0 Use OptionsPage class instead.
- */
-function sb_options_legacy() {
 	global $wpdb;
 	//Security check
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -417,48 +412,141 @@ function sb_options_legacy() {
 /**
 * Display uninstall screen and perform uninstall if requested
 */
-/**
- * Display the uninstall page.
- *
- * Wrapper function for backward compatibility.
- * Delegates to UninstallPage class.
- *
- * @since 0.6.0 Refactored to use UninstallPage class.
- */
-function sb_uninstall() {
-    $page = new \SermonBrowser\Admin\Pages\UninstallPage();
-    $page->render();
+function sb_uninstall () {
+	//Security check
+	if ( ! ( current_user_can( 'edit_plugins' ) || ( IS_MU && current_user_can( 'manage_options' ) ) ) ) {
+			wp_die(__("You do not have the correct permissions to Uninstall SermonBrowser", 'sermon-browser'));
+	}
+	if ( isset( $_POST['uninstall'] ) ) {
+		if ( ! isset( $_POST['sermon_browser_uninstall_nonce'] ) || ! wp_verify_nonce( $_POST['sermon_browser_uninstall_nonce'], 'sermon_browser_uninstall' ) ) {
+			wp_die( __( "You do not have the correct permissions to Uninstall SermonBrowser", 'sermon-browser' ) );
+		}
+		require(SB_INCLUDES_DIR.'/uninstall.php');
+	}
+
+?>
+	<form method="post">
+	<div class="wrap">
+		<?php if (IS_MU) { ?>
+			<h2> <?php _e('Reset SermonBrowser', 'sermon-browser'); ?></h2>
+			<p><?php printf(__('Clicking the %s button below will remove ALL data (sermons, preachers, series, etc.) from SermonBrowser', 'sermon-browser'), __('Delete all', 'sermon-browser'));
+					 echo '. ';
+					 _e('You will NOT be able to undo this action.', 'sermon-browser') ?>
+			</p>
+		<?php } else {  ?>
+			<h2> <?php _e('Uninstall', 'sermon-browser'); ?></h2>
+			<p><?php printf(__('Clicking the %s button below will remove ALL data (sermons, preachers, series, etc.) from SermonBrowser', 'sermon-browser'), __('Uninstall', 'sermon-browser'));
+					 echo ', ';
+					 _e('and will deactivate the SermonBrowser plugin', 'sermon-browser');
+					 echo '. ';
+					 _e('You will NOT be able to undo this action.', 'sermon-browser');
+					 echo ' ';
+					 _e('If you only want to temporarily disable SermonBrowser, just deactivate it from the plugins page.', 'sermon-browser'); ?>
+			</p>
+		<?php } ?>
+		<table border="0" class="widefat">
+			<tr>
+                    <td><input type="checkbox" name="wipe"
+                               value="1"> <?php _e( 'Also remove all uploaded files', 'sermon-browser' ) ?></td>
+			</tr>
+		</table>
+            <p class="submit"><input type="submit" name="uninstall" value="<?php if ( IS_MU ) {
+					_e( 'Delete all', 'sermon-browser' );
+				} else {
+					_e( 'Uninstall', 'sermon-browser' );
+				} ?>"
+                                     onclick="return confirm('<?php _e( 'Do you REALLY want to delete all data?', 'sermon-browser' ) ?>')"/>
+            </p>
+	</div>
+		<?php wp_nonce_field( 'sermon_browser_uninstall', 'sermon_browser_uninstall_nonce' ); ?>
+	</form>
+	<script>
+        jQuery( "form" ).submit( function ()
+        {
+			var yes = confirm("<?php _e('Are you REALLY REALLY sure you want to remove SermonBrowser?', 'sermon-browser')?>");
+			if(!yes) return false;
+		});
+	</script>
+<?php
 }
 
 /**
- * Display the templates page and handle changes.
- *
- * Wrapper function for backward compatibility.
- * Delegates to TemplatesPage class.
- *
- * @since 0.6.0 Refactored to use TemplatesPage class.
- */
-function sb_templates() {
-    $page = new \SermonBrowser\Admin\Pages\TemplatesPage();
-    $page->render();
+* Display the templates page and handle changes
+*/
+function sb_templates () {
+	//Security check
+	if (!current_user_can('manage_options'))
+			{wp_die(__("You do not have the correct permissions to edit the SermonBrowser templates", 'sermon-browser'));}
+	//Save templates or reset to default
+	if (isset($_POST['save']) || isset($_POST['resetdefault'])) {
+        if (! isset($_POST['sermon_template_edit_nonce']) || ! wp_verify_nonce( $_POST['sermon_template_edit_nonce'], 'sermon_template_edit' )) {
+            wp_die(__("You do not have the correct permissions to edit the SermonBrowser templates", 'sermon-browser'));
+        }
+		require(SB_INCLUDES_DIR.'/dictionary.php');
+		$multi = wp_kses_post($_POST['multi']);
+		$single = wp_kses_post($_POST['single']);
+		$style = wp_kses_post($_POST['style']);
+		if(isset($_POST['resetdefault'])){
+			require(SB_INCLUDES_DIR.'/sb-install.php');
+			$multi = sb_default_multi_template();
+			$single = sb_default_single_template();
+			$style = sb_default_css();
+		}
+		sb_update_option('search_template', $multi);
+		sb_update_option('single_template', $single);
+		sb_update_option('css_style', $style);
+		sb_update_option('search_output', strtr($multi, sb_search_results_dictionary()));
+		sb_update_option('single_output', strtr($single, sb_sermon_page_dictionary()));
+		sb_update_option('style_date_modified', strtotime('now'));
+		echo '<div id="message" class="updated fade"><p><b>';
+		_e('Templates saved successfully.', 'sermon-browser');
+		echo '</b></p></div>';
+	}
+	sb_do_alerts();
+	// HTML for templates page
+	?>
+	<form method="post">
+	<div class="wrap">
+		<a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+		<h2><?php _e('Templates', 'sermon-browser') ?></h2>
+		<br/>
+		<table border="0" class="widefat">
+			<tr>
+				<td align="right"><?php _e('Search results page', 'sermon-browser') ?>: </td>
+				<td>
+					<?php sb_build_textarea('multi', sb_get_option('search_template')) ?>
+				</td>
+			</tr>
+			<tr>
+				<td align="right"><?php _e('Sermon page', 'sermon-browser') ?>: </td>
+				<td>
+					<?php sb_build_textarea('single', sb_get_option('single_template')) ?>
+				</td>
+			</tr>
+			<tr>
+				<td align="right"><?php _e('Style', 'sermon-browser') ?>: </td>
+				<td>
+					<?php sb_build_textarea('style', sb_get_option('css_style')) ?>
+				</td>
+			</tr>
+		</table>
+		<p class="submit"><input type="submit" name="save" value="<?php _e('Save', 'sermon-browser') ?> &raquo;" /> <input type="submit" name="resetdefault" value="<?php _e('Reset to defaults', 'sermon-browser') ?>"  /></p>
+	</div>
+	<?php  wp_nonce_field( 'sermon_template_edit', 'sermon_template_edit_nonce' ); ?>
+	</form>
+	<script>
+		jQuery("form").submit(function() {
+			var yes = confirm("Are you sure ?");
+			if(!yes) return false;
+		});
+	</script>
+<?php
 }
 
 /**
- * Display the preachers page and handle changes.
- *
- * @since 0.6.0 Refactored to use PreachersPage class.
- */
+* Display the preachers page and handle changes
+*/
 function sb_manage_preachers() {
-    $page = new \SermonBrowser\Admin\Pages\PreachersPage();
-    $page->render();
-}
-
-/**
- * Legacy sb_manage_preachers implementation.
- *
- * @deprecated 0.6.0 Use PreachersPage class instead.
- */
-function sb_manage_preachers_legacy() {
 	global $wpdb;
 	//Security check
 	if (!current_user_can('manage_categories'))
@@ -477,7 +565,7 @@ function sb_manage_preachers_legacy() {
 		$pid = (int) $_REQUEST['pid'];
 
 		if (empty($_FILES['upload']['name'])) {
-			$p = $wpdb->get_row("SELECT image FROM {$wpdb->prefix}sb_preachers WHERE id = $pid");
+			$p = Preacher::find($pid);
 			$filename = $p ? $p->image : '';
 		} elseif ($_FILES['upload']['error'] == UPLOAD_ERR_OK) {
 			$filename = basename($_FILES['upload']['name']);
@@ -498,14 +586,14 @@ function sb_manage_preachers_legacy() {
 		}
 
 		if ($pid == 0) {
-			$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_preachers VALUES (null, %s, %s, %s)", $name, $description, $filename));
+			Preacher::create(['name' => $name, 'description' => $description, 'image' => $filename]);
 		} else {
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_preachers SET name = %s, description = %s, image = %s WHERE id = $pid", $name, $description, $filename));
+			Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => $filename]);
 			if ($_POST['old'] != $filename)
 				@unlink(SB_ABSPATH.sb_get_option('upload_dir').'images/'.sanitize_file_name($_POST['old']));
 		}
 		if(isset($_POST['remove'])){
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_preachers SET name = %s, description = %s, image = '' WHERE id = $pid", $name, $description));
+			Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => '']);
 			@unlink(SB_ABSPATH.sb_get_option('upload_dir').'images/'.sanitize_file_name($_POST['old']));
 		}
 		if(!$error)
@@ -514,17 +602,19 @@ function sb_manage_preachers_legacy() {
 
 	if (isset($_GET['act']) && $_GET['act'] == 'kill') {
 		$die = (int) $_GET['pid'];
-		if($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sb_sermons WHERE preacher_id = $die") > 0)
+		if(Preacher::hasSermons($die))
 			{echo '<div id="message" class="updated fade"><p><b>'.__("You cannot delete this preacher until you first delete any sermons they have preached.", 'sermon-browser').'</b></div>';}
 		else {
-			$p = $wpdb->get_row("SELECT image FROM {$wpdb->prefix}sb_preachers WHERE id = $die");
-			@unlink(SB_ABSPATH.sb_get_option('upload_dir').'images/'.$p->image);
-			$wpdb->query("DELETE FROM {$wpdb->prefix}sb_preachers WHERE id = $die");
+			$p = Preacher::find($die);
+			if ($p) {
+				@unlink(SB_ABSPATH.sb_get_option('upload_dir').'images/'.$p->image);
+				Preacher::delete($die);
+			}
 		}
 	}
 
 	if (isset($_GET['act']) && ($_GET['act'] == 'new' || $_GET['act'] == 'edit')) {
-		if ($_GET['act'] == 'edit') {$preacher = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}sb_preachers WHERE id = ".(int) $_GET['pid']);}
+		if ($_GET['act'] == 'edit') {$preacher = Preacher::find((int) $_GET['pid']);}
 	//Display HTML
 ?>
 	<div class="wrap">
@@ -585,7 +675,7 @@ function sb_manage_preachers_legacy() {
 		return;
 	}
 
-	$preachers = $wpdb->get_results("SELECT {$wpdb->prefix}sb_preachers.*, COUNT({$wpdb->prefix}sb_sermons.id) AS sermon_count FROM {$wpdb->prefix}sb_preachers LEFT JOIN {$wpdb->prefix}sb_sermons ON {$wpdb->prefix}sb_preachers.id=preacher_id GROUP BY id ORDER BY name ASC");
+	$preachers = Preacher::findAllWithSermonCount();
 	sb_do_alerts();
 ?>
 	<div class="wrap">
@@ -628,28 +718,16 @@ function sb_manage_preachers_legacy() {
 }
 
 /**
- * Display services & series page and handle changes.
- *
- * @since 0.6.0 Refactored to use SeriesServicesPage class.
- */
+* Display services & series page and handle changes
+*/
 function sb_manage_everything() {
-    $page = new \SermonBrowser\Admin\Pages\SeriesServicesPage();
-    $page->render();
-}
-
-/**
- * Legacy sb_manage_everything implementation.
- *
- * @deprecated 0.6.0 Use SeriesServicesPage class instead.
- */
-function sb_manage_everything_legacy() {
 	global $wpdb;
 	//Security check
 	if (!current_user_can('manage_categories'))
 			{wp_die(__("You do not have the correct permissions to manage the series and services database", 'sermon-browser'));}
 
-	$series = $wpdb->get_results("SELECT {$wpdb->prefix}sb_series.*, COUNT({$wpdb->prefix}sb_sermons.id) AS sermon_count FROM {$wpdb->prefix}sb_series LEFT JOIN {$wpdb->prefix}sb_sermons ON series_id = {$wpdb->prefix}sb_series.id GROUP BY id ORDER BY name ASC");
-	$services = $wpdb->get_results("SELECT {$wpdb->prefix}sb_services.*, COUNT({$wpdb->prefix}sb_sermons.id) AS sermon_count FROM {$wpdb->prefix}sb_services LEFT JOIN {$wpdb->prefix}sb_sermons ON service_id = {$wpdb->prefix}sb_services.id GROUP BY id ORDER BY name ASC");
+	$series = Series::findAllWithSermonCount();
+	$services = Service::findAllWithSermonCount();
 
 	$toManage = array(
 		'Series' => array('data' => $series),
@@ -826,24 +904,9 @@ function sb_manage_everything_legacy() {
 }
 
 /**
- * Display files page and handle changes.
- *
- * Wrapper function for backward compatibility.
- * Delegates to FilesPage class.
- *
- * @since 0.6.0 Refactored to use FilesPage class.
- */
+* Display files page and handle changes
+*/
 function sb_files() {
-    $page = new \SermonBrowser\Admin\Pages\FilesPage();
-    $page->render();
-}
-
-/**
- * Legacy sb_files implementation.
- *
- * @deprecated 0.6.0 Use FilesPage class instead.
- */
-function sb_files_legacy() {
 	global $wpdb, $filetypes;
 	//Security check
 	if (!current_user_can('upload_files'))
@@ -873,12 +936,12 @@ function sb_files_legacy() {
 						fwrite($file, $remote_contents);
 						fclose($remote_file);
 						fclose($file);
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'file', %s, 0, 0, 0)", $filename));
-						echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$wpdb->insert_id)."';</script>";
+						$file_id = File::create(['type' => 'file', 'name' => $filename, 'sermon_id' => 0, 'count' => 0, 'duration' => 0]);
+						echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$file_id)."';</script>";
 					}
 				} else {
-					$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'url', %s, 0, 0, 0)", $url));
-					echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$wpdb->insert_id)."';</script>";
+					$file_id = File::create(['type' => 'url', 'name' => $url, 'sermon_id' => 0, 'count' => 0, 'duration' => 0]);
+					echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$file_id)."';</script>";
 					die();
 				}
 			} else
@@ -903,12 +966,12 @@ function sb_files_legacy() {
 			if ($file_allowed) {
 				$prefix = '';
 				$dest = SB_ABSPATH.sb_get_option('upload_dir').$prefix.$filename;
-				if($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sb_stuff WHERE name = %s", $filename)) == 0) {
+				if(!File::existsByName($filename)) {
 					if (move_uploaded_file($_FILES['upload']['tmp_name'], $dest)) {
 						$filename = $prefix.$filename;
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'file', %s, 0, 0, 0)", $filename));
+						$file_id = File::create(['type' => 'file', 'name' => $filename, 'sermon_id' => 0, 'count' => 0, 'duration' => 0]);
 						if (sb_import_options_set ())
-							{echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$wpdb->insert_id)."';</script>";}
+							{echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$file_id)."';</script>";}
 						else
 							{echo '<div id="message" class="updated fade"><p><b>'.__('Files saved to database.', 'sermon-browser').'</b></div>';}
 					}
@@ -925,31 +988,31 @@ function sb_files_legacy() {
 	        wp_die(__('Access denied.', 'sermon-browser'));
 	    }
 
-		$unlinked = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id = 0 AND f.type = 'file' ORDER BY f.name;");
-		$linked = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id <> 0 AND f.type = 'file' ORDER BY f.name;");
-		$wanted = array(-1);
+		$unlinked = File::findUnlinkedWithTitle();
+		$linked = File::findLinkedWithTitle();
+		$wanted = array();
 		foreach ((array) $unlinked as $k => $file) {
 			if (!file_exists(SB_ABSPATH.sb_get_option('upload_dir').$file->name)) {
-				$wanted[] = $file->id;
+				$wanted[] = (int) $file->id;
 				unset($unlinked[$k]);
 			}
 		}
 		foreach ((array) $linked as $k => $file) {
 			if (!file_exists(SB_ABSPATH.sb_get_option('upload_dir').$file->name)) {
-				$wanted[] = $file->id;
+				$wanted[] = (int) $file->id;
 				unset($unlinked[$k]);
 			}
 		}
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE id IN (".implode(', ', (array) $wanted).")");
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE type != 'file' AND sermon_id=0");
+		if (!empty($wanted)) {
+			File::deleteByIds($wanted);
+		}
+		File::deleteOrphanedNonFiles();
 	}
 
-	$unlinked = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id = 0 AND f.type = 'file' ORDER BY f.name LIMIT 10;");
-	$linked = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id <> 0 AND f.type = 'file' ORDER BY f.name LIMIT 10;");
-	$cntu = $wpdb->get_row("SELECT COUNT(*) as cntu FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = 0 AND type = 'file' ", ARRAY_A);
-	$cntu = $cntu['cntu'];
-	$cntl = $wpdb->get_row("SELECT COUNT(*) as cntl FROM {$wpdb->prefix}sb_stuff WHERE sermon_id <> 0 AND type = 'file' ", ARRAY_A);
-	$cntl = $cntl['cntl'];
+	$unlinked = File::findUnlinkedWithTitle(10);
+	$linked = File::findLinkedWithTitle(10);
+	$cntu = File::countUnlinked();
+	$cntl = File::countLinked();
 	sb_do_alerts();
 ?>
 	<script>
@@ -1189,37 +1252,151 @@ function sb_files_legacy() {
 }
 
 /**
- * Displays Sermons page.
- *
- * Wrapper function for backward compatibility.
- * Delegates to SermonsPage class.
- *
- * @since 0.6.0 Refactored to use SermonsPage class.
- */
+* Displays Sermons page
+*/
 function sb_manage_sermons() {
-    $page = new \SermonBrowser\Admin\Pages\SermonsPage();
-    $page->render();
+	global $wpdb;
+	//Security check
+	if (!(current_user_can('publish_posts') || current_user_can('publish_pages')))
+		{wp_die(__("You do not have the correct permissions to edit sermons", 'sermon-browser'));}
+	sb_do_alerts();
+	if (isset($_GET['saved'])) {
+		echo '<div id="message" class="updated fade"><p><b>'.__('Sermon saved to database.', 'sermon-browser').'</b></div>';
+        $show_msg = rand (1,5);
+		if ($show_msg == 1 && sb_get_option('show_donate_reminder') != 'off')
+			{echo '<div id="message" class="updated"><p><b>'.sprintf(__('If you find SermonBrowser useful, please consider %1$ssupporting%2$s the ministry of Nathanael and Anna Ayling in Japan.', 'sermon-browser'), '<a href="'.admin_url('admin.php?page=sermon-browser/japan.php').'">', '</a>').'</b></div>';}
+        elseif ($show_msg == 2)
+            {echo '<div id="message" class="updated"><p><b>'.__('Sermon Browser 2.0 is under development. If you\'re a coder, and would like to help, please check the <a href="https://www.assembla.com/spaces/sermon-browser-2/documents">SB2 development website</a>.', 'sermon-browser').'</b></div>';}
+	}
+
+	if (isset($_GET['mid'])) {
+        if (! wp_verify_nonce( $_GET['sermon_manage_sermons_nonce'], 'sermon_manage_sermons' )) {
+            wp_die(__("You do not have the correct permissions to edit sermons", 'sermon-browser'));
+        }
+		//Security check
+		if (!current_user_can('publish_posts'))
+			{wp_die(__("You do not have the correct permissions to delete sermons", 'sermon-browser'));}
+		$mid = (int) $_GET['mid'];
+		Sermon::delete($mid);
+		Tag::detachAllFromSermon($mid);
+		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_books_sermons WHERE sermon_id = $mid;");
+		File::unlinkFromSermon($mid);
+		File::deleteNonFilesBySermon($mid);
+		sb_delete_unused_tags();
+		echo '<div id="message" class="updated fade"><p><b>'.__('Sermon removed from database.', 'sermon-browser').'</b></div>';
+	}
+
+	$cnt = Sermon::count();
+
+	$sermons = Sermon::findForAdminList((int) sb_get_option('sermons_per_page'));
+	$preachers = Preacher::findAllSorted();
+	$series = Series::findAllSorted();
+?>
+	<script>
+		function fetch(st) {
+			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {fetch: st + 1, sermon: 1, title: jQuery('#search').val(), preacher: jQuery('#preacher').val(), series: jQuery('#series').val() }, function(r) {
+				if (r) {
+					jQuery('#the-list').html(r);
+					if (st >= <?php echo sb_get_option('sermons_per_page') ?>) {
+						x = st - <?php echo sb_get_option('sermons_per_page') ?>;
+						jQuery('#left').html('<a href="javascript:fetch(' + x + ')">&laquo; Previous</a>');
+					} else {
+						jQuery('#left').html('');
+					}
+					if (st + <?php echo sb_get_option('sermons_per_page') ?> <= <?php echo $cnt ?>) {
+						y = st + <?php echo sb_get_option('sermons_per_page') ?>;
+						jQuery('#right').html('<a href="javascript:fetch(' + y + ')">Next &raquo;</a>');
+					} else {
+						jQuery('#right').html('');
+					}
+				};
+			});
+		}
+	</script>
+	<div class="wrap">
+			<a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+			<h2>Filter</h2>
+			<form id="searchform" name="searchform">
+			<fieldset style="float:left; margin-right: 1em">
+				<legend><?php _e('Title', 'sermon-browser') ?></legend>
+				<input type="text" size="17" value="" id="search" />
+			</fieldset>
+			<fieldset style="float:left; margin-right: 1em">
+				<legend><?php _e('Preacher', 'sermon-browser') ?></legend>
+				<select id="preacher">
+					<option value="0"></option>
+					<?php foreach ($preachers as $preacher): ?>
+						<option value="<?php echo $preacher->id ?>"><?php echo htmlspecialchars(stripslashes($preacher->name), ENT_QUOTES) ?></option>
+					<?php endforeach ?>
+				</select>
+			</fieldset>
+			<fieldset style="float:left; margin-right: 1em">
+				<legend><?php _e('Series', 'sermon-browser') ?></legend>
+				<select id="series">
+					<option value="0"></option>
+					<?php foreach ($series as $item): ?>
+						<option value="<?php echo $item->id ?>"><?php echo htmlspecialchars(stripslashes($item->name), ENT_QUOTES) ?></option>
+					<?php endforeach ?>
+				</select>
+			</fieldset style="float:left; margin-right: 1em">
+			<input type="submit" class="button" value="<?php _e('Filter', 'sermon-browser') ?> &raquo;" style="float:left;margin:14px 0pt 1em; position:relative;top:0.35em;" onclick="javascript:fetch(0);return false;" />
+			</form>
+		<br style="clear:both">
+		<h2><?php _e('Sermons', 'sermon-browser') ?></h2>
+		<br style="clear:both">
+		<table class="widefat">
+			<thead>
+			<tr>
+				<th scope="col" style="text-align:center"><?php _e('ID', 'sermon-browser') ?></th>
+				<th scope="col"><?php _e('Title', 'sermon-browser') ?></th>
+				<th scope="col"><?php _e('Preacher', 'sermon-browser') ?></th>
+				<th scope="col"><?php _e('Date', 'sermon-browser') ?></th>
+				<th scope="col"><?php _e('Service', 'sermon-browser') ?></th>
+				<th scope="col"><?php _e('Series', 'sermon-browser') ?></th>
+				<th scope="col" style="text-align:center"><?php _e('Stats', 'sermon-browser') ?></th>
+				<th scope="col" style="text-align:center"><?php _e('Actions', 'sermon-browser') ?></th>
+			</tr>
+			</thead>
+			<tbody id="the-list">
+				<?php if (is_array($sermons)): ?>
+					<?php foreach ($sermons as $sermon): ?>
+					<tr class="<?php $i=0; echo ++$i % 2 == 0 ? 'alternate' : '' ?>">
+						<th style="text-align:center" scope="row"><?php echo $sermon->id ?></th>
+						<td><?php echo stripslashes($sermon->title) ?></td>
+						<td><?php echo stripslashes($sermon->pname) ?></td>
+						<td><?php echo ($sermon->datetime == '1970-01-01 00:00:00') ? __('Unknown', 'sermon-browser') : wp_date('d M y', strtotime($sermon->datetime)); ?></td>
+						<td><?php echo stripslashes($sermon->sname) ?></td>
+						<td><?php echo stripslashes($sermon->ssname) ?></td>
+						<td><?php echo sb_sermon_stats($sermon->id) ?></td>
+						<td style="text-align:center">
+							<?php //Security check
+									if (current_user_can('publish_posts')) { ?>
+									<a href="<?php echo wp_nonce_url( admin_url("admin.php?page=sermon-browser/new_sermon.php&mid={$sermon->id}"), 'sermon_new_sermons', 'sermon_new_sermons_nonce' );  ?>"><?php _e('Edit', 'sermon-browser') ?></a> | <a onclick="return confirm('Are you sure?')" href="<?php echo wp_nonce_url( admin_url("admin.php?page=sermon-browser/sermon.php&mid={$sermon->id}"), 'sermon_manage_sermons', 'sermon_manage_sermons_nonce' );  ?>"><?php _e('Delete', 'sermon-browser'); ?></a> |
+							<?php } ?>
+							<a href="<?php echo sb_display_url().sb_query_char(true).'sermon_id='.$sermon->id;?>">View</a>
+						</td>
+					</tr>
+					<?php endforeach ?>
+				<?php endif ?>
+			</tbody>
+		</table>
+		<div class="navigation">
+			<div class="alignleft" id="left"></div>
+			<div class="alignright" id="right"></div>
+		</div>
+	</div>
+	<script>
+		<?php if ($cnt > sb_get_option('sermons_per_page')): ?>
+			jQuery('#right').html('<a href="javascript:fetch(<?php echo sb_get_option('sermons_per_page') ?>)">Next &raquo;</a>');
+		<?php endif ?>
+	</script>
+<?php
 }
 
 /**
- * Displays new/edit sermon page.
- *
- * Wrapper function for backward compatibility.
- * Delegates to SermonEditorPage class.
- *
- * @since 0.6.0 Refactored to use SermonEditorPage class.
- */
+* Displays new/edit sermon page
+*/
 function sb_new_sermon() {
-    $page = new \SermonBrowser\Admin\Pages\SermonEditorPage();
-    $page->render();
-}
-
-/**
- * Legacy sb_new_sermon implementation.
- *
- * @deprecated 0.6.0 Use SermonEditorPage class instead.
- */
-function sb_new_sermon_legacy() {
 	global $wpdb, $allowedposttags;
 	$getid3=false;
 	//Security check
@@ -1260,7 +1437,8 @@ function sb_new_sermon_legacy() {
 		$override = (isset($_POST['override']) && $_POST['override'] == 'on') ? 1 : 0;
 		if ($date) {
 			if (!$override) {
-				$service_time = $wpdb->get_var("SELECT time FROM {$wpdb->prefix}sb_services WHERE id={$service_id}");
+				$service = Service::find((int) $service_id);
+				$service_time = $service ? $service->time : null;
 				if ($service_time)
 					{$date = $date - strtotime('00:00') + strtotime($service_time);}
 			} else
@@ -1278,16 +1456,38 @@ function sb_new_sermon_legacy() {
 			//Security check
 			if (!current_user_can('publish_pages'))
 				{wp_die(__("You do not have the correct permissions to create sermons", 'sermon-browser'));}
-			$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_sermons VALUES (null, %s, '$preacher_id', '$date', '$service_id', '$series_id', %s, %s, %s, %s, '$override', 0)", $title, $start, $end, $description, $time));
-			$id = $wpdb->insert_id;
+			$id = Sermon::create([
+				'title' => $title,
+				'preacher_id' => $preacher_id,
+				'datetime' => $date,
+				'service_id' => $service_id,
+				'series_id' => $series_id,
+				'start' => $start,
+				'end' => $end,
+				'description' => $description,
+				'time' => $time,
+				'override' => $override,
+				'page_id' => 0,
+			]);
 		} else { // edit
 			//Security check
 			if (!current_user_can('publish_posts'))
 				{wp_die(__("You do not have the correct permissions to edit sermons", 'sermon-browser'));}
 			$id = (int) $_GET['mid'];
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_sermons SET title = %s, preacher_id = '$preacher_id', datetime = '$date', series_id = '$series_id', start = %s, end = %s, description = %s, time = '$time', service_id = '$service_id', override = '$override' WHERE id = $id", $title, $start, $end, $description));
-			$wpdb->query("UPDATE {$wpdb->prefix}sb_stuff SET sermon_id = 0 WHERE sermon_id = $id AND type = 'file'");
-			$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = $id AND type <> 'file'");
+			Sermon::update($id, [
+				'title' => $title,
+				'preacher_id' => $preacher_id,
+				'datetime' => $date,
+				'series_id' => $series_id,
+				'start' => $start,
+				'end' => $end,
+				'description' => $description,
+				'time' => $time,
+				'service_id' => $service_id,
+				'override' => $override,
+			]);
+			File::unlinkFromSermon($id);
+			File::deleteNonFilesBySermon($id);
 		}
 		// deal with books
 		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_books_sermons WHERE sermon_id = $id;");
@@ -1300,7 +1500,7 @@ function sb_new_sermon_legacy() {
 		// now previously uploaded files
 		foreach ($_POST['file'] as $uid => $file) {
 			if ($file != 0)
-				$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_stuff SET sermon_id = $id WHERE id = %s;", sanitize_file_name($file)));
+				File::linkToSermon((int) sanitize_file_name($file), $id);
 			elseif ($_FILES['upload']['error'][$uid] == UPLOAD_ERR_OK) {
 				$filename = basename($_FILES['upload']['name'][$uid]);
 				if (IS_MU) {
@@ -1316,9 +1516,9 @@ function sb_new_sermon_legacy() {
 				if ($file_allowed) {
 					$prefix = '';
 					$dest = SB_ABSPATH.sb_get_option('upload_dir').$prefix.$filename;
-					if ($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sb_stuff WHERE name = '".esc_sql($filename)."'") == 0 && move_uploaded_file($_FILES['upload']['tmp_name'][$uid], $dest)) {
+					if (!File::existsByName($filename) && move_uploaded_file($_FILES['upload']['tmp_name'][$uid], $dest)) {
 						$filename = $prefix.$filename;
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'file', %s, $id, 0, 0)", $filename));
+						File::create(['type' => 'file', 'name' => $filename, 'sermon_id' => $id, 'count' => 0, 'duration' => 0]);
 					} else {
 						echo '<div id="message" class="updated fade"><p><b>'.$filename.__(' already exists.', 'sermon-browser').'</b></div>';
 						$error = true;
@@ -1333,7 +1533,7 @@ function sb_new_sermon_legacy() {
 		// then URLs
 		foreach ((array) $_POST['url'] as $urlz) {
 			if (!empty($urlz)) {
-				$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES(null, 'url', %s, $id, 0, 0);", esc_url($urlz)));
+				File::create(['type' => 'url', 'name' => esc_url($urlz), 'sermon_id' => $id, 'count' => 0, 'duration' => 0]);
 			}
 		}
 		// embed code next
@@ -1342,20 +1542,18 @@ function sb_new_sermon_legacy() {
                 $embed_allowedposttags = $allowedposttags;
                 $embed_allowedposttags ['iframe'] = array ('width' => true, 'height' => true, 'src' => true, 'frameborder' => true, 'allowfullscreen' => true, 'style' => true, 'name' => true, 'id' => true, 'align' => true, 'sandbox' => true, 'srcdoc' => true);
 				$code = base64_encode(wp_kses(stripslashes($code), $embed_allowedposttags));
-				$wpdb->query("INSERT INTO {$wpdb->prefix}sb_stuff VALUES(null, 'code', '$code', $id, 0, 0)");
+				File::create(['type' => 'code', 'name' => $code, 'sermon_id' => $id, 'count' => 0, 'duration' => 0]);
 			}
 		}
 		// tags
 		$tags = explode(',', $_POST['tags']);
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_sermons_tags WHERE sermon_id = $id;");
+		Tag::detachAllFromSermon($id);
 		foreach ($tags as $tag) {
 			$clean_tag = sanitize_text_field($tag);
-			$existing_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sb_tags WHERE name=%s",$clean_tag));
-			if (is_null($existing_id)) {
-				$wpdb->query($wpdb->prepare("INSERT  INTO {$wpdb->prefix}sb_tags VALUES (null, %s)",$clean_tag));
-				$existing_id = $wpdb->insert_id;
+			if (!empty($clean_tag)) {
+				$tag_id = Tag::findOrCreate($clean_tag);
+				Tag::attachToSermon($id, $tag_id);
 			}
-			$wpdb->query("INSERT INTO {$wpdb->prefix}sb_sermons_tags VALUES (null, $id, $existing_id)");
 		}
 		sb_delete_unused_tags();
 		// everything is fine, get out of here!
@@ -1367,7 +1565,7 @@ function sb_new_sermon_legacy() {
 
 	$id3_tags = array();
 	if (isset($_GET['getid3'])) {
-		$file_data = $wpdb->get_row($wpdb->prepare("SELECT name, type FROM {$wpdb->prefix}sb_stuff WHERE id = %s", $_GET['getid3']));
+		$file_data = File::find((int) $_GET['getid3']);
 		if ($file_data !== null) {
 			if (!class_exists('getID3')) {
 			    require(ABSPATH.WPINC.'/ID3/getid3.php' );
@@ -1410,10 +1608,11 @@ function sb_new_sermon_legacy() {
 			if (sb_get_option ('import_album')) {
 				$id3_tags['series'] = @$id3_raw_tags['comments_html']['album'][0];
 				if ($id3_tags['series'] != '') {
-					$series_id = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}sb_series WHERE name LIKE '{$id3_tags['series']}'");
-					if ($series_id === null) {
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_series VALUES (null, %s, '0')", $id3_tags['series']));
-						$series_id = $wpdb->insert_id;
+					$existing = Series::findByName($id3_tags['series']);
+					if ($existing === null) {
+						$series_id = Series::create(['name' => $id3_tags['series'], 'page_id' => 0]);
+					} else {
+						$series_id = $existing->id;
 					}
 					$id3_tags['series'] = $series_id;
 				}
@@ -1421,10 +1620,11 @@ function sb_new_sermon_legacy() {
 			if (sb_get_option ('import_artist')) {
 				$id3_tags['preacher'] = @$id3_raw_tags['comments_html']['artist'][0];
 				if ($id3_tags['preacher'] != '') {
-					$preacher_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sb_preachers WHERE name LIKE %s", $id3_tags['preacher']));
-					if ($preacher_id === null) {
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_preachers VALUES (null, %s, '', '')", $id3_tags['preacher']));
-						$preacher_id = $wpdb->insert_id;
+					$existing = Preacher::findByName($id3_tags['preacher']);
+					if ($existing === null) {
+						$preacher_id = Preacher::create(['name' => $id3_tags['preacher'], 'description' => '', 'image' => '']);
+					} else {
+						$preacher_id = $existing->id;
 					}
 					$id3_tags['preacher'] = $preacher_id;
 				}
@@ -1449,10 +1649,10 @@ function sb_new_sermon_legacy() {
 	}
 
 	// load existing data
-	$preachers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_preachers ORDER BY name asc");
-	$services = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_services ORDER BY name asc");
-	$series = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_series ORDER BY name asc");
-	$files = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = 0 AND type = 'file' ORDER BY name asc");
+	$preachers = Preacher::findAllSorted();
+	$services = Service::findAllSorted();
+	$series = Series::findAllSorted();
+	$files = File::findUnlinked();
 
 	// sync
 	$wanted[] = -1;
@@ -1475,11 +1675,11 @@ function sb_new_sermon_legacy() {
 
 	if (isset($_GET['mid'])) {
 		$mid = (int) $_GET['mid'];
-		$curSermon = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}sb_sermons WHERE id = $mid");
-		$files = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_stuff WHERE sermon_id IN (0, $mid) AND type = 'file' ORDER BY name asc");
+		$curSermon = Sermon::find($mid);
+		$files = File::findBySermonOrUnlinked($mid);
 		$startArr = unserialize($curSermon->start);
 		$endArr = unserialize($curSermon->end);
-		$rawtags = $wpdb->get_results("SELECT t.name FROM {$wpdb->prefix}sb_sermons_tags as st LEFT JOIN {$wpdb->prefix}sb_tags as t ON st.tag_id = t.id WHERE st.sermon_id = $mid ORDER BY t.name asc");
+		$rawtags = Tag::findBySermon($mid);
 		$tags = array();
 		foreach ($rawtags as $tag) {
 			$tags[] = $tag->name;
@@ -1814,9 +2014,9 @@ function sb_new_sermon_legacy() {
 
 			<?php
 				if (isset($mid)) {
-					$assocFiles = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'file' ORDER BY name asc;");
-					$assocURLs = $wpdb->get_results("SELECT name FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'url' ORDER BY name asc;");
-					$assocCode = $wpdb->get_results("SELECT name FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'code' ORDER BY name asc;");
+					$assocFiles = File::findBySermonAndType($mid, 'file');
+					$assocURLs = File::findBySermonAndType($mid, 'url');
+					$assocCode = File::findBySermonAndType($mid, 'code');
 				}
 				else
 					{$assocFiles = $assocURLs = $assocCode = array();}
@@ -1918,30 +2118,118 @@ function sb_new_sermon_legacy() {
 /**
 * Displays the help page
 */
-/**
- * Display the help page.
- *
- * Wrapper function for backward compatibility.
- * Delegates to HelpPage class.
- *
- * @since 0.6.0 Refactored to use HelpPage class.
- */
 function sb_help() {
-    $page = new \SermonBrowser\Admin\Pages\HelpPage();
-    $page->render();
+sb_do_alerts();
+?>
+	<div class="wrap">
+		<a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+		<div style="width:45%;float:right;clear:right">
+		<h2>Thank you</h2>
+		<p>A number of individuals and churches have kindly <a href="http://www.sermonbrowser.com/donate/">donated</a> to the development of Sermon Browser. Their support is very much appreciated. Since April 2011, all donations have been sent to <a href="<?php echo admin_url('admin.php?page=sermon-browser/japan.php')?>">support the ministry of Nathanael and Anna Ayling</a> in Japan.</p>
+		<ul style="list-style-type:circle; margin-left: 2em">
+			<li><a href="http://www.cambray.org/" target="_blank">Cambray Baptist Church</a>, UK</li>
+			<li><a href="https://www.bethel-clydach.co.uk/" target="_blank">Bethel Evangelical Church</a>, Clydach, UK</li>
+			<li><a href="http://www.bethel-laleston.co.uk/" target="_blank">Bethel Baptist Church</a>, Laleston, UK</li>
+			<li><a href="http://www.hessonchurch.com/" target="_blank">Hesson Christian Fellowship</a>, Ontario, Canada</li>
+			<li><a href="http://www.icvineyard.org/" target="_blank">Vineyard Community Church</a>, Iowa</li>
+			<li><a href="http://www.cbcsd.us/" target="_blank">Chinese Bible Church of San Diego</a>, California</li>
+			<li><a href="http://thecreekside.org/" target="_blank">Creekside Community Church</a>, Texas</li>
+			<li><a href="http://stluke.info/" target="_blank">St. Luke Lutheran Church, Gales Ferry</a>, Connecticut</li>
+			<li><a href="http://www.bunnbaptistchurch.org/" target="_blank">Bunn Baptist Church</a>, North Carolina</li>
+			<li><a href="http://www.ccpconline.org" target="_blank">Christ Community Presbyterian Church</a>, Florida</li>
+			<li><a href="http://www.harborhawaii.org" target="_blank">Harbor Church</a>, Hawaii</li>
+			<li>Vicky H, UK</li>
+			<li>Ben S, UK</li>
+			<li>Tom W, UK</li>
+			<li>Gavin D, UK</li>
+			<li>Douglas C, UK</li>
+			<li>David A, UK</li>
+			<li>Thomas C, Canada</li>
+			<li>Daniel J, Germany</li>
+			<li>Hiromi O, Japan</li>
+			<li>David C, Australia</li>
+			<li>Lou B, Australia</li>
+			<li>Edward P, Delaware</li>
+			<li>Steve J, Pensylvania</li>
+			<li>William H, Indiana</li>
+			<li>Brandon E, New Jersey</li>
+			<li>Jamon A, Missouri</li>
+			<li>Chuck H, Tennessee</li>
+			<li>David F, Maryland</li>
+			<li>Antony L, California</li>
+			<li>David W, Florida</li>
+			<li>Fabio P, Connecticut</li>
+			<li>Bill C, Georgia</li>
+			<li>Scott J, Florida</li>
+			<li><a href="http://www.emw.org.uk/" target="_blank">Evangelical Movement of Wales</a>, UK</li>
+			<li><a href="http://BetterCommunication.org" target="_blank">BetterCommunication.org</a></li>
+			<li>Home and Outdoor Living, Indiana</li>
+			<li><a href="http://design.ddandhservices.com/" target="_blank">DD&H Services</a>, British Columbia</li>
+			<li><a href="http://www.dirtroadphotography.com" target="_blank">Dirt Road Photography</a>, Nebraska</li>
+			<li><a href="http://www.hardeysolutions.com/" target="_blank">Hardey Solutions</a>, Houston</li>
+			<li><a href="http://www.olivetreehost.com/" target="_blank">Olivetreehost.com</a></li>
+			<li><a href="http://www.onQsites.com/" target="_blank">onQsites</a>, South Carolina</li>
+			<li>Glorified Web Solutions</li>
+		</ul>
+		<p>Additional help was also received from:</p>
+		<ul style="list-style-type:circle; margin-left: 2em">
+			<li><a href="http://codeandmore.com/">Tien Do Xuan</a> (help with initial coding).
+			<li>James Hudson, Matthew Hiatt, Mark Bouchard (code contributions)</li>
+			<li>Juan Carlos and Marvin Ortega (Spanish translation)</li>
+			<li><a href="http://www.fatcow.com/">FatCow</a> (Russian translation)</li>
+			<li><a href="http://intercer.net/">Lucian Mihailescu</a> (Romanian translation)</li>
+			<li>Monika Gause (German translation)</li>
+			<li><a href="http://www.djio.com.br/sermonbrowser-em-portugues-brasileiro-pt_br/">DJIO</a> (Brazilian Portugese translation)</li>
+			<li>Numerous <a href="http://www.sermonbrowser.com/forum/">forum contributors</a> for feature suggestions and bug reports</li>
+		</ul>
+	</div>
+		<div style="width:45%;float:left">
+		<h2><?php _e('Help page', 'sermon-browser') ?></h2>
+		<h3>Screencasts</h3>
+		<p>If you need help with using SermonBrowser for the first time, these five minute screencast tutorials should be your first port of call (the tutorials were created with an older version of SermonBrowser, and an older version of Wordpress, but things haven't changed a great deal):</p>
+		<ul>
+			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-1" target="_blank">Installation and Overview</a></li>
+			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-2" target="_blank">Basic Options</a></li>
+			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-3" target="_blank">Preachers, Series and Services</a></li>
+			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-4" target="_blank">Entering a new sermon</a></li>
+			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-5" target="_blank">Editing a sermon and adding embedded video</a></li>
+		</ul>
+		<h3>Template tags</h3>
+		<p>If you want to change the way SermonBrowser displays on your website, you'll need to edit the templates and/or CSS file. Check out this guide to <a href="http://www.sermonbrowser.com/customisation/" target="_blank">template tags</a>.</p>
+		<h3>Shortcode</h3>
+		<p>You can put individual sermons or lists of sermons on any page of your website. You do this by adding a <a href="http://www.sermonbrowser.com/customisation/" target="_blank">shortcode</a> into a WordPress post or page.</p>
+		<h3>Frequently asked questions</h3>
+		<p>A <a href="http://www.sermonbrowser.com/faq/" target="_blank">comprehensive FAQ</a> is available on sermonbrowser.com.</p>
+		<h3>Further help</h3>
+		<p>If you have a problem that the FAQ doesn't answer, or you have a feature suggestion, please use the <a href="http://www.sermonbrowser.com/forum/" target="_blank">SermonBrowser forum</a>.</p>
+		</div>
+	</form>
+<?php
 }
 
-/**
- * Display the Japan ministry support page.
- *
- * Wrapper function for backward compatibility.
- * Delegates to HelpPage class.
- *
- * @since 0.6.0 Refactored to use HelpPage class.
- */
 function sb_japan() {
-    $page = new \SermonBrowser\Admin\Pages\HelpPage();
-    $page->renderJapan();
+sb_do_alerts();
+?>
+	<div class="wrap">
+		<a href="hthttp://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+		<h2 style=>Help support Christian ministry in Japan</h2>
+		<div style="width:533px; float:left">
+			<iframe src="http://player.vimeo.com/video/19995544?title=0&amp;byline=0&amp;portrait=0" width="533" height="300" frameborder="0"></iframe>
+		</div>
+		<div style="margin-left:553px;">
+			<p>Since April 2011, all gifts donated to Sermon Browser have been given to support the work of <a href="https://www.bethel-clydach.co.uk/about/mission-partners/nathanael-and-anna-ayling/">Nathanael and Anna Ayling</a> in Japan.
+		 	Nathanael and Anna are members of a small church in the UK where the the author of Sermon Browser is a minister. Together with little Ethan, they have been in Japan since April 2010, and are based in Sappororo in the north,
+		 	undergoing intensive language training so that by God's grace they can work alongside Japanese Christians to make disciples of Jesus among Japanese students. They are being cared for by <a href="http://www.omf.org/omf/japan/about_us">OMF International</a> (formerly known as the China Inland Mission, and founded by
+		 	Hudson Taylor in 1865).</p>
+		 	<p>If you value Sermon Browser, please consider supporting Nathanael and Anna. You can do this by:</p>
+		 	<ul>
+		 		<li><a href="http://ateamjapan.wordpress.com/">Looking at their blog</a>, and praying about their latest news.</li>
+		 		<li><a href="http://www.omf.org/omf/uk/omf_at_work/pray_for_omf_workers">Signing up</a> to receiving their regular prayer news.</li>
+		 		<li><form style="float:left" action="https://www.paypal.com/cgi-bin/webscr" method="post"><input type="hidden" name="cmd" value="_s-xclick" /><input type="hidden" name="hosted_button_id" value="YTB9ZW4P5F536" /><input type="image" src="https://www.paypalobjects.com/WEBSCR-640-20110429-1/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!" /><img alt="" border="0" src="https://www.paypalobjects.com/WEBSCR-640-20110429-1/en_GB/i/scr/pixel.gif" width="1" height="1" /></form> towards their ongoing support.</li>
+		 	</ul>
+		</div>
+	</div>
+<?php
 }
 /***************************************
  ** Supplementary functions           **
@@ -1981,21 +2269,20 @@ function sb_build_textarea($name, $html) {
 */
 function sb_rightnow () {
 	global $wpdb;
-	$file_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_stuff WHERE type='file'");
+	$file_count = File::countByType('file');
 	$output_string = '';
 	if ($file_count > 0) {
-		$sermon_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_sermons");
-		$preacher_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_preachers");
-		$series_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_series");
-		$tag_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_tags WHERE name<>''");
-		$download_count = $wpdb->get_var("SELECT SUM(count) FROM ".$wpdb->prefix."sb_stuff");
+		$sermon_count = Sermon::count();
+		$preacher_count = Preacher::count();
+		$series_count = Series::count();
+		$tag_count = Tag::countNonEmpty();
+		$download_count = File::getTotalDownloads();
 		if ($sermon_count == 0) {
 			$download_average = 0;
 		} else {
 			$download_average = round($download_count/$sermon_count, 1);
 		}
-		$most_popular = $wpdb->get_results("SELECT title, sermon_id, sum(count) AS c FROM {$wpdb->prefix}sb_stuff LEFT JOIN {$wpdb->prefix}sb_sermons ON {$wpdb->prefix}sb_sermons.id = sermon_id GROUP BY sermon_id ORDER BY c DESC LIMIT 1");
-		$most_popular = $most_popular[0];
+		$most_popular = File::getMostPopularSermon();
 		$output_string .= '<p class="youhave">'.__("You have")." ";
 		$output_string .= '<a href="'.admin_url('admin.php?page=sermon-browser/files.php').'">';
 		$output_string .= sprintf(_n('%s file', '%s files', $file_count), number_format($file_count))."</a> ";
@@ -2039,7 +2326,7 @@ function sb_rightnow () {
 function sb_dashboard_glance( $items ) {
 	global $wpdb;
 
-	$sermon_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}sb_sermons" );
+	$sermon_count = Sermon::count();
 
 	if ( $sermon_count > 0 ) {
 		$text = sprintf(
@@ -2060,22 +2347,19 @@ function sb_dashboard_glance( $items ) {
 * Find new files uploaded by FTP
 */
 function sb_scan_dir() {
-	global $wpdb;
-    $wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE type = 'file' AND name = '' AND sermon_id=0");
-	$files = $wpdb->get_results("SELECT name FROM {$wpdb->prefix}sb_stuff WHERE type = 'file';");
-	$bnn = array();
+	File::deleteEmptyUnlinked();
+	$fileNames = File::findAllFileNames();
 	$dir = SB_ABSPATH.sb_get_option('upload_dir');
-	foreach ($files as $file) {
-		$bnn[] = $file->name;
-		if (!file_exists($dir.$file->name)) {
-			$wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}sb_stuff WHERE name=%s AND sermon_id=0", $file->name));
+	foreach ($fileNames as $fileName) {
+		if (!file_exists($dir.$fileName)) {
+			File::deleteUnlinkedByName($fileName);
 		}
 	}
 
 	if ($dh = @opendir($dir)) {
 		while (false !== ($file = readdir($dh))) {
-			if ($file != "." && $file != ".." && !is_dir($dir.$file) && !in_array($file, $bnn)) {
-				$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'file', %s, 0, 0, 0);", $file));
+			if ($file != "." && $file != ".." && !is_dir($dir.$file) && !in_array($file, $fileNames)) {
+				File::create(['type' => 'file', 'name' => $file, 'sermon_id' => 0, 'count' => 0, 'duration' => 0]);
 			   }
 		}
 		   closedir($dh);
@@ -2112,11 +2396,7 @@ function sb_checkSermonUploadable($foldername = "") {
 * Delete any unused tags
 */
 function sb_delete_unused_tags() {
-	global $wpdb;
-	$unused_tags = $wpdb->get_results("SELECT {$wpdb->prefix}sb_tags.id AS id, {$wpdb->prefix}sb_sermons_tags.id AS sid FROM {$wpdb->prefix}sb_tags LEFT JOIN {$wpdb->prefix}sb_sermons_tags ON {$wpdb->prefix}sb_tags.id = {$wpdb->prefix}sb_sermons_tags.tag_id WHERE {$wpdb->prefix}sb_sermons_tags.tag_id IS NULL");
-	if (is_array($unused_tags))
-		{foreach ($unused_tags AS $unused_tag)
-			{$wpdb->query("DELETE FROM {$wpdb->prefix}sb_tags WHERE id='{$unused_tag->id}'");}}
+	Tag::deleteUnused();
 }
 
 /**
@@ -2198,7 +2478,7 @@ function sb_print_upload_form () {
 			<td>
 				<select name="getid3">
 					<?php
-						$files = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = 0 AND type = 'file' ORDER BY name asc");
+						$files = File::findUnlinked();
 						echo count($files) == 0 ? '<option value="0">No files found</option>' : '<option value="0"></option>';
 						foreach ($files as $file) { ?>
 							<option value="<?php echo $file->id ?>"><?php echo $file->name ?></option>
