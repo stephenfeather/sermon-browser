@@ -187,12 +187,47 @@ $sermon = $this->sermonRepository->find($id);
 ## Phase 2: Split Monolithic Files
 
 ### Goals
-- Break `admin.php` (2,540 lines) into focused class files
+- ~~Break `admin.php` (2,540 lines) into focused class files~~ ✅ Classes created
 - Restructure `sermon.php` (928 lines) as a thin bootstrap
 - Establish clear Single Responsibility Principle boundaries
 - Enable better testing and maintenance
 
-### Current State
+### Completed Work (as of 2026-01-30)
+
+| Commit | Date | Change | Files |
+|--------|------|--------|-------|
+| `7e2e7c4` | Jan 30 | Original extraction (lost in PR #8 merge) | 11 files |
+| `7dbe8ce` | Jan 30 | **Recovered Page classes** | **11 files, 4,642 lines** |
+
+**Files created:**
+```
+src/
+  Plugin.php                         # Bootstrap class (153 lines)
+  Admin/
+    AdminController.php              # Menu registration (328 lines)
+    Pages/
+      FilesPage.php                  # sb_files() (573 lines)
+      HelpPage.php                   # sb_help() (192 lines)
+      OptionsPage.php                # sb_options() (791 lines)
+      PreachersPage.php              # sb_manage_preachers() (447 lines)
+      SeriesServicesPage.php         # sb_manage_everything() (362 lines)
+      SermonEditorPage.php           # sb_new_sermon() (1,155 lines)
+      SermonsPage.php                # sb_manage_sermons() (395 lines)
+      TemplatesPage.php              # sb_templates() (125 lines)
+      UninstallPage.php              # sb_uninstall() (121 lines)
+```
+
+### Remaining Work
+
+| Task | Priority | Status |
+|------|----------|--------|
+| Wire admin.php functions to Page classes | High | Not started |
+| Update sermon.php to use Plugin::boot() | Medium | Not started |
+| Add tests for Page classes | Medium | Not started |
+
+### Current State (Partial)
+
+**admin.php still contains full implementations** - wrapper functions need to delegate to Page classes.
 
 **admin.php contains 24 functions (VERIFIED):**
 
