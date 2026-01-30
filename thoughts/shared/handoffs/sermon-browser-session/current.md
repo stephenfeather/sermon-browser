@@ -15,7 +15,7 @@ status: active
 **Test:** `docker-compose up -d` then http://localhost:8080
 
 ### Now
-[→] **Phase 4 REST API COMPLETE** - Ready to commit and proceed to Phase 5 or 6
+[→] **Phase 2 RECOVERY NEEDED** - Work was lost in PR #8 merge, cherry-pick 7e2e7c4 and resolve conflicts
 
 ### Active Handoffs
 - **Phase 2 Worktree:** `feature/phase2-admin-split` branch
@@ -35,9 +35,10 @@ status: active
 ### v0.6.0 Architecture Refactoring (per refactor-master-plan.md)
 - [x] **Phase 1:** Repository Layer ✓ COMPLETE
   - Container, Facades, 7 Repositories, 57 tests passing
-- [~] **Phase 2:** Split Monolithic Files - IN PROGRESS (worktree)
-  - Branch: `feature/phase2-admin-split`
-  - Extracting admin.php → `src/Admin/Pages/*.php`
+- [!] **Phase 2:** Split Monolithic Files - LOST IN MERGE
+  - Work was merged in PR #7 but lost in PR #8 merge
+  - Cherry-pick commit `7e2e7c4` and resolve conflicts
+  - 11 files to recover (4,489 lines total)
 - [~] **Phase 3:** JS Modernization - ~60% COMPLETE
   - ✅ Removed legacy JS files (673 lines) - commit `e3f92d3`
   - ✅ Added ESLint 9 config

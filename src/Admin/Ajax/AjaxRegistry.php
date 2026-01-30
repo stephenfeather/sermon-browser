@@ -66,6 +66,8 @@ class AjaxRegistry
         $this->addHandler(new SeriesAjax());
         $this->addHandler(new ServiceAjax());
         $this->addHandler(new FileAjax());
+        $this->addHandler(new SermonPaginationAjax());
+        $this->addHandler(new FilePaginationAjax());
     }
 
     /**

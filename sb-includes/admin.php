@@ -32,13 +32,25 @@ function sb_add_admin_headers() {
 			true
 		);
 
-		// Localize nonces for AJAX handlers.
+		// Localize nonces and i18n for AJAX handlers.
 		wp_localize_script('sb-admin-ajax', 'sbAjaxSettings', array(
 			'ajaxUrl'       => admin_url('admin-ajax.php'),
 			'preacherNonce' => wp_create_nonce('sb_preacher_nonce'),
 			'seriesNonce'   => wp_create_nonce('sb_series_nonce'),
 			'serviceNonce'  => wp_create_nonce('sb_service_nonce'),
 			'fileNonce'     => wp_create_nonce('sb_file_nonce'),
+			'sermonNonce'   => wp_create_nonce('sb_sermon_nonce'),
+			'i18n'          => array(
+				'edit'          => __('Edit', 'sermon-browser'),
+				'delete'        => __('Delete', 'sermon-browser'),
+				'view'          => __('View', 'sermon-browser'),
+				'rename'        => __('Rename', 'sermon-browser'),
+				'createSermon'  => __('Create sermon', 'sermon-browser'),
+				'noResults'     => __('No results', 'sermon-browser'),
+				'confirmDelete' => __('Are you sure?', 'sermon-browser'),
+				'previous'      => __('&laquo; Previous', 'sermon-browser'),
+				'next'          => __('Next &raquo;', 'sermon-browser'),
+			),
 		));
 	}
 	if (isset($_REQUEST['page']) && $_REQUEST['page'] == 'sermon-browser/new_sermon.php') {
@@ -1067,49 +1079,49 @@ function sb_files() {
 				});
 			});
 		}
-		function fetchU(st) {
-			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/uploads.php'); ?>', {fetchU: st + 1, sermon: 1}, function(r) {
-				if (r) {
-					jQuery('#the-list-u').html(r);
-					if (st >= <?php echo sb_get_option('sermons_per_page') ?>) {
-						x = st - <?php echo sb_get_option('sermons_per_page') ?>;
-						jQuery('#uleft').html('<a href="javascript:fetchU(' + x + ')">&laquo; <?php _e('Previous', 'sermon-browser') ?></a>');
+		var currentUnlinkedPage = 1;
+		var currentLinkedPage = 1;
+		function fetchU(page) {
+			if (typeof page === 'undefined') page = 1;
+			SBAdmin.filePagination.unlinked(page).done(function(response) {
+				SBAdmin.handleResponse(response, function(data) {
+					currentUnlinkedPage = data.page;
+					if (data.items.length > 0) {
+						jQuery('#the-list-u').html(SBAdmin.filePagination.renderRows(data.items));
 					} else {
-						jQuery('#uleft').html('');
+						jQuery('#the-list-u').html(SBAdmin.filePagination.renderNoResults());
 					}
-					if (st + <?php echo sb_get_option('sermons_per_page') ?> <= <?php echo $cntu ?>) {
-						y = st + <?php echo sb_get_option('sermons_per_page') ?>;
-						jQuery('#uright').html('<a href="javascript:fetchU(' + y + ')"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
-					} else {
-						jQuery('#uright').html('');
-					}
-				};
+					jQuery('#uleft').html(data.has_prev ? '<a href="javascript:fetchU(' + (data.page - 1) + ')">' + SBAdmin.i18n.previous + '</a>' : '');
+					jQuery('#uright').html(data.has_next ? '<a href="javascript:fetchU(' + (data.page + 1) + ')">' + SBAdmin.i18n.next + '</a>' : '');
+				});
 			});
 		}
-		function fetchL(st) {
-			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>', {fetchL: st + 1, sermon: 1}, function(r) {
-				if (r) {
-					jQuery('#the-list-l').html(r);
-					if (st >= <?php echo sb_get_option('sermons_per_page') ?>) {
-						x = st - <?php echo sb_get_option('sermons_per_page') ?>;
-						jQuery('#left').html('<a href="javascript:fetchL(' + x + ')">&laquo; <?php _e('Previous', 'sermon-browser') ?></a>');
+		function fetchL(page) {
+			if (typeof page === 'undefined') page = 1;
+			SBAdmin.filePagination.linked(page).done(function(response) {
+				SBAdmin.handleResponse(response, function(data) {
+					currentLinkedPage = data.page;
+					if (data.items.length > 0) {
+						jQuery('#the-list-l').html(SBAdmin.filePagination.renderRows(data.items));
 					} else {
-						jQuery('#left').html('');
+						jQuery('#the-list-l').html(SBAdmin.filePagination.renderNoResults());
 					}
-					if (st + <?php echo sb_get_option('sermons_per_page') ?> <= <?php echo $cntl ?>) {
-						y = st + <?php echo sb_get_option('sermons_per_page') ?>;
-						jQuery('#right').html('<a href="javascript:fetchL(' + y + ')"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
-					} else {
-						jQuery('#right').html('');
-					}
-				};
+					jQuery('#left').html(data.has_prev ? '<a href="javascript:fetchL(' + (data.page - 1) + ')">' + SBAdmin.i18n.previous + '</a>' : '');
+					jQuery('#right').html(data.has_next ? '<a href="javascript:fetchL(' + (data.page + 1) + ')">' + SBAdmin.i18n.next + '</a>' : '');
+				});
 			});
 		}
 		function findNow() {
-			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>', {search: jQuery('#search').val(), sermon: 1}, function(r) {
-				if (r) {
-					jQuery('#the-list-s').html(r);
-				};
+			var searchTerm = jQuery('#search').val();
+			if (!searchTerm) return;
+			SBAdmin.filePagination.search(searchTerm).done(function(response) {
+				SBAdmin.handleResponse(response, function(data) {
+					if (data.items.length > 0) {
+						jQuery('#the-list-s').html(SBAdmin.filePagination.renderRows(data.items));
+					} else {
+						jQuery('#the-list-s').html(SBAdmin.filePagination.renderNoResults());
+					}
+				});
 			});
 		}
 	</script>
@@ -1297,23 +1309,24 @@ function sb_manage_sermons() {
 	$series = Series::findAllSorted();
 ?>
 	<script>
-		function fetch(st) {
-			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {fetch: st + 1, sermon: 1, title: jQuery('#search').val(), preacher: jQuery('#preacher').val(), series: jQuery('#series').val() }, function(r) {
-				if (r) {
-					jQuery('#the-list').html(r);
-					if (st >= <?php echo sb_get_option('sermons_per_page') ?>) {
-						x = st - <?php echo sb_get_option('sermons_per_page') ?>;
-						jQuery('#left').html('<a href="javascript:fetch(' + x + ')">&laquo; Previous</a>');
+		var currentSermonPage = 1;
+		function fetch(page) {
+			if (typeof page === 'undefined') page = 1;
+			SBAdmin.sermon.list(page, {
+				title: jQuery('#search').val(),
+				preacher: jQuery('#preacher').val(),
+				series: jQuery('#series').val()
+			}).done(function(response) {
+				SBAdmin.handleResponse(response, function(data) {
+					currentSermonPage = data.page;
+					if (data.items.length > 0) {
+						jQuery('#the-list').html(SBAdmin.sermon.renderRows(data.items));
 					} else {
-						jQuery('#left').html('');
+						jQuery('#the-list').html('<tr><td colspan="8">' + SBAdmin.i18n.noResults + '</td></tr>');
 					}
-					if (st + <?php echo sb_get_option('sermons_per_page') ?> <= <?php echo $cnt ?>) {
-						y = st + <?php echo sb_get_option('sermons_per_page') ?>;
-						jQuery('#right').html('<a href="javascript:fetch(' + y + ')">Next &raquo;</a>');
-					} else {
-						jQuery('#right').html('');
-					}
-				};
+					jQuery('#left').html(data.has_prev ? '<a href="javascript:fetch(' + (data.page - 1) + ')">' + SBAdmin.i18n.previous + '</a>' : '');
+					jQuery('#right').html(data.has_next ? '<a href="javascript:fetch(' + (data.page + 1) + ')">' + SBAdmin.i18n.next + '</a>' : '');
+				});
 			});
 		}
 	</script>
