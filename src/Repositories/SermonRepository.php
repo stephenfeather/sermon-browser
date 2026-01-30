@@ -202,6 +202,13 @@ class SermonRepository extends AbstractRepository
             WHERE 1=1";
 
         // Apply filters
+        if (!empty($filter['title'])) {
+            $sql .= $this->db->prepare(
+                ' AND s.title LIKE %s',
+                '%' . $this->db->esc_like($filter['title']) . '%'
+            );
+        }
+
         if (!empty($filter['preacher_id']) && (int) $filter['preacher_id'] !== 0) {
             $sql .= $this->db->prepare(' AND s.preacher_id = %d', (int) $filter['preacher_id']);
         }
@@ -214,7 +221,7 @@ class SermonRepository extends AbstractRepository
             $sql .= $this->db->prepare(' AND s.service_id = %d', (int) $filter['service_id']);
         }
 
-        $sql .= ' ORDER BY s.datetime DESC';
+        $sql .= ' ORDER BY s.datetime DESC, srv.time DESC';
 
         if ($limit > 0) {
             $sql .= $this->db->prepare(' LIMIT %d OFFSET %d', $limit, $offset);
@@ -236,6 +243,13 @@ class SermonRepository extends AbstractRepository
         $table = $this->getTableName();
 
         $sql = "SELECT COUNT(*) FROM {$table} WHERE 1=1";
+
+        if (!empty($filter['title'])) {
+            $sql .= $this->db->prepare(
+                ' AND title LIKE %s',
+                '%' . $this->db->esc_like($filter['title']) . '%'
+            );
+        }
 
         if (!empty($filter['preacher_id']) && (int) $filter['preacher_id'] !== 0) {
             $sql .= $this->db->prepare(' AND preacher_id = %d', (int) $filter['preacher_id']);

@@ -9,13 +9,13 @@ status: active
 
 ## Ledger
 <!-- This section is extracted by SessionStart hook for quick resume -->
-**Updated:** 2026-01-30T16:30:00Z
+**Updated:** 2026-01-30T19:00:00Z
 **Goal:** Update Sermon Browser plugin for modern WordPress compatibility
 **Branch:** develop (main = release only)
 **Test:** `docker-compose up -d` then http://localhost:8080
 
 ### Now
-[→] **Phase 2 work in worktree** - Check `feature/phase2-admin-split` at `/Users/stephenfeather/Development/sermon-browser-phase2`
+[→] **Phase 4 REST API COMPLETE** - Ready to commit and proceed to Phase 5 or 6
 
 ### Active Handoffs
 - **Phase 2 Worktree:** `feature/phase2-admin-split` branch
@@ -43,7 +43,10 @@ status: active
   - ✅ Added ESLint 9 config
   - ⏸️ Build pipeline (@wordpress/scripts) - deferred to Phase 5
   - ⏸️ Inline JS extraction (~360 lines) - deferred to Phase 5
-- [ ] **Phase 4:** REST API
+- [x] **Phase 4:** REST API ✓ COMPLETE
+  - 9 REST files: RestController, RestApiRegistry, 7 endpoint controllers
+  - Endpoints: /sermons, /preachers, /series, /services, /files, /tags, /search
+  - 167 new tests (240 total, 650 assertions)
 - [ ] **Phase 5:** Gutenberg Blocks (triggers remaining Phase 3 work)
 - [ ] **Phase 6:** Remove eval() Templates
 

@@ -23,6 +23,8 @@
  * @method static array findByDateRange(string $startDate, string $endDate, int $limit = 0)
  * @method static object|null findWithRelations(int $id)
  * @method static array findAllWithRelations(array $filter = [], int $limit = 0, int $offset = 0)
+ * @method static int countFiltered(array $filter = [])
+ * @method static array searchByTitle(string $search, int $limit = 0)
  * @method static array findForAdminList(int $limit = 0, int $offset = 0)
  */
 

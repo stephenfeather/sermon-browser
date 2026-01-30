@@ -527,9 +527,10 @@ class FileRepository extends AbstractRepository
      * Find unlinked files with sermon title (for file management page).
      *
      * @param int $limit Maximum results (0 for all).
+     * @param int $offset Number to skip.
      * @return array<object> Array of files with title.
      */
-    public function findUnlinkedWithTitle(int $limit = 0): array
+    public function findUnlinkedWithTitle(int $limit = 0, int $offset = 0): array
     {
         $table = $this->getTableName();
         $sermonsTable = $this->db->prefix . 'sb_sermons';
@@ -540,7 +541,7 @@ class FileRepository extends AbstractRepository
                 ORDER BY f.name ASC";
 
         if ($limit > 0) {
-            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+            $sql .= $this->db->prepare(' LIMIT %d OFFSET %d', $limit, $offset);
         }
 
         $results = $this->db->get_results($sql);
@@ -552,9 +553,10 @@ class FileRepository extends AbstractRepository
      * Find linked files with sermon title (for file management page).
      *
      * @param int $limit Maximum results (0 for all).
+     * @param int $offset Number to skip.
      * @return array<object> Array of files with title.
      */
-    public function findLinkedWithTitle(int $limit = 0): array
+    public function findLinkedWithTitle(int $limit = 0, int $offset = 0): array
     {
         $table = $this->getTableName();
         $sermonsTable = $this->db->prefix . 'sb_sermons';
@@ -565,12 +567,62 @@ class FileRepository extends AbstractRepository
                 ORDER BY f.name ASC";
 
         if ($limit > 0) {
-            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+            $sql .= $this->db->prepare(' LIMIT %d OFFSET %d', $limit, $offset);
         }
 
         $results = $this->db->get_results($sql);
 
         return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Search files by name with sermon title.
+     *
+     * @param string $search The search term.
+     * @param int $limit Maximum results (0 for all).
+     * @param int $offset Number to skip.
+     * @return array<object> Array of matching files.
+     */
+    public function searchByName(string $search, int $limit = 0, int $offset = 0): array
+    {
+        $table = $this->getTableName();
+        $sermonsTable = $this->db->prefix . 'sb_sermons';
+
+        $sql = $this->db->prepare(
+            "SELECT f.*, s.title FROM {$table} AS f
+            LEFT JOIN {$sermonsTable} AS s ON f.sermon_id = s.id
+            WHERE f.name LIKE %s AND f.type = 'file'
+            ORDER BY f.name ASC",
+            '%' . $this->db->esc_like($search) . '%'
+        );
+
+        if ($limit > 0) {
+            $sql .= $this->db->prepare(' LIMIT %d OFFSET %d', $limit, $offset);
+        }
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Count files matching search term.
+     *
+     * @param string $search The search term.
+     * @return int The count.
+     */
+    public function countBySearch(string $search): int
+    {
+        $table = $this->getTableName();
+
+        $result = $this->db->get_var(
+            $this->db->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE name LIKE %s AND type = 'file'",
+                '%' . $this->db->esc_like($search) . '%'
+            )
+        );
+
+        return (int) ($result ?? 0);
     }
 
     /**

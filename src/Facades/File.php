@@ -39,8 +39,10 @@
  * @method static array findAllFileNames()
  * @method static array findBySermonOrUnlinked(int $sermonId)
  * @method static bool deleteUnlinkedByName(string $name)
- * @method static array findUnlinkedWithTitle(int $limit = 0)
- * @method static array findLinkedWithTitle(int $limit = 0)
+ * @method static array findUnlinkedWithTitle(int $limit = 0, int $offset = 0)
+ * @method static array findLinkedWithTitle(int $limit = 0, int $offset = 0)
+ * @method static array searchByName(string $search, int $limit = 0, int $offset = 0)
+ * @method static int countBySearch(string $search)
  * @method static object|null getMostPopularSermon()
  */
 
