@@ -291,14 +291,34 @@ SermonBrowser\Plugin::boot();
 ## Phase 3: Modernize JavaScript
 
 ### Goals
+- ~~Remove legacy JavaScript files~~ ✅ DONE
+- ~~Replace custom implementations with browser/WordPress built-ins~~ ✅ DONE
+- ~~Add ESLint configuration~~ ✅ DONE
 - Introduce a build pipeline (@wordpress/scripts)
 - Extract inline JavaScript to ES6+ modules
-- Enable proper dependency management
 - Prepare infrastructure for Phase 5 Gutenberg blocks
+
+### Completed Work (as of 2026-01-30)
+
+| Commit | Date | Change | Lines Removed |
+|--------|------|--------|---------------|
+| `0b3c294` | Jan 13 | Fixed SonarQube issues, added ESLint 9 config | - |
+| `22475c4` | Jan 13 | Modernized 64.js with Unicode support | - |
+| `e3f92d3` | Jan 30 | **Removed legacy JS, use native APIs** | **673 lines** |
+
+**Files removed:**
+- `sb-includes/64.js` (142 lines) → replaced with native `atob()`/`btoa()`
+- `sb-includes/datePicker.js` (431 lines) → replaced with jQuery UI Datepicker
+- `sb-includes/datepicker.css` (103 lines) → using jQuery UI CDN theme
+
+**Files added:**
+- `eslint.config.js` - ESLint 9 configuration for future JS linting
+
+**Result:** Eliminated 155 SonarQube issues and 673 lines of legacy code.
 
 ### Current State (VERIFIED 2026-01-30)
 
-**CORRECTION: No separate JS files exist.** All JavaScript is inline in PHP files:
+**No standalone JS files remain.** All JavaScript is inline in PHP files:
 
 | File | Script Blocks | Lines | Content |
 |------|---------------|-------|---------|
@@ -315,12 +335,23 @@ SermonBrowser\Plugin::boot();
 - jQuery
 - jQuery UI Datepicker
 
-**No build infrastructure:**
-- No `package.json` for frontend
-- No bundler configuration
-- Scripts loaded via `wp_enqueue_script('jquery')` and `wp_enqueue_script('jquery-ui-datepicker')`
+**Infrastructure:**
+- `eslint.config.js` exists
+- No `package.json` for frontend yet
+- No bundler configuration yet
 
-### Target State
+### Remaining Work
+
+| Task | Priority | Status |
+|------|----------|--------|
+| Set up `@wordpress/scripts` build | Medium | Not started |
+| Add `package.json` | Medium | Not started |
+| Extract inline JS to modules (~360 lines) | Low | Not started |
+| Add `wp_localize_script()` for PHP→JS data | Low | Not started |
+
+**Note:** Inline JS extraction is lower priority now that legacy files are removed. Can be done incrementally during Phase 5 (Gutenberg blocks) when build pipeline is needed.
+
+### Target State (Future)
 
 ```
 assets/
@@ -343,37 +374,36 @@ assets/
     frontend.js
     frontend.asset.php
 package.json
+eslint.config.js                   # Already exists
 ```
 
 ### Key Decisions (CONFIRMED)
 
-1. **Build tool**: ✅ **@wordpress/scripts** (not Vite)
+1. **Legacy JS removal**: ✅ **Completed** - use native browser APIs
+   - `atob()`/`btoa()` instead of custom Base64
+   - jQuery UI Datepicker (WordPress bundled) instead of custom picker
+
+2. **Build tool**: ✅ **@wordpress/scripts** (when needed for Phase 5)
    - Phase 5 adds Gutenberg blocks - wp-scripts handles this natively
    - Auto-generates `.asset.php` dependency files
-   - Handles WordPress script dependencies (`wp.i18n`, `wp.element`)
-   - Official WordPress tooling = long-term support
+   - Deferred until Gutenberg work begins
 
-2. **jQuery strategy**: ✅ **Keep jQuery** initially
+3. **jQuery strategy**: ✅ **Keep jQuery**
    - WordPress admin bundles jQuery
-   - Gradual migration to vanilla JS in future phases
-   - Focus on extraction and modularization first
-
-3. **Date picker**: ✅ **Keep jQuery UI Datepicker**
-   - Already bundled with WordPress
-   - Works well, no need to replace
-   - Flatpickr migration is optional enhancement
+   - Inline JS already uses jQuery
+   - No immediate need to migrate
 
 4. **TypeScript**: ✅ **Plain JS with JSDoc**
    - Lower barrier, faster iteration
-   - JSDoc provides IDE support without compilation
+   - ESLint already configured
 
 ### Dependencies
-- **Phase 2 should complete first** - admin.php is being refactored; extracting JS now would create merge conflicts
-- Alternative: Start with frontend.php JS (smaller, less churn from Phase 2)
+- **Phase 2 should complete first** for inline JS extraction (admin.php being refactored)
+- Build pipeline can wait until Phase 5 (Gutenberg blocks)
 
-### Implementation Steps
+### Implementation Steps (Remaining)
 
-1. **Set up build infrastructure**
+1. **Set up build infrastructure** (when starting Phase 5)
    ```bash
    npm init -y
    npm install --save-dev @wordpress/scripts
@@ -384,58 +414,32 @@ package.json
    {
      "scripts": {
        "build": "wp-scripts build assets/src/admin/index.js assets/src/frontend/index.js --output-path=assets/build",
-       "start": "wp-scripts start assets/src/admin/index.js assets/src/frontend/index.js --output-path=assets/build"
+       "start": "wp-scripts start assets/src/admin/index.js assets/src/frontend/index.js --output-path=assets/build",
+       "lint:js": "wp-scripts lint-js assets/src"
      }
    }
    ```
 
-3. **Extract frontend JS first** (smaller, independent of Phase 2)
-   - `frontend.php:330-350` → `frontend/cookie-manager.js`
-   - Use `wp_localize_script()` for PHP variables
+3. **Extract inline JS** (after Phase 2, incrementally with Phase 5)
+   - Use `wp_localize_script()` for PHP→JS data
+   - Use `wp_set_script_translations()` for i18n strings
 
-4. **Extract admin JS** (after Phase 2 stabilizes)
-   - `admin.php:1665-1770` → `admin/sermon-editor.js` (~100 lines)
-   - `admin.php:1008-1100` → `admin/file-manager.js`
-   - Replace `<?php echo $var ?>` with `wp_localize_script()` data
-
-5. **Update PHP enqueue**
-   ```php
-   $asset = require plugin_dir_path(__FILE__) . 'assets/build/admin.asset.php';
-   wp_enqueue_script(
-       'sermon-browser-admin',
-       plugins_url('assets/build/admin.js', __FILE__),
-       $asset['dependencies'],
-       $asset['version']
-   );
-   wp_localize_script('sermon-browser-admin', 'sbAdmin', [
-       'ajaxUrl' => admin_url('admin-ajax.php'),
-       'nonce' => wp_create_nonce('sb_admin'),
-       'i18n' => [
-           'newPreacher' => __("New preacher's name?", 'sermon-browser'),
-           // ... other strings
-       ]
-   ]);
-   ```
-
-6. **Add to .gitignore**
+4. **Add to .gitignore**
    ```
    /assets/build/
    /node_modules/
    ```
 
-7. **Update CI/CD** to run `npm run build` before deployment
-
 ### Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| PHP variables in JS | High | Medium | Use `wp_localize_script()` for all data |
-| i18n strings in JS | High | Medium | Use `wp_set_script_translations()` |
-| Merge conflicts with Phase 2 | Medium | High | Extract frontend JS first; wait for Phase 2 |
-| Build failures in CI | Low | High | Add npm build to GitHub Actions |
+| PHP variables in inline JS | Existing | Low | Address during extraction |
+| Merge conflicts with Phase 2 | Medium | Medium | Extract after Phase 2 |
+| Build complexity | Low | Low | Defer until Phase 5 needs it |
 
 ### Estimated Scope
-**Medium** - 2-3 weeks of focused work
+**Small** - 1 week (build setup only); inline extraction is incremental with Phase 5
 
 ---
 
