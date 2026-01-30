@@ -1,0 +1,91 @@
+---
+session: sermon-browser-session
+date: 2026-01-30
+status: complete
+outcome: SUCCEEDED
+---
+
+goal: Complete Phase 3 AJAX modularization - backend handlers and frontend JS migration
+now: Continue with Phase 4 (Frontend Modularization) or other v0.6.0 architecture work
+
+test: composer test && rg 'SBAdmin\.' sb-includes/admin.php
+
+done_this_session:
+  - task: Created AjaxHandler base class with nonce verification and capability checks
+    files: [src/Admin/Ajax/AjaxHandler.php]
+  - task: Created PreacherAjax handler for CRUD via wp_ajax_sb_preacher_*
+    files: [src/Admin/Ajax/PreacherAjax.php]
+  - task: Created SeriesAjax handler for CRUD via wp_ajax_sb_series_*
+    files: [src/Admin/Ajax/SeriesAjax.php]
+  - task: Created ServiceAjax handler with time cascade via wp_ajax_sb_service_*
+    files: [src/Admin/Ajax/ServiceAjax.php]
+  - task: Created FileAjax handler for rename/delete via wp_ajax_sb_file_*
+    files: [src/Admin/Ajax/FileAjax.php]
+  - task: Created AjaxRegistry for central registration of all handlers
+    files: [src/Admin/Ajax/AjaxRegistry.php]
+  - task: Added ServiceRepository.updateWithTimeShift() for time cascade logic
+    files: [src/Repositories/ServiceRepository.php]
+  - task: Registered AJAX handlers in sermon.php bootstrap
+    files: [sermon.php]
+  - task: Created admin-ajax.js module with SBAdmin namespace
+    files: [assets/js/admin-ajax.js]
+  - task: Added script enqueue and nonce localization
+    files: [sb-includes/admin.php]
+  - task: Migrated 11 inline AJAX calls to use SBAdmin module
+    files: [sb-includes/admin.php]
+  - task: Added 16 unit tests for AJAX handlers
+    files: [tests/Unit/Admin/Ajax/AjaxHandlerTest.php, tests/Unit/Admin/Ajax/AjaxRegistryTest.php, tests/Unit/Admin/Ajax/PreacherAjaxTest.php]
+
+blockers: []
+
+questions: []
+
+decisions:
+  - pagination_deferred: Pagination functions (fetch, fetchU, fetchL, search) remain on legacy ajax.php as they return HTML fragments - modernizing requires more significant changes
+  - nonces_per_entity: Separate nonces per entity type (preacher, series, service, file) for granular security
+
+findings:
+  - phase3_scope: 15 jQuery.post calls in admin.php - 11 migrated to new system, 4 pagination calls deferred
+  - service_time_cascade: When service time changes, all linked sermons (without override) need datetime adjustment - handled in ServiceRepository.updateWithTimeShift()
+
+worked:
+  - SBAdmin namespace pattern for clean JS organization
+  - wp_localize_script for passing nonces to JS
+  - SBAdmin.handleResponse() utility for consistent error handling
+
+failed: []
+
+next:
+  - Phase 4: Frontend Modularization - convert frontend.php to use Facades and create FrontendController
+  - Optional: Modernize pagination AJAX to return JSON instead of HTML
+  - Manual testing of all AJAX operations (create/update/delete preacher, series, service, files)
+
+files:
+  created:
+    - src/Admin/Ajax/AjaxHandler.php
+    - src/Admin/Ajax/AjaxRegistry.php
+    - src/Admin/Ajax/PreacherAjax.php
+    - src/Admin/Ajax/SeriesAjax.php
+    - src/Admin/Ajax/ServiceAjax.php
+    - src/Admin/Ajax/FileAjax.php
+    - assets/js/admin-ajax.js
+    - tests/Unit/Admin/Ajax/AjaxHandlerTest.php
+    - tests/Unit/Admin/Ajax/AjaxRegistryTest.php
+    - tests/Unit/Admin/Ajax/PreacherAjaxTest.php
+  modified:
+    - sermon.php
+    - sb-includes/admin.php
+    - src/Repositories/ServiceRepository.php
+    - thoughts/shared/plans/architecture-refactoring-plan.md
+
+context:
+  branch: develop
+  commits:
+    - f54d457: "Add Phase 3 AJAX handlers with WordPress AJAX API integration"
+    - be10a48: "Migrate admin AJAX calls to modern WordPress AJAX API"
+  tests_passing: 73
+  phase_status:
+    phase_1_repository_layer: COMPLETE
+    phase_2_admin_facades: COMPLETE
+    phase_3_ajax_modularization: COMPLETE
+    phase_4_frontend_modularization: TODO
