@@ -21,6 +21,9 @@
  * @method static array findByService(int $serviceId, int $limit = 0)
  * @method static array findRecent(int $limit = 10)
  * @method static array findByDateRange(string $startDate, string $endDate, int $limit = 0)
+ * @method static object|null findWithRelations(int $id)
+ * @method static array findAllWithRelations(array $filter = [], int $limit = 0, int $offset = 0)
+ * @method static array findForAdminList(int $limit = 0, int $offset = 0)
  */
 
 declare(strict_types=1);

@@ -7,6 +7,13 @@
 * @package admin_functions
 */
 
+use SermonBrowser\Facades\Preacher;
+use SermonBrowser\Facades\Series;
+use SermonBrowser\Facades\Service;
+use SermonBrowser\Facades\Sermon;
+use SermonBrowser\Facades\File;
+use SermonBrowser\Facades\Tag;
+
 
 /**
 * Adds javascript and CSS where required in admin
@@ -558,7 +565,7 @@ function sb_manage_preachers() {
 		$pid = (int) $_REQUEST['pid'];
 
 		if (empty($_FILES['upload']['name'])) {
-			$p = $wpdb->get_row("SELECT image FROM {$wpdb->prefix}sb_preachers WHERE id = $pid");
+			$p = Preacher::find($pid);
 			$filename = $p ? $p->image : '';
 		} elseif ($_FILES['upload']['error'] == UPLOAD_ERR_OK) {
 			$filename = basename($_FILES['upload']['name']);
@@ -579,14 +586,14 @@ function sb_manage_preachers() {
 		}
 
 		if ($pid == 0) {
-			$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_preachers VALUES (null, %s, %s, %s)", $name, $description, $filename));
+			Preacher::create(['name' => $name, 'description' => $description, 'image' => $filename]);
 		} else {
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_preachers SET name = %s, description = %s, image = %s WHERE id = $pid", $name, $description, $filename));
+			Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => $filename]);
 			if ($_POST['old'] != $filename)
 				@unlink(SB_ABSPATH.sb_get_option('upload_dir').'images/'.sanitize_file_name($_POST['old']));
 		}
 		if(isset($_POST['remove'])){
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_preachers SET name = %s, description = %s, image = '' WHERE id = $pid", $name, $description));
+			Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => '']);
 			@unlink(SB_ABSPATH.sb_get_option('upload_dir').'images/'.sanitize_file_name($_POST['old']));
 		}
 		if(!$error)
@@ -595,17 +602,19 @@ function sb_manage_preachers() {
 
 	if (isset($_GET['act']) && $_GET['act'] == 'kill') {
 		$die = (int) $_GET['pid'];
-		if($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sb_sermons WHERE preacher_id = $die") > 0)
+		if(Preacher::hasSermons($die))
 			{echo '<div id="message" class="updated fade"><p><b>'.__("You cannot delete this preacher until you first delete any sermons they have preached.", 'sermon-browser').'</b></div>';}
 		else {
-			$p = $wpdb->get_row("SELECT image FROM {$wpdb->prefix}sb_preachers WHERE id = $die");
-			@unlink(SB_ABSPATH.sb_get_option('upload_dir').'images/'.$p->image);
-			$wpdb->query("DELETE FROM {$wpdb->prefix}sb_preachers WHERE id = $die");
+			$p = Preacher::find($die);
+			if ($p) {
+				@unlink(SB_ABSPATH.sb_get_option('upload_dir').'images/'.$p->image);
+				Preacher::delete($die);
+			}
 		}
 	}
 
 	if (isset($_GET['act']) && ($_GET['act'] == 'new' || $_GET['act'] == 'edit')) {
-		if ($_GET['act'] == 'edit') {$preacher = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}sb_preachers WHERE id = ".(int) $_GET['pid']);}
+		if ($_GET['act'] == 'edit') {$preacher = Preacher::find((int) $_GET['pid']);}
 	//Display HTML
 ?>
 	<div class="wrap">
@@ -666,7 +675,7 @@ function sb_manage_preachers() {
 		return;
 	}
 
-	$preachers = $wpdb->get_results("SELECT {$wpdb->prefix}sb_preachers.*, COUNT({$wpdb->prefix}sb_sermons.id) AS sermon_count FROM {$wpdb->prefix}sb_preachers LEFT JOIN {$wpdb->prefix}sb_sermons ON {$wpdb->prefix}sb_preachers.id=preacher_id GROUP BY id ORDER BY name ASC");
+	$preachers = Preacher::findAllWithSermonCount();
 	sb_do_alerts();
 ?>
 	<div class="wrap">
@@ -717,8 +726,8 @@ function sb_manage_everything() {
 	if (!current_user_can('manage_categories'))
 			{wp_die(__("You do not have the correct permissions to manage the series and services database", 'sermon-browser'));}
 
-	$series = $wpdb->get_results("SELECT {$wpdb->prefix}sb_series.*, COUNT({$wpdb->prefix}sb_sermons.id) AS sermon_count FROM {$wpdb->prefix}sb_series LEFT JOIN {$wpdb->prefix}sb_sermons ON series_id = {$wpdb->prefix}sb_series.id GROUP BY id ORDER BY name ASC");
-	$services = $wpdb->get_results("SELECT {$wpdb->prefix}sb_services.*, COUNT({$wpdb->prefix}sb_sermons.id) AS sermon_count FROM {$wpdb->prefix}sb_services LEFT JOIN {$wpdb->prefix}sb_sermons ON service_id = {$wpdb->prefix}sb_services.id GROUP BY id ORDER BY name ASC");
+	$series = Series::findAllWithSermonCount();
+	$services = Service::findAllWithSermonCount();
 
 	$toManage = array(
 		'Series' => array('data' => $series),
@@ -927,12 +936,12 @@ function sb_files() {
 						fwrite($file, $remote_contents);
 						fclose($remote_file);
 						fclose($file);
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'file', %s, 0, 0, 0)", $filename));
-						echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$wpdb->insert_id)."';</script>";
+						$file_id = File::create(['type' => 'file', 'name' => $filename, 'sermon_id' => 0, 'count' => 0, 'duration' => 0]);
+						echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$file_id)."';</script>";
 					}
 				} else {
-					$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'url', %s, 0, 0, 0)", $url));
-					echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$wpdb->insert_id)."';</script>";
+					$file_id = File::create(['type' => 'url', 'name' => $url, 'sermon_id' => 0, 'count' => 0, 'duration' => 0]);
+					echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$file_id)."';</script>";
 					die();
 				}
 			} else
@@ -957,12 +966,12 @@ function sb_files() {
 			if ($file_allowed) {
 				$prefix = '';
 				$dest = SB_ABSPATH.sb_get_option('upload_dir').$prefix.$filename;
-				if($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}sb_stuff WHERE name = %s", $filename)) == 0) {
+				if(!File::existsByName($filename)) {
 					if (move_uploaded_file($_FILES['upload']['tmp_name'], $dest)) {
 						$filename = $prefix.$filename;
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'file', %s, 0, 0, 0)", $filename));
+						$file_id = File::create(['type' => 'file', 'name' => $filename, 'sermon_id' => 0, 'count' => 0, 'duration' => 0]);
 						if (sb_import_options_set ())
-							{echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$wpdb->insert_id)."';</script>";}
+							{echo "<script>document.location = '".admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3='.$file_id)."';</script>";}
 						else
 							{echo '<div id="message" class="updated fade"><p><b>'.__('Files saved to database.', 'sermon-browser').'</b></div>';}
 					}
@@ -979,31 +988,31 @@ function sb_files() {
 	        wp_die(__('Access denied.', 'sermon-browser'));
 	    }
 
-		$unlinked = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id = 0 AND f.type = 'file' ORDER BY f.name;");
-		$linked = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id <> 0 AND f.type = 'file' ORDER BY f.name;");
-		$wanted = array(-1);
+		$unlinked = File::findUnlinkedWithTitle();
+		$linked = File::findLinkedWithTitle();
+		$wanted = array();
 		foreach ((array) $unlinked as $k => $file) {
 			if (!file_exists(SB_ABSPATH.sb_get_option('upload_dir').$file->name)) {
-				$wanted[] = $file->id;
+				$wanted[] = (int) $file->id;
 				unset($unlinked[$k]);
 			}
 		}
 		foreach ((array) $linked as $k => $file) {
 			if (!file_exists(SB_ABSPATH.sb_get_option('upload_dir').$file->name)) {
-				$wanted[] = $file->id;
+				$wanted[] = (int) $file->id;
 				unset($unlinked[$k]);
 			}
 		}
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE id IN (".implode(', ', (array) $wanted).")");
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE type != 'file' AND sermon_id=0");
+		if (!empty($wanted)) {
+			File::deleteByIds($wanted);
+		}
+		File::deleteOrphanedNonFiles();
 	}
 
-	$unlinked = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id = 0 AND f.type = 'file' ORDER BY f.name LIMIT 10;");
-	$linked = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id <> 0 AND f.type = 'file' ORDER BY f.name LIMIT 10;");
-	$cntu = $wpdb->get_row("SELECT COUNT(*) as cntu FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = 0 AND type = 'file' ", ARRAY_A);
-	$cntu = $cntu['cntu'];
-	$cntl = $wpdb->get_row("SELECT COUNT(*) as cntl FROM {$wpdb->prefix}sb_stuff WHERE sermon_id <> 0 AND type = 'file' ", ARRAY_A);
-	$cntl = $cntl['cntl'];
+	$unlinked = File::findUnlinkedWithTitle(10);
+	$linked = File::findLinkedWithTitle(10);
+	$cntu = File::countUnlinked();
+	$cntl = File::countLinked();
 	sb_do_alerts();
 ?>
 	<script>
@@ -1268,26 +1277,20 @@ function sb_manage_sermons() {
 		if (!current_user_can('publish_posts'))
 			{wp_die(__("You do not have the correct permissions to delete sermons", 'sermon-browser'));}
 		$mid = (int) $_GET['mid'];
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_sermons WHERE id = $mid;");
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_sermons_tags WHERE sermon_id = $mid;");
+		Sermon::delete($mid);
+		Tag::detachAllFromSermon($mid);
 		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_books_sermons WHERE sermon_id = $mid;");
-		$wpdb->query("UPDATE {$wpdb->prefix}sb_stuff SET sermon_id = 0 WHERE sermon_id = $mid AND type = 'file';");
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = $mid AND type <> 'file';");
+		File::unlinkFromSermon($mid);
+		File::deleteNonFilesBySermon($mid);
 		sb_delete_unused_tags();
 		echo '<div id="message" class="updated fade"><p><b>'.__('Sermon removed from database.', 'sermon-browser').'</b></div>';
 	}
 
-	$cnt = $wpdb->get_row("SELECT COUNT(*) FROM {$wpdb->prefix}sb_sermons", ARRAY_A);
-	$cnt = $cnt['COUNT(*)'];
+	$cnt = Sermon::count();
 
-	$sermons = $wpdb->get_results("SELECT m.id, m.title, m.datetime, p.name as pname, s.name as sname, ss.name as ssname
-		FROM {$wpdb->prefix}sb_sermons as m
-		LEFT JOIN {$wpdb->prefix}sb_preachers as p ON m.preacher_id = p.id
-		LEFT JOIN {$wpdb->prefix}sb_services as s ON m.service_id = s.id
-		LEFT JOIN {$wpdb->prefix}sb_series as ss ON m.series_id = ss.id
-		ORDER BY m.datetime desc, s.time desc LIMIT 0, ".sb_get_option('sermons_per_page'));
-	$preachers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_preachers ORDER BY name;");
-	$series = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_series ORDER BY name;");
+	$sermons = Sermon::findForAdminList((int) sb_get_option('sermons_per_page'));
+	$preachers = Preacher::findAllSorted();
+	$series = Series::findAllSorted();
 ?>
 	<script>
 		function fetch(st) {
@@ -1434,7 +1437,8 @@ function sb_new_sermon() {
 		$override = (isset($_POST['override']) && $_POST['override'] == 'on') ? 1 : 0;
 		if ($date) {
 			if (!$override) {
-				$service_time = $wpdb->get_var("SELECT time FROM {$wpdb->prefix}sb_services WHERE id={$service_id}");
+				$service = Service::find((int) $service_id);
+				$service_time = $service ? $service->time : null;
 				if ($service_time)
 					{$date = $date - strtotime('00:00') + strtotime($service_time);}
 			} else
@@ -1452,16 +1456,38 @@ function sb_new_sermon() {
 			//Security check
 			if (!current_user_can('publish_pages'))
 				{wp_die(__("You do not have the correct permissions to create sermons", 'sermon-browser'));}
-			$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_sermons VALUES (null, %s, '$preacher_id', '$date', '$service_id', '$series_id', %s, %s, %s, %s, '$override', 0)", $title, $start, $end, $description, $time));
-			$id = $wpdb->insert_id;
+			$id = Sermon::create([
+				'title' => $title,
+				'preacher_id' => $preacher_id,
+				'datetime' => $date,
+				'service_id' => $service_id,
+				'series_id' => $series_id,
+				'start' => $start,
+				'end' => $end,
+				'description' => $description,
+				'time' => $time,
+				'override' => $override,
+				'page_id' => 0,
+			]);
 		} else { // edit
 			//Security check
 			if (!current_user_can('publish_posts'))
 				{wp_die(__("You do not have the correct permissions to edit sermons", 'sermon-browser'));}
 			$id = (int) $_GET['mid'];
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_sermons SET title = %s, preacher_id = '$preacher_id', datetime = '$date', series_id = '$series_id', start = %s, end = %s, description = %s, time = '$time', service_id = '$service_id', override = '$override' WHERE id = $id", $title, $start, $end, $description));
-			$wpdb->query("UPDATE {$wpdb->prefix}sb_stuff SET sermon_id = 0 WHERE sermon_id = $id AND type = 'file'");
-			$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = $id AND type <> 'file'");
+			Sermon::update($id, [
+				'title' => $title,
+				'preacher_id' => $preacher_id,
+				'datetime' => $date,
+				'series_id' => $series_id,
+				'start' => $start,
+				'end' => $end,
+				'description' => $description,
+				'time' => $time,
+				'service_id' => $service_id,
+				'override' => $override,
+			]);
+			File::unlinkFromSermon($id);
+			File::deleteNonFilesBySermon($id);
 		}
 		// deal with books
 		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_books_sermons WHERE sermon_id = $id;");
@@ -1474,7 +1500,7 @@ function sb_new_sermon() {
 		// now previously uploaded files
 		foreach ($_POST['file'] as $uid => $file) {
 			if ($file != 0)
-				$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_stuff SET sermon_id = $id WHERE id = %s;", sanitize_file_name($file)));
+				File::linkToSermon((int) sanitize_file_name($file), $id);
 			elseif ($_FILES['upload']['error'][$uid] == UPLOAD_ERR_OK) {
 				$filename = basename($_FILES['upload']['name'][$uid]);
 				if (IS_MU) {
@@ -1490,9 +1516,9 @@ function sb_new_sermon() {
 				if ($file_allowed) {
 					$prefix = '';
 					$dest = SB_ABSPATH.sb_get_option('upload_dir').$prefix.$filename;
-					if ($wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sb_stuff WHERE name = '".esc_sql($filename)."'") == 0 && move_uploaded_file($_FILES['upload']['tmp_name'][$uid], $dest)) {
+					if (!File::existsByName($filename) && move_uploaded_file($_FILES['upload']['tmp_name'][$uid], $dest)) {
 						$filename = $prefix.$filename;
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'file', %s, $id, 0, 0)", $filename));
+						File::create(['type' => 'file', 'name' => $filename, 'sermon_id' => $id, 'count' => 0, 'duration' => 0]);
 					} else {
 						echo '<div id="message" class="updated fade"><p><b>'.$filename.__(' already exists.', 'sermon-browser').'</b></div>';
 						$error = true;
@@ -1507,7 +1533,7 @@ function sb_new_sermon() {
 		// then URLs
 		foreach ((array) $_POST['url'] as $urlz) {
 			if (!empty($urlz)) {
-				$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES(null, 'url', %s, $id, 0, 0);", esc_url($urlz)));
+				File::create(['type' => 'url', 'name' => esc_url($urlz), 'sermon_id' => $id, 'count' => 0, 'duration' => 0]);
 			}
 		}
 		// embed code next
@@ -1516,20 +1542,18 @@ function sb_new_sermon() {
                 $embed_allowedposttags = $allowedposttags;
                 $embed_allowedposttags ['iframe'] = array ('width' => true, 'height' => true, 'src' => true, 'frameborder' => true, 'allowfullscreen' => true, 'style' => true, 'name' => true, 'id' => true, 'align' => true, 'sandbox' => true, 'srcdoc' => true);
 				$code = base64_encode(wp_kses(stripslashes($code), $embed_allowedposttags));
-				$wpdb->query("INSERT INTO {$wpdb->prefix}sb_stuff VALUES(null, 'code', '$code', $id, 0, 0)");
+				File::create(['type' => 'code', 'name' => $code, 'sermon_id' => $id, 'count' => 0, 'duration' => 0]);
 			}
 		}
 		// tags
 		$tags = explode(',', $_POST['tags']);
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_sermons_tags WHERE sermon_id = $id;");
+		Tag::detachAllFromSermon($id);
 		foreach ($tags as $tag) {
 			$clean_tag = sanitize_text_field($tag);
-			$existing_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sb_tags WHERE name=%s",$clean_tag));
-			if (is_null($existing_id)) {
-				$wpdb->query($wpdb->prepare("INSERT  INTO {$wpdb->prefix}sb_tags VALUES (null, %s)",$clean_tag));
-				$existing_id = $wpdb->insert_id;
+			if (!empty($clean_tag)) {
+				$tag_id = Tag::findOrCreate($clean_tag);
+				Tag::attachToSermon($id, $tag_id);
 			}
-			$wpdb->query("INSERT INTO {$wpdb->prefix}sb_sermons_tags VALUES (null, $id, $existing_id)");
 		}
 		sb_delete_unused_tags();
 		// everything is fine, get out of here!
@@ -1541,7 +1565,7 @@ function sb_new_sermon() {
 
 	$id3_tags = array();
 	if (isset($_GET['getid3'])) {
-		$file_data = $wpdb->get_row($wpdb->prepare("SELECT name, type FROM {$wpdb->prefix}sb_stuff WHERE id = %s", $_GET['getid3']));
+		$file_data = File::find((int) $_GET['getid3']);
 		if ($file_data !== null) {
 			if (!class_exists('getID3')) {
 			    require(ABSPATH.WPINC.'/ID3/getid3.php' );
@@ -1584,10 +1608,11 @@ function sb_new_sermon() {
 			if (sb_get_option ('import_album')) {
 				$id3_tags['series'] = @$id3_raw_tags['comments_html']['album'][0];
 				if ($id3_tags['series'] != '') {
-					$series_id = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}sb_series WHERE name LIKE '{$id3_tags['series']}'");
-					if ($series_id === null) {
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_series VALUES (null, %s, '0')", $id3_tags['series']));
-						$series_id = $wpdb->insert_id;
+					$existing = Series::findByName($id3_tags['series']);
+					if ($existing === null) {
+						$series_id = Series::create(['name' => $id3_tags['series'], 'page_id' => 0]);
+					} else {
+						$series_id = $existing->id;
 					}
 					$id3_tags['series'] = $series_id;
 				}
@@ -1595,10 +1620,11 @@ function sb_new_sermon() {
 			if (sb_get_option ('import_artist')) {
 				$id3_tags['preacher'] = @$id3_raw_tags['comments_html']['artist'][0];
 				if ($id3_tags['preacher'] != '') {
-					$preacher_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}sb_preachers WHERE name LIKE %s", $id3_tags['preacher']));
-					if ($preacher_id === null) {
-						$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_preachers VALUES (null, %s, '', '')", $id3_tags['preacher']));
-						$preacher_id = $wpdb->insert_id;
+					$existing = Preacher::findByName($id3_tags['preacher']);
+					if ($existing === null) {
+						$preacher_id = Preacher::create(['name' => $id3_tags['preacher'], 'description' => '', 'image' => '']);
+					} else {
+						$preacher_id = $existing->id;
 					}
 					$id3_tags['preacher'] = $preacher_id;
 				}
@@ -1623,10 +1649,10 @@ function sb_new_sermon() {
 	}
 
 	// load existing data
-	$preachers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_preachers ORDER BY name asc");
-	$services = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_services ORDER BY name asc");
-	$series = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_series ORDER BY name asc");
-	$files = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = 0 AND type = 'file' ORDER BY name asc");
+	$preachers = Preacher::findAllSorted();
+	$services = Service::findAllSorted();
+	$series = Series::findAllSorted();
+	$files = File::findUnlinked();
 
 	// sync
 	$wanted[] = -1;
@@ -1649,11 +1675,11 @@ function sb_new_sermon() {
 
 	if (isset($_GET['mid'])) {
 		$mid = (int) $_GET['mid'];
-		$curSermon = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}sb_sermons WHERE id = $mid");
-		$files = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_stuff WHERE sermon_id IN (0, $mid) AND type = 'file' ORDER BY name asc");
+		$curSermon = Sermon::find($mid);
+		$files = File::findBySermonOrUnlinked($mid);
 		$startArr = unserialize($curSermon->start);
 		$endArr = unserialize($curSermon->end);
-		$rawtags = $wpdb->get_results("SELECT t.name FROM {$wpdb->prefix}sb_sermons_tags as st LEFT JOIN {$wpdb->prefix}sb_tags as t ON st.tag_id = t.id WHERE st.sermon_id = $mid ORDER BY t.name asc");
+		$rawtags = Tag::findBySermon($mid);
 		$tags = array();
 		foreach ($rawtags as $tag) {
 			$tags[] = $tag->name;
@@ -1988,9 +2014,9 @@ function sb_new_sermon() {
 
 			<?php
 				if (isset($mid)) {
-					$assocFiles = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'file' ORDER BY name asc;");
-					$assocURLs = $wpdb->get_results("SELECT name FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'url' ORDER BY name asc;");
-					$assocCode = $wpdb->get_results("SELECT name FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'code' ORDER BY name asc;");
+					$assocFiles = File::findBySermonAndType($mid, 'file');
+					$assocURLs = File::findBySermonAndType($mid, 'url');
+					$assocCode = File::findBySermonAndType($mid, 'code');
 				}
 				else
 					{$assocFiles = $assocURLs = $assocCode = array();}
@@ -2243,21 +2269,20 @@ function sb_build_textarea($name, $html) {
 */
 function sb_rightnow () {
 	global $wpdb;
-	$file_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_stuff WHERE type='file'");
+	$file_count = File::countByType('file');
 	$output_string = '';
 	if ($file_count > 0) {
-		$sermon_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_sermons");
-		$preacher_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_preachers");
-		$series_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_series");
-		$tag_count = $wpdb->get_var("SELECT COUNT(*) FROM ".$wpdb->prefix."sb_tags WHERE name<>''");
-		$download_count = $wpdb->get_var("SELECT SUM(count) FROM ".$wpdb->prefix."sb_stuff");
+		$sermon_count = Sermon::count();
+		$preacher_count = Preacher::count();
+		$series_count = Series::count();
+		$tag_count = Tag::countNonEmpty();
+		$download_count = File::getTotalDownloads();
 		if ($sermon_count == 0) {
 			$download_average = 0;
 		} else {
 			$download_average = round($download_count/$sermon_count, 1);
 		}
-		$most_popular = $wpdb->get_results("SELECT title, sermon_id, sum(count) AS c FROM {$wpdb->prefix}sb_stuff LEFT JOIN {$wpdb->prefix}sb_sermons ON {$wpdb->prefix}sb_sermons.id = sermon_id GROUP BY sermon_id ORDER BY c DESC LIMIT 1");
-		$most_popular = $most_popular[0];
+		$most_popular = File::getMostPopularSermon();
 		$output_string .= '<p class="youhave">'.__("You have")." ";
 		$output_string .= '<a href="'.admin_url('admin.php?page=sermon-browser/files.php').'">';
 		$output_string .= sprintf(_n('%s file', '%s files', $file_count), number_format($file_count))."</a> ";
@@ -2301,7 +2326,7 @@ function sb_rightnow () {
 function sb_dashboard_glance( $items ) {
 	global $wpdb;
 
-	$sermon_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}sb_sermons" );
+	$sermon_count = Sermon::count();
 
 	if ( $sermon_count > 0 ) {
 		$text = sprintf(
@@ -2322,22 +2347,19 @@ function sb_dashboard_glance( $items ) {
 * Find new files uploaded by FTP
 */
 function sb_scan_dir() {
-	global $wpdb;
-    $wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE type = 'file' AND name = '' AND sermon_id=0");
-	$files = $wpdb->get_results("SELECT name FROM {$wpdb->prefix}sb_stuff WHERE type = 'file';");
-	$bnn = array();
+	File::deleteEmptyUnlinked();
+	$fileNames = File::findAllFileNames();
 	$dir = SB_ABSPATH.sb_get_option('upload_dir');
-	foreach ($files as $file) {
-		$bnn[] = $file->name;
-		if (!file_exists($dir.$file->name)) {
-			$wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}sb_stuff WHERE name=%s AND sermon_id=0", $file->name));
+	foreach ($fileNames as $fileName) {
+		if (!file_exists($dir.$fileName)) {
+			File::deleteUnlinkedByName($fileName);
 		}
 	}
 
 	if ($dh = @opendir($dir)) {
 		while (false !== ($file = readdir($dh))) {
-			if ($file != "." && $file != ".." && !is_dir($dir.$file) && !in_array($file, $bnn)) {
-				$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_stuff VALUES (null, 'file', %s, 0, 0, 0);", $file));
+			if ($file != "." && $file != ".." && !is_dir($dir.$file) && !in_array($file, $fileNames)) {
+				File::create(['type' => 'file', 'name' => $file, 'sermon_id' => 0, 'count' => 0, 'duration' => 0]);
 			   }
 		}
 		   closedir($dh);
@@ -2374,11 +2396,7 @@ function sb_checkSermonUploadable($foldername = "") {
 * Delete any unused tags
 */
 function sb_delete_unused_tags() {
-	global $wpdb;
-	$unused_tags = $wpdb->get_results("SELECT {$wpdb->prefix}sb_tags.id AS id, {$wpdb->prefix}sb_sermons_tags.id AS sid FROM {$wpdb->prefix}sb_tags LEFT JOIN {$wpdb->prefix}sb_sermons_tags ON {$wpdb->prefix}sb_tags.id = {$wpdb->prefix}sb_sermons_tags.tag_id WHERE {$wpdb->prefix}sb_sermons_tags.tag_id IS NULL");
-	if (is_array($unused_tags))
-		{foreach ($unused_tags AS $unused_tag)
-			{$wpdb->query("DELETE FROM {$wpdb->prefix}sb_tags WHERE id='{$unused_tag->id}'");}}
+	Tag::deleteUnused();
 }
 
 /**
@@ -2460,7 +2478,7 @@ function sb_print_upload_form () {
 			<td>
 				<select name="getid3">
 					<?php
-						$files = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = 0 AND type = 'file' ORDER BY name asc");
+						$files = File::findUnlinked();
 						echo count($files) == 0 ? '<option value="0">No files found</option>' : '<option value="0"></option>';
 						foreach ($files as $file) { ?>
 							<option value="<?php echo $file->id ?>"><?php echo $file->name ?></option>

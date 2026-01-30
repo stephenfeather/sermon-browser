@@ -301,4 +301,20 @@ class TagRepository extends AbstractRepository
 
         return $result !== false ? (int) $this->db->rows_affected : 0;
     }
+
+    /**
+     * Count tags with non-empty names.
+     *
+     * @return int Count of non-empty tags.
+     */
+    public function countNonEmpty(): int
+    {
+        $table = $this->getTableName();
+
+        $result = $this->db->get_var(
+            "SELECT COUNT(*) FROM {$table} WHERE name <> ''"
+        );
+
+        return (int) ($result ?? 0);
+    }
 }
