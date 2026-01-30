@@ -1,0 +1,51 @@
+---
+session: sermon-browser-session
+date: 2026-01-13
+status: complete
+outcome: SUCCEEDED
+---
+
+goal: Query SonarQube API for JavaScript issues and create reusable skill
+now: Fix the 155 JavaScript issues identified (8 BLOCKER, 80 CRITICAL priority)
+
+test: curl -s "https://sonarcloud.io/api/issues/search?componentKeys=stephenfeather_sermon-browser&languages=js&ps=1" -H "Authorization: Bearer $SONAR_TOKEN" | jq '.total'
+
+done_this_session:
+  - task: Researched SonarQube API for querying issues by language
+    files: []
+  - task: Queried SonarCloud for JavaScript issues in sermon-browser project
+    files: [sb-includes/64.js, sb-includes/datePicker.js]
+  - task: Created sonarqube-api skill documenting API usage
+    files: [.claude/skills/sonarqube-api/SKILL.md]
+
+blockers: []
+
+questions: []
+
+decisions:
+  - skill_structure: Used standard SKILL.md format with frontmatter, examples, and project-specific commands
+
+findings:
+  - javascript_issues_count: 155 total issues across 2 files
+  - severity_breakdown: 8 BLOCKER, 80 CRITICAL, 25 MAJOR, 42 MINOR
+  - issue_types: 150 CODE_SMELL, 5 BUG
+  - top_rule_S3504: 76 issues for var->let/const conversion
+  - top_rule_S2703: 8 BLOCKER issues for implicit global declarations
+  - affected_files: sb-includes/64.js and sb-includes/datePicker.js
+
+worked:
+  - Using facets parameter for aggregated counts
+  - jq for parsing and simplifying JSON responses
+  - Bearer token auth with SONAR_TOKEN env variable
+
+failed: []
+
+next:
+  - Fix 8 BLOCKER issues (implicit globals in 64.js and datePicker.js)
+  - Fix 5 BUG issues (const modification, wrong function arguments)
+  - Convert 76 var declarations to let/const
+  - Address cognitive complexity in datePicker.js (S3776)
+
+files:
+  created: [.claude/skills/sonarqube-api/SKILL.md]
+  modified: []

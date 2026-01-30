@@ -1,0 +1,82 @@
+---
+session: sermon-browser-session
+date: 2026-01-30
+status: partial
+outcome: PARTIAL_PLUS
+---
+
+goal: Replace legacy 64.js and datePicker.js with modern browser-native alternatives
+now: Complete manual testing of datepicker and atob() functionality in browser
+
+test: |
+  # Verify no legacy references remain
+  grep -r "64\.js\|sb_64\|Base64\.\|datePicker\|sb_datepicker" . --include="*.php" && echo "FAIL: Legacy refs found" || echo "PASS"
+
+done_this_session:
+  - task: Replaced Base64.decode() with native atob()
+    files: [sb-includes/admin.php:2059]
+  - task: Replaced legacy datePicker with jQuery UI datepicker
+    files: [sb-includes/admin.php:1972-1978, sb-includes/frontend.php:1114-1126]
+  - task: Updated script enqueues to use WordPress bundled jquery-ui-datepicker
+    files: [sb-includes/admin.php:19-21, sb-includes/frontend.php:551-552]
+  - task: Removed legacy script registrations
+    files: [sermon.php:167-169]
+  - task: Deleted legacy JavaScript files
+    files: [sb-includes/64.js (deleted), sb-includes/datePicker.js (deleted), sb-includes/datepicker.css (deleted)]
+  - task: Set up test environment on port 8082 (avoiding 8080 conflict)
+    files: [docker-compose.yml:7]
+
+blockers: []
+
+questions:
+  - Does wp-jquery-ui-dialog style provide adequate datepicker styling?
+  - Are there any edge cases with atob() for non-ASCII base64 content?
+
+decisions:
+  - jquery-ui-datepicker: WordPress bundles jQuery UI - zero new dependencies
+  - wp-jquery-ui-dialog-style: Uses WordPress bundled style instead of external CDN
+  - port-8082: Changed docker-compose port to avoid conflict with fa-wpmcp on 8080
+
+findings:
+  - datepicker-api-difference: jQuery UI uses lowercase .datepicker() vs legacy .datePicker()
+  - date-format-difference: jQuery UI uses 'yy-mm-dd' vs legacy 'ymd' with separator arg
+  - css-file-existed: Legacy datepicker.css (103 lines) also needed removal
+
+worked:
+  - Native atob()/btoa() direct replacement for Base64.decode()/encode()
+  - jQuery UI datepicker as drop-in with minor API adjustments
+
+failed: []
+
+next:
+  - Manual test admin embed code field (atob functionality)
+  - Manual test admin date picker (new sermon page)
+  - Manual test frontend date filter fields
+  - Check browser console for JavaScript errors
+  - Revert docker-compose.yml port change before commit
+  - Create git commit for the changes
+
+files:
+  created: []
+  modified:
+    - sb-includes/admin.php
+    - sb-includes/frontend.php
+    - sermon.php
+  deleted:
+    - sb-includes/64.js
+    - sb-includes/datePicker.js
+    - sb-includes/datepicker.css
+
+context:
+  worktree: /Users/stephenfeather/Development/sermon-browser-js-modernize
+  branch: feature/javascript-modernization
+  test_url: http://localhost:8082
+  plan_file: thoughts/shared/plans/javascript-modernization.md
+
+manual_testing_checklist:
+  - "[ ] Admin: Embed code field works (atob)"
+  - "[ ] Admin: Date picker opens and selects dates"
+  - "[ ] Frontend: Date filter fields work"
+  - "[ ] Frontend: End date field works"
+  - "[ ] No JavaScript console errors"
+  - "[ ] Date format matches existing behavior (YYYY-MM-DD)"

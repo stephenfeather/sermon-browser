@@ -1,0 +1,57 @@
+---
+session: sermon-browser-session
+date: 2026-01-12
+status: complete
+outcome: SUCCEEDED
+---
+
+goal: Phase 1 PHP 8 compatibility fixes for Sermon Browser WordPress plugin
+now: Continue with Phase 2 - fix strftime(), (boolean) casts, rightnow_end hook
+test: composer test && docker exec sermon-browser-wp php -l /var/www/html/wp-content/plugins/sermon-browser/sermon.php
+
+done_this_session:
+  - task: Fixed preg_replace /e modifier (fatal on PHP 7+)
+    files: [sb-includes/admin.php]
+  - task: Replaced is_site_admin() with sb_is_super_admin() (3 occurrences)
+    files: [sb-includes/admin.php]
+  - task: Replaced WPLANG constant with get_locale()
+    files: [sermon.php]
+  - task: Fixed implode() argument order
+    files: [sb-includes/dictionary.php]
+  - task: Fixed sb_return_kbytes() non-numeric warning
+    files: [sermon.php]
+  - task: Replaced deprecated contextual_help filter with Help Tabs API
+    files: [sermon.php, sb-includes/admin.php]
+  - task: Removed external link from creditlink template tag
+    files: [sb-includes/dictionary.php]
+  - task: Committed Phase 1 changes (7ed8f16)
+    files: []
+
+blockers: []
+
+questions: []
+
+decisions:
+  - help_tabs_api: Used modern WordPress Help Tabs API instead of deprecated contextual_help filter
+  - testable_functions: Created helper functions in functions-testable.php for unit testing
+
+findings:
+  - php8_numeric: PHP 8 strict type checking causes warnings when multiplying strings
+  - contextual_help_deprecation: Deprecated since WordPress 3.3, causes visible error in browser
+
+worked:
+  - Using sb_generate_temp_suffix() to replace preg_replace /e
+  - Using get_current_screen()->add_help_tab() for contextual help
+  - Cast to int before multiplication in sb_return_kbytes()
+
+failed: []
+
+next:
+  - Fix (boolean) cast deprecations in admin.php:2498-2500
+  - Replace strftime() calls with wp_date() (4 locations)
+  - Fix rightnow_end hook deprecation (use dashboard_glance_items)
+  - Continue Phase 2 deprecated function fixes
+
+files:
+  created: []
+  modified: [sermon.php, sb-includes/admin.php, sb-includes/dictionary.php]

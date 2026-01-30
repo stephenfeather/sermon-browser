@@ -1,0 +1,197 @@
+---
+session: sermon-browser-phase2
+date: 2026-01-30
+status: ready
+outcome: PENDING
+worktree: /Users/stephenfeather/Development/sermon-browser-phase2
+branch: feature/phase2-admin-split
+---
+
+goal: Split monolithic admin.php (2,540 lines) into modular class files
+now: Create Plugin.php bootstrap and AdminController, then extract admin pages
+
+test: |
+  composer test
+  # All 57 tests should pass
+  # Then manually test: docker-compose up -d && open http://localhost:8080/wp-admin
+
+prerequisites_verified:
+  - Phase 1 complete: Repository layer with 7 repositories
+  - Facades working: Sermon::find(), Preacher::findAll(), etc.
+  - Container available: sb_container()
+  - 57 tests passing
+  - PHP 8.5 syntax check passes
+
+target_structure: |
+  src/
+  ├── Plugin.php                    # Main bootstrap class (NEW)
+  ├── Admin/
+  │   ├── AdminController.php       # Route to page handlers (NEW)
+  │   └── Pages/
+  │       ├── SermonsPage.php       # sb_manage_sermons() - 140 lines
+  │       ├── SermonEditorPage.php  # sb_new_sermon() - 700 lines (biggest!)
+  │       ├── PreachersPage.php     # sb_manage_preachers() - 170 lines
+  │       ├── SeriesServicesPage.php # sb_manage_everything() - 180 lines
+  │       ├── FilesPage.php         # sb_files() - 340 lines
+  │       ├── OptionsPage.php       # sb_options() - 370 lines
+  │       ├── TemplatesPage.php     # sb_templates() - 70 lines
+  │       ├── HelpPage.php          # sb_help() - 90 lines
+  │       └── UninstallPage.php     # sb_uninstall() - 60 lines
+
+implementation_order:
+  - step: 1
+    task: Create src/Plugin.php bootstrap class
+    details: |
+      - Singleton pattern with Plugin::instance()
+      - Move constant definitions from sermon.php
+      - Move hook registrations from sb_sermon_init()
+      - Call from sermon.php: SermonBrowser\Plugin::boot()
+    test: Plugin activates without errors
+
+  - step: 2
+    task: Create src/Admin/AdminController.php
+    details: |
+      - Register admin menu via add_menu_page/add_submenu_page
+      - Route menu callbacks to page classes
+      - Handle admin_enqueue_scripts
+    test: Admin menu appears correctly
+
+  - step: 3
+    task: Extract SermonEditorPage first (biggest ROI)
+    details: |
+      - Create src/Admin/Pages/SermonEditorPage.php
+      - Move sb_new_sermon() logic (700 lines)
+      - Use Sermon facade for database operations
+      - Keep sb_new_sermon() as wrapper in admin.php
+    test: Add/Edit sermon works
+
+  - step: 4
+    task: Extract FilesPage (340 lines)
+    details: |
+      - Create src/Admin/Pages/FilesPage.php
+      - Move sb_files() logic
+      - Use File facade for database operations
+    test: File management works
+
+  - step: 5
+    task: Extract OptionsPage (370 lines)
+    details: |
+      - Create src/Admin/Pages/OptionsPage.php
+      - Move sb_options() logic
+    test: Options save correctly
+
+  - step: 6
+    task: Extract remaining pages
+    details: |
+      - PreachersPage (170 lines)
+      - SeriesServicesPage (180 lines)
+      - SermonsPage (140 lines)
+      - TemplatesPage (70 lines)
+      - HelpPage (90 lines)
+      - UninstallPage (60 lines)
+    test: All admin pages work
+
+  - step: 7
+    task: Update sermon.php to thin bootstrap
+    details: |
+      - Keep only: plugin header, autoload, Plugin::boot()
+      - Move remaining logic to Plugin.php
+    test: Plugin still activates and works
+
+admin_php_function_map:
+  sb_options: { lines: "29-407", target: "Pages/OptionsPage.php" }
+  sb_uninstall: { lines: "408-468", target: "Pages/UninstallPage.php" }
+  sb_templates: { lines: "469-541", target: "Pages/TemplatesPage.php" }
+  sb_manage_preachers: { lines: "542-713", target: "Pages/PreachersPage.php" }
+  sb_manage_everything: { lines: "714-899", target: "Pages/SeriesServicesPage.php" }
+  sb_files: { lines: "900-1247", target: "Pages/FilesPage.php" }
+  sb_manage_sermons: { lines: "1248-1395", target: "Pages/SermonsPage.php" }
+  sb_new_sermon: { lines: "1396-2094", target: "Pages/SermonEditorPage.php" }
+  sb_help: { lines: "2095-2180", target: "Pages/HelpPage.php" }
+  sb_japan: { lines: "2181-2207", target: "Pages/HelpPage.php" }
+  utility_functions: { lines: "2208-2541", target: "AdminController.php" }
+
+patterns:
+  page_class: |
+    <?php
+    namespace SermonBrowser\Admin\Pages;
+
+    use SermonBrowser\Facades\Sermon;
+    use SermonBrowser\Facades\Preacher;
+
+    class SermonsPage {
+        public function render(): void {
+            // Extracted from sb_manage_sermons()
+        }
+
+        public function handlePost(): void {
+            // POST handling if applicable
+        }
+    }
+
+  wrapper_function: |
+    // Keep in admin.php for backward compatibility
+    function sb_manage_sermons() {
+        $page = new \SermonBrowser\Admin\Pages\SermonsPage();
+        $page->render();
+    }
+
+  plugin_bootstrap: |
+    <?php
+    namespace SermonBrowser;
+
+    class Plugin {
+        private static ?self $instance = null;
+
+        public static function instance(): self {
+            if (self::$instance === null) {
+                self::$instance = new self();
+            }
+            return self::$instance;
+        }
+
+        public static function boot(): void {
+            self::instance()->init();
+        }
+
+        private function init(): void {
+            // Load dependencies
+            require_once __DIR__ . '/../sb-includes/functions-testable.php';
+
+            // Register hooks
+            add_action('init', [$this, 'onInit']);
+            add_action('admin_menu', [$this, 'registerAdminMenu']);
+        }
+    }
+
+decisions:
+  - namespace: "SermonBrowser\\Admin\\Pages" for grouped clarity
+  - instantiation: Via container for testability
+  - backward_compat: Keep wrapper functions in admin.php
+  - template_rendering: Keep inline HTML initially, extract later
+
+risks:
+  - risk: Missing function calls
+    mitigation: Static analysis + comprehensive testing
+  - risk: Global variable dependencies
+    mitigation: Document and pass explicitly
+  - risk: Menu registration changes
+    mitigation: Test all menu paths
+
+files_reference:
+  plan_detailed: thoughts/shared/plans/architecture-refactoring-plan.md
+  plan_master: thoughts/shared/plans/refactor-master-plan.md
+  current_admin: sb-includes/admin.php
+  current_sermon: sermon.php
+
+commands:
+  run_tests: composer test
+  syntax_check: php -l sermon.php
+  start_docker: docker-compose up -d
+  admin_url: http://localhost:8080/wp-admin
+
+next_session_start: |
+  1. cd /Users/stephenfeather/Development/sermon-browser-phase2
+  2. Read this handoff: thoughts/shared/handoffs/sermon-browser-session/2026-01-30_phase2-admin-split.yaml
+  3. Run: composer test (verify 57 tests pass)
+  4. Start with Step 1: Create src/Plugin.php

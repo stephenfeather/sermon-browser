@@ -1,0 +1,65 @@
+---
+session: sermon-browser-session
+date: 2026-01-12
+status: complete
+outcome: SUCCEEDED
+---
+
+goal: Phase 1 PHP 8 compatibility fixes validated in Docker
+now: Begin Phase 2 - fix strftime() deprecations and deprecated WordPress hooks
+
+test: docker-compose up -d && open http://localhost:8080
+
+done_this_session:
+  - task: Fixed Docker PHP upload limits (64M upload_max_filesize, 64M post_max_size)
+    files: [docker/php.ini, docker-compose.yml]
+  - task: Removed obsolete docker-compose version attribute
+    files: [docker-compose.yml]
+  - task: Manual testing - plugin activation successful
+    files: []
+  - task: Manual testing - sermon creation successful
+    files: []
+  - task: Submitted 2 GitHub issues for non-critical bugs found during testing
+    files: []
+
+blockers: []
+
+questions: []
+
+decisions:
+  - php_limits_64M: Set upload limits to 64M (well above 15M minimum) to accommodate large sermon files
+
+findings:
+  - phase1_validated: All Phase 1 PHP 8 fixes work correctly in WordPress 6.4 + PHP 8.2
+  - manual_test_passed: Plugin activates and creates sermons without fatal errors
+
+worked:
+  - Custom php.ini mounted via docker-compose volumes
+  - Phase 1 fixes (preg_replace /e, is_site_admin, WPLANG, implode) all functional
+
+failed: []
+
+next:
+  - Phase 2.1: Replace strftime() calls with wp_date() in admin.php:1361, ajax.php:129, frontend.php:819,901
+  - Phase 2.2: Fix (boolean) cast deprecation in admin.php:2498-2500 (use (bool))
+  - Phase 2.3: Replace rightnow_end hook with dashboard_glance_items in sermon.php:229
+  - Write tests for strftime replacement functions before implementing
+
+files:
+  created: [docker/php.ini]
+  modified: [docker-compose.yml, thoughts/shared/handoffs/sermon-browser-session/current.md]
+
+context:
+  branch: develop
+  commits: [1155ee9]
+  test_command: composer test
+  tests_passing: 17
+  phase_status:
+    phase_0: VALIDATED
+    phase_0.5: COMPLETE
+    phase_1: VALIDATED
+    phase_2: PENDING
+    phase_3: PENDING
+    phase_4: PENDING
+    phase_5: PENDING
+    phase_6: PENDING

@@ -1,0 +1,64 @@
+---
+session: sermon-browser-session
+date: 2026-01-30
+status: complete
+outcome: SUCCEEDED
+---
+
+goal: Close out phase1 and js-modernization worktrees with proper merges
+now: Continue Phase 2 work (strftime deprecations, boolean casts, rightnow_end hook)
+
+test: git worktree list && git log --oneline -5 develop
+
+done_this_session:
+  - task: Merged phase1-repository-integration branch to develop via PR #8
+    files: [sb-includes/admin.php, sermon.php, src/Facades/*.php, src/Repositories/*.php]
+  - task: Resolved merge conflicts keeping Facades architecture over modular page classes
+    files: [sb-includes/admin.php, sermon.php, src/Facades/File.php, src/Facades/Sermon.php, src/Facades/Tag.php]
+  - task: Removed phase1 worktree at /Users/stephenfeather/Development/sermon-browser-phase1
+    files: []
+  - task: Closed js-modernization worktree (already merged), preserved handoff
+    files: [thoughts/shared/handoffs/sermon-browser-session/2026-01-30_07-46_javascript-modernization.yaml]
+
+blockers: []
+
+questions: []
+
+decisions:
+  - facades_over_pages: Phase1 architecture uses Facades with inline admin code vs modular Page classes. Kept Facades approach as it was the validated direction.
+  - delete_plugin_class: Removed src/Plugin.php and src/Admin/Pages/* as phase1 approach doesn't use them.
+
+findings:
+  - phase1_validated: Phase 1 PHP 8 compatibility was validated on 2026-01-12
+  - js_branch_merged: JS modernization branch was already merged to develop before worktree removal
+  - worktrees_consolidated: All work now in single main checkout on develop branch
+
+worked:
+  - Using git checkout --ours to resolve conflicts in favor of phase1 branch
+  - Copying handoff files before force-removing worktrees
+
+failed: []
+
+next:
+  - Phase 2.1: Replace strftime() calls with wp_date() in admin.php:1361, ajax.php:129, frontend.php:819,901
+  - Phase 2.2: Fix (boolean) cast deprecation in admin.php:2498-2500 (use (bool))
+  - Phase 2.3: Replace rightnow_end hook with dashboard_glance_items in sermon.php:229
+  - Consider committing the accumulated untracked handoff files
+
+files:
+  created: [thoughts/shared/handoffs/sermon-browser-session/2026-01-30_12-35_worktree-cleanup.yaml]
+  modified: []
+
+context:
+  branch: develop
+  pr_merged: 8
+  worktrees_removed:
+    - /Users/stephenfeather/Development/sermon-browser-phase1
+    - /Users/stephenfeather/Development/sermon-browser-js-modernize
+  remaining_worktree: /Users/stephenfeather/Development/sermon-browser
+  phase_status:
+    phase_0: VALIDATED
+    phase_0.5: COMPLETE
+    phase_1: VALIDATED (now merged)
+    phase_2: PENDING
+    phase_3: PENDING
