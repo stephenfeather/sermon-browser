@@ -1,0 +1,87 @@
+---
+session: sermon-browser-session
+date: 2026-01-29
+status: partial
+outcome: PARTIAL_PLUS
+---
+
+goal: Phase 1 Repository Integration - Replace $wpdb with Facades in sermon.php
+now: Continue facade replacements in admin.php (80+ $wpdb calls)
+test: php -l sermon.php && composer test
+
+done_this_session:
+  - task: Created comprehensive 6-phase refactor master plan
+    files: [thoughts/shared/plans/refactor-master-plan.md]
+  - task: Scaffolded Container and Facades infrastructure
+    files: [src/Services/Container.php, src/bootstrap.php, src/Facades/*.php]
+  - task: Added WP-CLI service to docker-compose
+    files: [docker-compose.yml]
+  - task: Replaced 6 $wpdb calls in sermon.php with Facades
+    files: [sermon.php, src/Repositories/FileRepository.php, src/Facades/File.php]
+  - task: Created worktree for Phase 1 work
+    files: []
+
+blockers: []
+
+questions:
+  - How to handle sb_create_multi_sermon_query complex JOIN (lines 780-852)?
+  - Should Books repository be created for sb_books table?
+
+decisions:
+  - simple_singleton: Custom singleton container over DI library (fewer dependencies)
+  - static_facades: Static facades like Sermon::find() for human readability
+  - autoload_immediate: Load Composer autoloader at top of sermon.php
+  - migration_core_first: sermon.php → admin.php, defer frontend.php to Phase 6
+  - worktree_workflow: All dev work in git worktrees, not main checkout
+
+findings:
+  - sermon_wpdb_count: 32 total $wpdb refs, replaced 6, 26 remain (WP core + complex queries)
+  - repositories_exist: 7 repositories already exist in src/Repositories/ with full CRUD
+  - file_repo_extended: Added incrementCountByName() and getTotalDownloadsBySermon()
+
+worked:
+  - File facade for sb_stuff table queries
+  - Service facade for sb_services lookups
+  - PHP array_filter for mp3-only file filtering (simple, no new repo method needed)
+
+failed: []
+
+next:
+  - Replace $wpdb calls in admin.php with Facades (~80 calls)
+  - Consider SermonQueryBuilder class for complex multi-table queries
+  - Add integration tests for Facade methods
+  - Create Books repository if needed for sb_books queries
+
+files:
+  created:
+    - src/Services/Container.php
+    - src/bootstrap.php
+    - src/Facades/Facade.php
+    - src/Facades/Sermon.php
+    - src/Facades/Preacher.php
+    - src/Facades/Series.php
+    - src/Facades/Service.php
+    - src/Facades/File.php
+    - src/Facades/Tag.php
+    - thoughts/shared/plans/refactor-master-plan.md
+  modified:
+    - sermon.php
+    - docker-compose.yml
+    - composer.json
+    - src/Repositories/FileRepository.php
+    - src/Facades/File.php
+
+worktree:
+  location: /Users/stephenfeather/Development/sermon-browser-phase1
+  branch: feature/phase1-repository-integration
+  commits:
+    - 0b79409: Add Phase 1 scaffolding (on develop)
+    - 0dab501: Replace $wpdb calls with Facades in sermon.php
+
+refactor_plan_summary:
+  phase1: Repository Integration (IN PROGRESS)
+  phase2: Split Monolithic Files (admin.php 2540 lines)
+  phase3: Modernize JavaScript (Vite, Flatpickr)
+  phase4: Add REST API
+  phase5: Gutenberg Blocks
+  phase6: Remove eval() Templates

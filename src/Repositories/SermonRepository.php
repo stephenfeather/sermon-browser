@@ -341,4 +341,34 @@ class SermonRepository extends AbstractRepository
 
         return $result ?: null;
     }
+
+    /**
+     * Get sermons for admin listing with related names.
+     *
+     * @param int $limit Maximum results.
+     * @param int $offset Number to skip.
+     * @return array<object> Array of sermons with pname, sname, ssname columns.
+     */
+    public function findForAdminList(int $limit = 0, int $offset = 0): array
+    {
+        $table = $this->getTableName();
+        $preachersTable = $this->db->prefix . 'sb_preachers';
+        $seriesTable = $this->db->prefix . 'sb_series';
+        $servicesTable = $this->db->prefix . 'sb_services';
+
+        $sql = "SELECT m.id, m.title, m.datetime, p.name as pname, s.name as sname, ss.name as ssname
+                FROM {$table} as m
+                LEFT JOIN {$preachersTable} as p ON m.preacher_id = p.id
+                LEFT JOIN {$servicesTable} as s ON m.service_id = s.id
+                LEFT JOIN {$seriesTable} as ss ON m.series_id = ss.id
+                ORDER BY m.datetime DESC, s.time DESC";
+
+        if ($limit > 0) {
+            $sql .= $this->db->prepare(' LIMIT %d, %d', $offset, $limit);
+        }
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
 }
