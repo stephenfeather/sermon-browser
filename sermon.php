@@ -52,18 +52,20 @@ The frontend output is inserted by sb_shortcode
 /**
 * Initialisation
 *
-* Sets version constants and basic Wordpress hooks.
+* Sets path constants and bootstraps the plugin.
 * @package common_functions
 */
-define('SB_CURRENT_VERSION', '0.5.1-dev');
-define('SB_DATABASE_VERSION', '1.7');
+
+// Define path constants first (requires __FILE__ context from this file).
 sb_define_constants();
 
-// Load testable helper functions (Phase 1 modernization).
-require_once SB_INCLUDES_DIR . '/functions-testable.php';
-add_action ('plugins_loaded', 'sb_hijack');
-add_action ('init', 'sb_sermon_init');
-add_action ('widgets_init', 'sb_widget_sermon_init');
+// Load Composer autoloader.
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
+// Boot the plugin via the modern Plugin class.
+\SermonBrowser\Plugin::boot();
 
 /**
 * Display podcast, or download linked files
@@ -227,7 +229,8 @@ function sb_sermon_init () {
 			add_action ('wp_footer', 'sb_footer_stats');
 	} else {
 		require (SB_INCLUDES_DIR.'/admin.php');
-		add_action ('admin_menu', 'sb_add_pages');
+		// Phase 2: Admin menu registration moved to AdminController.
+		// add_action ('admin_menu', 'sb_add_pages');
 		add_filter('dashboard_glance_items', 'sb_dashboard_glance');
 		add_action('admin_init', 'sb_add_admin_headers');
 		// Phase 1: Use Help Tabs API instead of deprecated contextual_help filter.
@@ -238,8 +241,10 @@ function sb_sermon_init () {
 }
 
 /**
-* Add Sermons menu and sub-menus in admin
-*/
+ * Add Sermons menu and sub-menus in admin.
+ *
+ * @deprecated 0.6.0 Use AdminController::registerMenus() instead.
+ */
 function sb_add_pages() {
 	add_menu_page(__('Sermons', 'sermon-browser'), __('Sermons', 'sermon-browser'), 'publish_posts', __FILE__, 'sb_manage_sermons', SB_PLUGIN_URL.'/sb-includes/sb-icon.png');
 	add_submenu_page(__FILE__, __('Sermons', 'sermon-browser'), __('Sermons', 'sermon-browser'), 'publish_posts', __FILE__, 'sb_manage_sermons');
