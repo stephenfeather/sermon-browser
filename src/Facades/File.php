@@ -16,6 +16,12 @@
  * @method static array findBy(string $column, mixed $value)
  * @method static object|null findOneBy(string $column, mixed $value)
  * @method static bool exists(int $id)
+ * @method static array findBySermon(int $sermonId)
+ * @method static array findBySermonAndType(int $sermonId, string $type)
+ * @method static int countBySermon(int $sermonId)
+ * @method static bool incrementCount(int $id)
+ * @method static bool incrementCountByName(string $name)
+ * @method static int getTotalDownloadsBySermon(int $sermonId)
  */
 
 declare(strict_types=1);

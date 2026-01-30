@@ -49,6 +49,13 @@ The frontend output is inserted by sb_shortcode
 
 */
 
+use SermonBrowser\Facades\Sermon;
+use SermonBrowser\Facades\Preacher;
+use SermonBrowser\Facades\Series;
+use SermonBrowser\Facades\Service;
+use SermonBrowser\Facades\File;
+use SermonBrowser\Facades\Tag;
+
 /**
 * Initialisation
 *
@@ -58,6 +65,9 @@ The frontend output is inserted by sb_shortcode
 define('SB_CURRENT_VERSION', '0.5.1-dev');
 define('SB_DATABASE_VERSION', '1.7');
 sb_define_constants();
+
+// Load Composer autoloader for modern PSR-4 classes.
+require_once __DIR__ . '/vendor/autoload.php';
 
 // Load testable helper functions (Phase 1 modernization).
 require_once SB_INCLUDES_DIR . '/functions-testable.php';
@@ -73,7 +83,7 @@ add_action ('widgets_init', 'sb_widget_sermon_init');
 */
 function sb_hijack() {
 
-	global $filetypes, $wpdb;
+	global $filetypes;
 
 	wp_timezone_override_offset();
 
@@ -84,8 +94,9 @@ function sb_hijack() {
 
 	//Forces sermon download of local file
 	if (isset($_GET['download']) AND isset($_GET['file_name'])) {
-		$file_name = esc_sql(rawurldecode($_GET['file_name']));
-		$file_name = $wpdb->get_var("SELECT name FROM {$wpdb->prefix}sb_stuff WHERE name='{$file_name}'");
+		$requested_name = rawurldecode($_GET['file_name']);
+		$file = File::findOneBy('name', $requested_name);
+		$file_name = $file?->name;
 		if (!is_null($file_name)) {
 			header("Content-Type: application/octet-stream");
 			header('Content-Disposition: attachment; filename="'.$file_name.'"');
@@ -120,8 +131,9 @@ function sb_hijack() {
 	//Returns local file (doesn't force download)
 	if (isset($_GET['show']) AND isset($_GET['file_name'])) {
 		global $filetypes;
-		$file_name = esc_sql(rawurldecode($_GET['file_name']));
-		$file_name = $wpdb->get_var("SELECT name FROM {$wpdb->prefix}sb_stuff WHERE name='{$file_name}'");
+		$requested_name = rawurldecode($_GET['file_name']);
+		$file = File::findOneBy('name', $requested_name);
+		$file_name = $file?->name;
 		if (!is_null($file_name)) {
 			$url = sb_get_option('upload_url').$file_name;
 			sb_increase_download_count ($file_name);
@@ -288,8 +300,7 @@ function sb_return_kbytes($val) {
 * @return integer
 */
 function sb_sermon_stats($sermonid) {
-	global $wpdb;
-	$stats = $wpdb->get_var("SELECT SUM(count) FROM ".$wpdb->prefix."sb_stuff WHERE sermon_id=".$sermonid);
+	$stats = File::getTotalDownloadsBySermon((int) $sermonid);
 	if ($stats > 0)
 		return $stats;
 }
@@ -849,10 +860,9 @@ function sb_create_multi_sermon_query ($filter, $order, $page = 1, $limit = 0, $
 * @return string (service time)
 */
 function sb_default_time($service) {
-	global $wpdb;
-	$sermon_time = $wpdb->get_var("SELECT time FROM {$wpdb->prefix}sb_services WHERE id='{$service}'");
-	if (isset($sermon_time)) {
-		return $sermon_time;
+	$serviceRecord = Service::find((int) $service);
+	if ($serviceRecord && isset($serviceRecord->time)) {
+		return $serviceRecord->time;
 	} else {
 		return "00:00";
 	}
@@ -866,11 +876,9 @@ function sb_default_time($service) {
 * @return array
 */
 function sb_get_stuff($sermon, $mp3_only = FALSE) {
-	global $wpdb;
+	$stuff = File::findBySermon((int) $sermon->id);
 	if ($mp3_only) {
-		$stuff = $wpdb->get_results("SELECT f.type, f.name FROM {$wpdb->prefix}sb_stuff as f WHERE sermon_id = $sermon->id AND name LIKE '%.mp3' ORDER BY id desc");
-	} else {
-		$stuff = $wpdb->get_results("SELECT f.type, f.name FROM {$wpdb->prefix}sb_stuff as f WHERE sermon_id = $sermon->id ORDER BY id desc");
+		$stuff = array_filter($stuff, fn($f) => str_ends_with($f->name ?? '', '.mp3'));
 	}
 	$file = $url = $code = array();
 	foreach ($stuff as $cur)
@@ -891,8 +899,7 @@ function sb_get_stuff($sermon, $mp3_only = FALSE) {
 */
 function sb_increase_download_count ($stuff_name) {
 	if (!(current_user_can('edit_posts') || current_user_can('publish_posts'))) {
-		global $wpdb;
-		$wpdb->query("UPDATE ".$wpdb->prefix."sb_stuff SET COUNT=COUNT+1 WHERE name='".esc_sql($stuff_name)."'");
+		File::incrementCountByName($stuff_name);
 	}
 }
 

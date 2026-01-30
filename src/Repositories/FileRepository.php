@@ -140,6 +140,26 @@ class FileRepository extends AbstractRepository
     }
 
     /**
+     * Increment download count for a file by name.
+     *
+     * @param string $name The file name.
+     * @return bool True on success.
+     */
+    public function incrementCountByName(string $name): bool
+    {
+        $table = $this->getTableName();
+
+        $result = $this->db->query(
+            $this->db->prepare(
+                "UPDATE {$table} SET count = count + 1 WHERE name = %s",
+                $name
+            )
+        );
+
+        return $result !== false;
+    }
+
+    /**
      * Get files with sermon data.
      *
      * @param string $type Optional file type filter.
@@ -188,5 +208,25 @@ class FileRepository extends AbstractRepository
         $results = $this->db->get_results($sql);
 
         return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Get total download count for a sermon.
+     *
+     * @param int $sermonId The sermon ID.
+     * @return int Total download count.
+     */
+    public function getTotalDownloadsBySermon(int $sermonId): int
+    {
+        $table = $this->getTableName();
+
+        $result = $this->db->get_var(
+            $this->db->prepare(
+                "SELECT SUM(count) FROM {$table} WHERE sermon_id = %d",
+                $sermonId
+            )
+        );
+
+        return (int) ($result ?? 0);
     }
 }
