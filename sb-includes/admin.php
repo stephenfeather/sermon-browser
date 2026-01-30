@@ -24,9 +24,21 @@ function sb_add_admin_headers() {
 }
 
 /**
-* Display the options page and handle changes
-*/
+ * Display the options page and handle changes.
+ *
+ * @since 0.6.0 Refactored to use OptionsPage class.
+ */
 function sb_options() {
+    $page = new \SermonBrowser\Admin\Pages\OptionsPage();
+    $page->render();
+}
+
+/**
+ * Legacy sb_options implementation.
+ *
+ * @deprecated 0.6.0 Use OptionsPage class instead.
+ */
+function sb_options_legacy() {
 	global $wpdb;
 	//Security check
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -405,141 +417,48 @@ function sb_options() {
 /**
 * Display uninstall screen and perform uninstall if requested
 */
-function sb_uninstall () {
-	//Security check
-	if ( ! ( current_user_can( 'edit_plugins' ) || ( IS_MU && current_user_can( 'manage_options' ) ) ) ) {
-			wp_die(__("You do not have the correct permissions to Uninstall SermonBrowser", 'sermon-browser'));
-	}
-	if ( isset( $_POST['uninstall'] ) ) {
-		if ( ! isset( $_POST['sermon_browser_uninstall_nonce'] ) || ! wp_verify_nonce( $_POST['sermon_browser_uninstall_nonce'], 'sermon_browser_uninstall' ) ) {
-			wp_die( __( "You do not have the correct permissions to Uninstall SermonBrowser", 'sermon-browser' ) );
-		}
-		require(SB_INCLUDES_DIR.'/uninstall.php');
-	}
-
-?>
-	<form method="post">
-	<div class="wrap">
-		<?php if (IS_MU) { ?>
-			<h2> <?php _e('Reset SermonBrowser', 'sermon-browser'); ?></h2>
-			<p><?php printf(__('Clicking the %s button below will remove ALL data (sermons, preachers, series, etc.) from SermonBrowser', 'sermon-browser'), __('Delete all', 'sermon-browser'));
-					 echo '. ';
-					 _e('You will NOT be able to undo this action.', 'sermon-browser') ?>
-			</p>
-		<?php } else {  ?>
-			<h2> <?php _e('Uninstall', 'sermon-browser'); ?></h2>
-			<p><?php printf(__('Clicking the %s button below will remove ALL data (sermons, preachers, series, etc.) from SermonBrowser', 'sermon-browser'), __('Uninstall', 'sermon-browser'));
-					 echo ', ';
-					 _e('and will deactivate the SermonBrowser plugin', 'sermon-browser');
-					 echo '. ';
-					 _e('You will NOT be able to undo this action.', 'sermon-browser');
-					 echo ' ';
-					 _e('If you only want to temporarily disable SermonBrowser, just deactivate it from the plugins page.', 'sermon-browser'); ?>
-			</p>
-		<?php } ?>
-		<table border="0" class="widefat">
-			<tr>
-                    <td><input type="checkbox" name="wipe"
-                               value="1"> <?php _e( 'Also remove all uploaded files', 'sermon-browser' ) ?></td>
-			</tr>
-		</table>
-            <p class="submit"><input type="submit" name="uninstall" value="<?php if ( IS_MU ) {
-					_e( 'Delete all', 'sermon-browser' );
-				} else {
-					_e( 'Uninstall', 'sermon-browser' );
-				} ?>"
-                                     onclick="return confirm('<?php _e( 'Do you REALLY want to delete all data?', 'sermon-browser' ) ?>')"/>
-            </p>
-	</div>
-		<?php wp_nonce_field( 'sermon_browser_uninstall', 'sermon_browser_uninstall_nonce' ); ?>
-	</form>
-	<script>
-        jQuery( "form" ).submit( function ()
-        {
-			var yes = confirm("<?php _e('Are you REALLY REALLY sure you want to remove SermonBrowser?', 'sermon-browser')?>");
-			if(!yes) return false;
-		});
-	</script>
-<?php
+/**
+ * Display the uninstall page.
+ *
+ * Wrapper function for backward compatibility.
+ * Delegates to UninstallPage class.
+ *
+ * @since 0.6.0 Refactored to use UninstallPage class.
+ */
+function sb_uninstall() {
+    $page = new \SermonBrowser\Admin\Pages\UninstallPage();
+    $page->render();
 }
 
 /**
-* Display the templates page and handle changes
-*/
-function sb_templates () {
-	//Security check
-	if (!current_user_can('manage_options'))
-			{wp_die(__("You do not have the correct permissions to edit the SermonBrowser templates", 'sermon-browser'));}
-	//Save templates or reset to default
-	if (isset($_POST['save']) || isset($_POST['resetdefault'])) {
-        if (! isset($_POST['sermon_template_edit_nonce']) || ! wp_verify_nonce( $_POST['sermon_template_edit_nonce'], 'sermon_template_edit' )) {
-            wp_die(__("You do not have the correct permissions to edit the SermonBrowser templates", 'sermon-browser'));
-        }
-		require(SB_INCLUDES_DIR.'/dictionary.php');
-		$multi = wp_kses_post($_POST['multi']);
-		$single = wp_kses_post($_POST['single']);
-		$style = wp_kses_post($_POST['style']);
-		if(isset($_POST['resetdefault'])){
-			require(SB_INCLUDES_DIR.'/sb-install.php');
-			$multi = sb_default_multi_template();
-			$single = sb_default_single_template();
-			$style = sb_default_css();
-		}
-		sb_update_option('search_template', $multi);
-		sb_update_option('single_template', $single);
-		sb_update_option('css_style', $style);
-		sb_update_option('search_output', strtr($multi, sb_search_results_dictionary()));
-		sb_update_option('single_output', strtr($single, sb_sermon_page_dictionary()));
-		sb_update_option('style_date_modified', strtotime('now'));
-		echo '<div id="message" class="updated fade"><p><b>';
-		_e('Templates saved successfully.', 'sermon-browser');
-		echo '</b></p></div>';
-	}
-	sb_do_alerts();
-	// HTML for templates page
-	?>
-	<form method="post">
-	<div class="wrap">
-		<a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
-		<h2><?php _e('Templates', 'sermon-browser') ?></h2>
-		<br/>
-		<table border="0" class="widefat">
-			<tr>
-				<td align="right"><?php _e('Search results page', 'sermon-browser') ?>: </td>
-				<td>
-					<?php sb_build_textarea('multi', sb_get_option('search_template')) ?>
-				</td>
-			</tr>
-			<tr>
-				<td align="right"><?php _e('Sermon page', 'sermon-browser') ?>: </td>
-				<td>
-					<?php sb_build_textarea('single', sb_get_option('single_template')) ?>
-				</td>
-			</tr>
-			<tr>
-				<td align="right"><?php _e('Style', 'sermon-browser') ?>: </td>
-				<td>
-					<?php sb_build_textarea('style', sb_get_option('css_style')) ?>
-				</td>
-			</tr>
-		</table>
-		<p class="submit"><input type="submit" name="save" value="<?php _e('Save', 'sermon-browser') ?> &raquo;" /> <input type="submit" name="resetdefault" value="<?php _e('Reset to defaults', 'sermon-browser') ?>"  /></p>
-	</div>
-	<?php  wp_nonce_field( 'sermon_template_edit', 'sermon_template_edit_nonce' ); ?>
-	</form>
-	<script>
-		jQuery("form").submit(function() {
-			var yes = confirm("Are you sure ?");
-			if(!yes) return false;
-		});
-	</script>
-<?php
+ * Display the templates page and handle changes.
+ *
+ * Wrapper function for backward compatibility.
+ * Delegates to TemplatesPage class.
+ *
+ * @since 0.6.0 Refactored to use TemplatesPage class.
+ */
+function sb_templates() {
+    $page = new \SermonBrowser\Admin\Pages\TemplatesPage();
+    $page->render();
 }
 
 /**
-* Display the preachers page and handle changes
-*/
+ * Display the preachers page and handle changes.
+ *
+ * @since 0.6.0 Refactored to use PreachersPage class.
+ */
 function sb_manage_preachers() {
+    $page = new \SermonBrowser\Admin\Pages\PreachersPage();
+    $page->render();
+}
+
+/**
+ * Legacy sb_manage_preachers implementation.
+ *
+ * @deprecated 0.6.0 Use PreachersPage class instead.
+ */
+function sb_manage_preachers_legacy() {
 	global $wpdb;
 	//Security check
 	if (!current_user_can('manage_categories'))
@@ -709,9 +628,21 @@ function sb_manage_preachers() {
 }
 
 /**
-* Display services & series page and handle changes
-*/
+ * Display services & series page and handle changes.
+ *
+ * @since 0.6.0 Refactored to use SeriesServicesPage class.
+ */
 function sb_manage_everything() {
+    $page = new \SermonBrowser\Admin\Pages\SeriesServicesPage();
+    $page->render();
+}
+
+/**
+ * Legacy sb_manage_everything implementation.
+ *
+ * @deprecated 0.6.0 Use SeriesServicesPage class instead.
+ */
+function sb_manage_everything_legacy() {
 	global $wpdb;
 	//Security check
 	if (!current_user_can('manage_categories'))
@@ -895,9 +826,24 @@ function sb_manage_everything() {
 }
 
 /**
-* Display files page and handle changes
-*/
+ * Display files page and handle changes.
+ *
+ * Wrapper function for backward compatibility.
+ * Delegates to FilesPage class.
+ *
+ * @since 0.6.0 Refactored to use FilesPage class.
+ */
 function sb_files() {
+    $page = new \SermonBrowser\Admin\Pages\FilesPage();
+    $page->render();
+}
+
+/**
+ * Legacy sb_files implementation.
+ *
+ * @deprecated 0.6.0 Use FilesPage class instead.
+ */
+function sb_files_legacy() {
 	global $wpdb, $filetypes;
 	//Security check
 	if (!current_user_can('upload_files'))
@@ -1243,157 +1189,37 @@ function sb_files() {
 }
 
 /**
-* Displays Sermons page
-*/
+ * Displays Sermons page.
+ *
+ * Wrapper function for backward compatibility.
+ * Delegates to SermonsPage class.
+ *
+ * @since 0.6.0 Refactored to use SermonsPage class.
+ */
 function sb_manage_sermons() {
-	global $wpdb;
-	//Security check
-	if (!(current_user_can('publish_posts') || current_user_can('publish_pages')))
-		{wp_die(__("You do not have the correct permissions to edit sermons", 'sermon-browser'));}
-	sb_do_alerts();
-	if (isset($_GET['saved'])) {
-		echo '<div id="message" class="updated fade"><p><b>'.__('Sermon saved to database.', 'sermon-browser').'</b></div>';
-        $show_msg = rand (1,5);
-		if ($show_msg == 1 && sb_get_option('show_donate_reminder') != 'off')
-			{echo '<div id="message" class="updated"><p><b>'.sprintf(__('If you find SermonBrowser useful, please consider %1$ssupporting%2$s the ministry of Nathanael and Anna Ayling in Japan.', 'sermon-browser'), '<a href="'.admin_url('admin.php?page=sermon-browser/japan.php').'">', '</a>').'</b></div>';}
-        elseif ($show_msg == 2)
-            {echo '<div id="message" class="updated"><p><b>'.__('Sermon Browser 2.0 is under development. If you\'re a coder, and would like to help, please check the <a href="https://www.assembla.com/spaces/sermon-browser-2/documents">SB2 development website</a>.', 'sermon-browser').'</b></div>';}
-	}
-
-	if (isset($_GET['mid'])) {
-        if (! wp_verify_nonce( $_GET['sermon_manage_sermons_nonce'], 'sermon_manage_sermons' )) {
-            wp_die(__("You do not have the correct permissions to edit sermons", 'sermon-browser'));
-        }
-		//Security check
-		if (!current_user_can('publish_posts'))
-			{wp_die(__("You do not have the correct permissions to delete sermons", 'sermon-browser'));}
-		$mid = (int) $_GET['mid'];
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_sermons WHERE id = $mid;");
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_sermons_tags WHERE sermon_id = $mid;");
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_books_sermons WHERE sermon_id = $mid;");
-		$wpdb->query("UPDATE {$wpdb->prefix}sb_stuff SET sermon_id = 0 WHERE sermon_id = $mid AND type = 'file';");
-		$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE sermon_id = $mid AND type <> 'file';");
-		sb_delete_unused_tags();
-		echo '<div id="message" class="updated fade"><p><b>'.__('Sermon removed from database.', 'sermon-browser').'</b></div>';
-	}
-
-	$cnt = $wpdb->get_row("SELECT COUNT(*) FROM {$wpdb->prefix}sb_sermons", ARRAY_A);
-	$cnt = $cnt['COUNT(*)'];
-
-	$sermons = $wpdb->get_results("SELECT m.id, m.title, m.datetime, p.name as pname, s.name as sname, ss.name as ssname
-		FROM {$wpdb->prefix}sb_sermons as m
-		LEFT JOIN {$wpdb->prefix}sb_preachers as p ON m.preacher_id = p.id
-		LEFT JOIN {$wpdb->prefix}sb_services as s ON m.service_id = s.id
-		LEFT JOIN {$wpdb->prefix}sb_series as ss ON m.series_id = ss.id
-		ORDER BY m.datetime desc, s.time desc LIMIT 0, ".sb_get_option('sermons_per_page'));
-	$preachers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_preachers ORDER BY name;");
-	$series = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_series ORDER BY name;");
-?>
-	<script>
-		function fetch(st) {
-			jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {fetch: st + 1, sermon: 1, title: jQuery('#search').val(), preacher: jQuery('#preacher').val(), series: jQuery('#series').val() }, function(r) {
-				if (r) {
-					jQuery('#the-list').html(r);
-					if (st >= <?php echo sb_get_option('sermons_per_page') ?>) {
-						x = st - <?php echo sb_get_option('sermons_per_page') ?>;
-						jQuery('#left').html('<a href="javascript:fetch(' + x + ')">&laquo; Previous</a>');
-					} else {
-						jQuery('#left').html('');
-					}
-					if (st + <?php echo sb_get_option('sermons_per_page') ?> <= <?php echo $cnt ?>) {
-						y = st + <?php echo sb_get_option('sermons_per_page') ?>;
-						jQuery('#right').html('<a href="javascript:fetch(' + y + ')">Next &raquo;</a>');
-					} else {
-						jQuery('#right').html('');
-					}
-				};
-			});
-		}
-	</script>
-	<div class="wrap">
-			<a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
-			<h2>Filter</h2>
-			<form id="searchform" name="searchform">
-			<fieldset style="float:left; margin-right: 1em">
-				<legend><?php _e('Title', 'sermon-browser') ?></legend>
-				<input type="text" size="17" value="" id="search" />
-			</fieldset>
-			<fieldset style="float:left; margin-right: 1em">
-				<legend><?php _e('Preacher', 'sermon-browser') ?></legend>
-				<select id="preacher">
-					<option value="0"></option>
-					<?php foreach ($preachers as $preacher): ?>
-						<option value="<?php echo $preacher->id ?>"><?php echo htmlspecialchars(stripslashes($preacher->name), ENT_QUOTES) ?></option>
-					<?php endforeach ?>
-				</select>
-			</fieldset>
-			<fieldset style="float:left; margin-right: 1em">
-				<legend><?php _e('Series', 'sermon-browser') ?></legend>
-				<select id="series">
-					<option value="0"></option>
-					<?php foreach ($series as $item): ?>
-						<option value="<?php echo $item->id ?>"><?php echo htmlspecialchars(stripslashes($item->name), ENT_QUOTES) ?></option>
-					<?php endforeach ?>
-				</select>
-			</fieldset style="float:left; margin-right: 1em">
-			<input type="submit" class="button" value="<?php _e('Filter', 'sermon-browser') ?> &raquo;" style="float:left;margin:14px 0pt 1em; position:relative;top:0.35em;" onclick="javascript:fetch(0);return false;" />
-			</form>
-		<br style="clear:both">
-		<h2><?php _e('Sermons', 'sermon-browser') ?></h2>
-		<br style="clear:both">
-		<table class="widefat">
-			<thead>
-			<tr>
-				<th scope="col" style="text-align:center"><?php _e('ID', 'sermon-browser') ?></th>
-				<th scope="col"><?php _e('Title', 'sermon-browser') ?></th>
-				<th scope="col"><?php _e('Preacher', 'sermon-browser') ?></th>
-				<th scope="col"><?php _e('Date', 'sermon-browser') ?></th>
-				<th scope="col"><?php _e('Service', 'sermon-browser') ?></th>
-				<th scope="col"><?php _e('Series', 'sermon-browser') ?></th>
-				<th scope="col" style="text-align:center"><?php _e('Stats', 'sermon-browser') ?></th>
-				<th scope="col" style="text-align:center"><?php _e('Actions', 'sermon-browser') ?></th>
-			</tr>
-			</thead>
-			<tbody id="the-list">
-				<?php if (is_array($sermons)): ?>
-					<?php foreach ($sermons as $sermon): ?>
-					<tr class="<?php $i=0; echo ++$i % 2 == 0 ? 'alternate' : '' ?>">
-						<th style="text-align:center" scope="row"><?php echo $sermon->id ?></th>
-						<td><?php echo stripslashes($sermon->title) ?></td>
-						<td><?php echo stripslashes($sermon->pname) ?></td>
-						<td><?php echo ($sermon->datetime == '1970-01-01 00:00:00') ? __('Unknown', 'sermon-browser') : wp_date('d M y', strtotime($sermon->datetime)); ?></td>
-						<td><?php echo stripslashes($sermon->sname) ?></td>
-						<td><?php echo stripslashes($sermon->ssname) ?></td>
-						<td><?php echo sb_sermon_stats($sermon->id) ?></td>
-						<td style="text-align:center">
-							<?php //Security check
-									if (current_user_can('publish_posts')) { ?>
-									<a href="<?php echo wp_nonce_url( admin_url("admin.php?page=sermon-browser/new_sermon.php&mid={$sermon->id}"), 'sermon_new_sermons', 'sermon_new_sermons_nonce' );  ?>"><?php _e('Edit', 'sermon-browser') ?></a> | <a onclick="return confirm('Are you sure?')" href="<?php echo wp_nonce_url( admin_url("admin.php?page=sermon-browser/sermon.php&mid={$sermon->id}"), 'sermon_manage_sermons', 'sermon_manage_sermons_nonce' );  ?>"><?php _e('Delete', 'sermon-browser'); ?></a> |
-							<?php } ?>
-							<a href="<?php echo sb_display_url().sb_query_char(true).'sermon_id='.$sermon->id;?>">View</a>
-						</td>
-					</tr>
-					<?php endforeach ?>
-				<?php endif ?>
-			</tbody>
-		</table>
-		<div class="navigation">
-			<div class="alignleft" id="left"></div>
-			<div class="alignright" id="right"></div>
-		</div>
-	</div>
-	<script>
-		<?php if ($cnt > sb_get_option('sermons_per_page')): ?>
-			jQuery('#right').html('<a href="javascript:fetch(<?php echo sb_get_option('sermons_per_page') ?>)">Next &raquo;</a>');
-		<?php endif ?>
-	</script>
-<?php
+    $page = new \SermonBrowser\Admin\Pages\SermonsPage();
+    $page->render();
 }
 
 /**
-* Displays new/edit sermon page
-*/
+ * Displays new/edit sermon page.
+ *
+ * Wrapper function for backward compatibility.
+ * Delegates to SermonEditorPage class.
+ *
+ * @since 0.6.0 Refactored to use SermonEditorPage class.
+ */
 function sb_new_sermon() {
+    $page = new \SermonBrowser\Admin\Pages\SermonEditorPage();
+    $page->render();
+}
+
+/**
+ * Legacy sb_new_sermon implementation.
+ *
+ * @deprecated 0.6.0 Use SermonEditorPage class instead.
+ */
+function sb_new_sermon_legacy() {
 	global $wpdb, $allowedposttags;
 	$getid3=false;
 	//Security check
@@ -2092,118 +1918,30 @@ function sb_new_sermon() {
 /**
 * Displays the help page
 */
+/**
+ * Display the help page.
+ *
+ * Wrapper function for backward compatibility.
+ * Delegates to HelpPage class.
+ *
+ * @since 0.6.0 Refactored to use HelpPage class.
+ */
 function sb_help() {
-sb_do_alerts();
-?>
-	<div class="wrap">
-		<a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
-		<div style="width:45%;float:right;clear:right">
-		<h2>Thank you</h2>
-		<p>A number of individuals and churches have kindly <a href="http://www.sermonbrowser.com/donate/">donated</a> to the development of Sermon Browser. Their support is very much appreciated. Since April 2011, all donations have been sent to <a href="<?php echo admin_url('admin.php?page=sermon-browser/japan.php')?>">support the ministry of Nathanael and Anna Ayling</a> in Japan.</p>
-		<ul style="list-style-type:circle; margin-left: 2em">
-			<li><a href="http://www.cambray.org/" target="_blank">Cambray Baptist Church</a>, UK</li>
-			<li><a href="https://www.bethel-clydach.co.uk/" target="_blank">Bethel Evangelical Church</a>, Clydach, UK</li>
-			<li><a href="http://www.bethel-laleston.co.uk/" target="_blank">Bethel Baptist Church</a>, Laleston, UK</li>
-			<li><a href="http://www.hessonchurch.com/" target="_blank">Hesson Christian Fellowship</a>, Ontario, Canada</li>
-			<li><a href="http://www.icvineyard.org/" target="_blank">Vineyard Community Church</a>, Iowa</li>
-			<li><a href="http://www.cbcsd.us/" target="_blank">Chinese Bible Church of San Diego</a>, California</li>
-			<li><a href="http://thecreekside.org/" target="_blank">Creekside Community Church</a>, Texas</li>
-			<li><a href="http://stluke.info/" target="_blank">St. Luke Lutheran Church, Gales Ferry</a>, Connecticut</li>
-			<li><a href="http://www.bunnbaptistchurch.org/" target="_blank">Bunn Baptist Church</a>, North Carolina</li>
-			<li><a href="http://www.ccpconline.org" target="_blank">Christ Community Presbyterian Church</a>, Florida</li>
-			<li><a href="http://www.harborhawaii.org" target="_blank">Harbor Church</a>, Hawaii</li>
-			<li>Vicky H, UK</li>
-			<li>Ben S, UK</li>
-			<li>Tom W, UK</li>
-			<li>Gavin D, UK</li>
-			<li>Douglas C, UK</li>
-			<li>David A, UK</li>
-			<li>Thomas C, Canada</li>
-			<li>Daniel J, Germany</li>
-			<li>Hiromi O, Japan</li>
-			<li>David C, Australia</li>
-			<li>Lou B, Australia</li>
-			<li>Edward P, Delaware</li>
-			<li>Steve J, Pensylvania</li>
-			<li>William H, Indiana</li>
-			<li>Brandon E, New Jersey</li>
-			<li>Jamon A, Missouri</li>
-			<li>Chuck H, Tennessee</li>
-			<li>David F, Maryland</li>
-			<li>Antony L, California</li>
-			<li>David W, Florida</li>
-			<li>Fabio P, Connecticut</li>
-			<li>Bill C, Georgia</li>
-			<li>Scott J, Florida</li>
-			<li><a href="http://www.emw.org.uk/" target="_blank">Evangelical Movement of Wales</a>, UK</li>
-			<li><a href="http://BetterCommunication.org" target="_blank">BetterCommunication.org</a></li>
-			<li>Home and Outdoor Living, Indiana</li>
-			<li><a href="http://design.ddandhservices.com/" target="_blank">DD&H Services</a>, British Columbia</li>
-			<li><a href="http://www.dirtroadphotography.com" target="_blank">Dirt Road Photography</a>, Nebraska</li>
-			<li><a href="http://www.hardeysolutions.com/" target="_blank">Hardey Solutions</a>, Houston</li>
-			<li><a href="http://www.olivetreehost.com/" target="_blank">Olivetreehost.com</a></li>
-			<li><a href="http://www.onQsites.com/" target="_blank">onQsites</a>, South Carolina</li>
-			<li>Glorified Web Solutions</li>
-		</ul>
-		<p>Additional help was also received from:</p>
-		<ul style="list-style-type:circle; margin-left: 2em">
-			<li><a href="http://codeandmore.com/">Tien Do Xuan</a> (help with initial coding).
-			<li>James Hudson, Matthew Hiatt, Mark Bouchard (code contributions)</li>
-			<li>Juan Carlos and Marvin Ortega (Spanish translation)</li>
-			<li><a href="http://www.fatcow.com/">FatCow</a> (Russian translation)</li>
-			<li><a href="http://intercer.net/">Lucian Mihailescu</a> (Romanian translation)</li>
-			<li>Monika Gause (German translation)</li>
-			<li><a href="http://www.djio.com.br/sermonbrowser-em-portugues-brasileiro-pt_br/">DJIO</a> (Brazilian Portugese translation)</li>
-			<li>Numerous <a href="http://www.sermonbrowser.com/forum/">forum contributors</a> for feature suggestions and bug reports</li>
-		</ul>
-	</div>
-		<div style="width:45%;float:left">
-		<h2><?php _e('Help page', 'sermon-browser') ?></h2>
-		<h3>Screencasts</h3>
-		<p>If you need help with using SermonBrowser for the first time, these five minute screencast tutorials should be your first port of call (the tutorials were created with an older version of SermonBrowser, and an older version of Wordpress, but things haven't changed a great deal):</p>
-		<ul>
-			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-1" target="_blank">Installation and Overview</a></li>
-			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-2" target="_blank">Basic Options</a></li>
-			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-3" target="_blank">Preachers, Series and Services</a></li>
-			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-4" target="_blank">Entering a new sermon</a></li>
-			<li><a href="http://www.sermonbrowser.com/tutorials/#efe-swf-5" target="_blank">Editing a sermon and adding embedded video</a></li>
-		</ul>
-		<h3>Template tags</h3>
-		<p>If you want to change the way SermonBrowser displays on your website, you'll need to edit the templates and/or CSS file. Check out this guide to <a href="http://www.sermonbrowser.com/customisation/" target="_blank">template tags</a>.</p>
-		<h3>Shortcode</h3>
-		<p>You can put individual sermons or lists of sermons on any page of your website. You do this by adding a <a href="http://www.sermonbrowser.com/customisation/" target="_blank">shortcode</a> into a WordPress post or page.</p>
-		<h3>Frequently asked questions</h3>
-		<p>A <a href="http://www.sermonbrowser.com/faq/" target="_blank">comprehensive FAQ</a> is available on sermonbrowser.com.</p>
-		<h3>Further help</h3>
-		<p>If you have a problem that the FAQ doesn't answer, or you have a feature suggestion, please use the <a href="http://www.sermonbrowser.com/forum/" target="_blank">SermonBrowser forum</a>.</p>
-		</div>
-	</form>
-<?php
+    $page = new \SermonBrowser\Admin\Pages\HelpPage();
+    $page->render();
 }
 
+/**
+ * Display the Japan ministry support page.
+ *
+ * Wrapper function for backward compatibility.
+ * Delegates to HelpPage class.
+ *
+ * @since 0.6.0 Refactored to use HelpPage class.
+ */
 function sb_japan() {
-sb_do_alerts();
-?>
-	<div class="wrap">
-		<a href="hthttp://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
-		<h2 style=>Help support Christian ministry in Japan</h2>
-		<div style="width:533px; float:left">
-			<iframe src="http://player.vimeo.com/video/19995544?title=0&amp;byline=0&amp;portrait=0" width="533" height="300" frameborder="0"></iframe>
-		</div>
-		<div style="margin-left:553px;">
-			<p>Since April 2011, all gifts donated to Sermon Browser have been given to support the work of <a href="https://www.bethel-clydach.co.uk/about/mission-partners/nathanael-and-anna-ayling/">Nathanael and Anna Ayling</a> in Japan.
-		 	Nathanael and Anna are members of a small church in the UK where the the author of Sermon Browser is a minister. Together with little Ethan, they have been in Japan since April 2010, and are based in Sappororo in the north,
-		 	undergoing intensive language training so that by God's grace they can work alongside Japanese Christians to make disciples of Jesus among Japanese students. They are being cared for by <a href="http://www.omf.org/omf/japan/about_us">OMF International</a> (formerly known as the China Inland Mission, and founded by
-		 	Hudson Taylor in 1865).</p>
-		 	<p>If you value Sermon Browser, please consider supporting Nathanael and Anna. You can do this by:</p>
-		 	<ul>
-		 		<li><a href="http://ateamjapan.wordpress.com/">Looking at their blog</a>, and praying about their latest news.</li>
-		 		<li><a href="http://www.omf.org/omf/uk/omf_at_work/pray_for_omf_workers">Signing up</a> to receiving their regular prayer news.</li>
-		 		<li><form style="float:left" action="https://www.paypal.com/cgi-bin/webscr" method="post"><input type="hidden" name="cmd" value="_s-xclick" /><input type="hidden" name="hosted_button_id" value="YTB9ZW4P5F536" /><input type="image" src="https://www.paypalobjects.com/WEBSCR-640-20110429-1/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!" /><img alt="" border="0" src="https://www.paypalobjects.com/WEBSCR-640-20110429-1/en_GB/i/scr/pixel.gif" width="1" height="1" /></form> towards their ongoing support.</li>
-		 	</ul>
-		</div>
-	</div>
-<?php
+    $page = new \SermonBrowser\Admin\Pages\HelpPage();
+    $page->renderJapan();
 }
 /***************************************
  ** Supplementary functions           **
