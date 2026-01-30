@@ -34,6 +34,24 @@ PR #7 created Admin Page classes (SermonsPage, FilesPage, etc.) but PR #8 chose 
 4. Replaced all 9 remaining `$wpdb` calls with Book facade methods
 5. All 57 tests passing
 
+### Phase 3: IN PROGRESS (Backend Complete)
+**AJAX Modularization**
+
+**Completed 2026-01-30:**
+1. Created `src/Admin/Ajax/AjaxHandler.php` - Base class with nonce verification and capability checks
+2. Created `src/Admin/Ajax/PreacherAjax.php` - Preacher CRUD via wp_ajax_sb_preacher_*
+3. Created `src/Admin/Ajax/SeriesAjax.php` - Series CRUD via wp_ajax_sb_series_*
+4. Created `src/Admin/Ajax/ServiceAjax.php` - Service CRUD with time cascade via wp_ajax_sb_service_*
+5. Created `src/Admin/Ajax/FileAjax.php` - File rename/delete via wp_ajax_sb_file_*
+6. Created `src/Admin/Ajax/AjaxRegistry.php` - Central registration
+7. Updated `sermon.php` to register AJAX handlers
+8. Added `ServiceRepository::updateWithTimeShift()` for time cascade logic
+9. All 73 tests passing (16 new AJAX tests)
+
+**Remaining:**
+- Update JavaScript to use new wp_ajax_sb_* endpoints instead of legacy POST
+- Deprecate sb-includes/ajax.php after JS migration
+
 ---
 
 ## Overview

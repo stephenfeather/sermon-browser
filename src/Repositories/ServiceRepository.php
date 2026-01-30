@@ -103,4 +103,84 @@ class ServiceRepository extends AbstractRepository
 
         return (int) $count > 0;
     }
+
+    /**
+     * Update service and cascade time changes to related sermons.
+     *
+     * When a service's time changes, all linked sermons (that don't have
+     * override set) have their datetime adjusted by the time difference.
+     *
+     * @param int $id The service ID.
+     * @param string $name The new service name.
+     * @param string $time The new service time (HH:MM format).
+     * @return bool True if update succeeded.
+     */
+    public function updateWithTimeShift(int $id, string $name, string $time): bool
+    {
+        $table = $this->getTableName();
+        $sermonsTable = $this->db->prefix . 'sb_sermons';
+
+        // Get the old time
+        $oldTime = $this->db->get_var(
+            $this->db->prepare(
+                "SELECT time FROM {$table} WHERE id = %d",
+                $id
+            )
+        );
+
+        if ($oldTime === null) {
+            $oldTime = '00:00';
+        }
+
+        // Calculate time difference in seconds
+        $difference = strtotime($time) - strtotime($oldTime);
+
+        // Update the service
+        $result = $this->db->update(
+            $table,
+            ['name' => $name, 'time' => $time],
+            ['id' => $id],
+            ['%s', '%s'],
+            ['%d']
+        );
+
+        if ($result === false) {
+            return false;
+        }
+
+        // Update sermon datetimes if there's a time difference
+        if ($difference !== 0) {
+            $this->db->query(
+                $this->db->prepare(
+                    "UPDATE {$sermonsTable}
+                     SET datetime = DATE_ADD(datetime, INTERVAL %d SECOND)
+                     WHERE override = 0 AND service_id = %d",
+                    $difference,
+                    $id
+                )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the time for a service.
+     *
+     * @param int $id The service ID.
+     * @return string|null The time or null.
+     */
+    public function getTime(int $id): ?string
+    {
+        $table = $this->getTableName();
+
+        $time = $this->db->get_var(
+            $this->db->prepare(
+                "SELECT time FROM {$table} WHERE id = %d",
+                $id
+            )
+        );
+
+        return $time !== null ? (string) $time : null;
+    }
 }

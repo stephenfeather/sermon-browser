@@ -55,6 +55,7 @@ use SermonBrowser\Facades\Series;
 use SermonBrowser\Facades\Service;
 use SermonBrowser\Facades\File;
 use SermonBrowser\Facades\Tag;
+use SermonBrowser\Admin\Ajax\AjaxRegistry;
 
 /**
 * Initialisation
@@ -74,6 +75,13 @@ require_once SB_INCLUDES_DIR . '/functions-testable.php';
 add_action ('plugins_loaded', 'sb_hijack');
 add_action ('init', 'sb_sermon_init');
 add_action ('widgets_init', 'sb_widget_sermon_init');
+
+// Register modern AJAX handlers (Phase 3: Ajax Modularization).
+add_action('init', function () {
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        AjaxRegistry::getInstance()->register();
+    }
+});
 
 /**
 * Display podcast, or download linked files
