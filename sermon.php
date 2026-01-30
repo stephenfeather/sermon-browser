@@ -164,9 +164,7 @@ function sb_sermon_init () {
 		require(SB_INCLUDES_DIR.'/podcast.php');
 
 	// Register custom CSS and javascript files
-	wp_register_script('sb_64', SB_PLUGIN_URL.'/sb-includes/64.js', false, SB_CURRENT_VERSION);
-	wp_register_script('sb_datepicker', SB_PLUGIN_URL.'/sb-includes/datePicker.js', array('jquery'), SB_CURRENT_VERSION);
-	wp_register_style('sb_datepicker', SB_PLUGIN_URL.'/sb-includes/datepicker.css', false, SB_CURRENT_VERSION);
+	// jQuery UI Datepicker is bundled with WordPress - no registration needed
 	if (get_option('permalink_structure') == '') {
 		wp_register_style('sb_style', trailingslashit(home_url()).'?sb-style&', false, sb_get_option('style_date_modified'));
 	} else {
@@ -229,7 +227,7 @@ function sb_sermon_init () {
 		require (SB_INCLUDES_DIR.'/admin.php');
 		add_action ('admin_menu', 'sb_add_pages');
 		add_filter('dashboard_glance_items', 'sb_dashboard_glance');
-		add_action('admin_init', 'sb_add_admin_headers');
+		add_action('admin_enqueue_scripts', 'sb_add_admin_headers');
 		// Phase 1: Use Help Tabs API instead of deprecated contextual_help filter.
 		add_action('current_screen', 'sb_add_help_tabs');
 		if (defined('SAVEQUERIES') && SAVEQUERIES)

@@ -548,8 +548,8 @@ function sb_add_headers() {
 		$pageid = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_content LIKE '%[sermons%' AND (post_status = 'publish' OR post_status = 'private') AND ID={$post->ID} AND post_date < NOW();");
 		if ($pageid !== NULL) {
 			if (sb_get_option('filter_type') == 'dropdown') {
-				wp_enqueue_script('sb_datepicker');
-				wp_enqueue_style ('sb_datepicker');
+				wp_enqueue_script('jquery-ui-datepicker');
+				wp_enqueue_style('jquery-ui-css', 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css', array(), '1.13.2');
 			}
 			if (isset($_REQUEST['title']) || isset($_REQUEST['preacher']) || isset($_REQUEST['date']) || isset($_REQUEST['enddate']) || isset($_REQUEST['series']) || isset($_REQUEST['service']) || isset($_REQUEST['book']) || isset($_REQUEST['stag']))
 				echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"".__('Custom sermon podcast', 'sermon-browser')."\" href=\"".sb_podcast_url()."\" />\r";
@@ -1112,14 +1112,23 @@ function sb_print_filters($filter) {
 			</form>
 		</div>
 		<script type="text/javascript">
-			jQuery.datePicker.setDateFormat('ymd','-');
-			jQuery('#date').datePicker({startDate:'01/01/1970'});
-			jQuery('#enddate').datePicker({startDate:'01/01/1970'});
-			<?php if ($hide_filter === TRUE) { ?>
-			jQuery(document).ready(function() {
+			jQuery(function($) {
+				$('#date').datepicker({
+					dateFormat: 'yy-mm-dd',
+					minDate: new Date(1970, 0, 1),
+					changeMonth: true,
+					changeYear: true
+				});
+				$('#enddate').datepicker({
+					dateFormat: 'yy-mm-dd',
+					minDate: new Date(1970, 0, 1),
+					changeMonth: true,
+					changeYear: true
+				});
+				<?php if ($hide_filter === TRUE) { ?>
 				<?php echo $js_hide; ?>
+				<?php } ?>
 			});
-			<?php } ?>
 		</script>
 	<?php
 	}

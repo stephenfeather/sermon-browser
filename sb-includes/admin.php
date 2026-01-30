@@ -16,9 +16,8 @@ function sb_add_admin_headers() {
 		wp_enqueue_script('jquery');
 	}
 	if (isset($_REQUEST['page']) && $_REQUEST['page'] == 'sermon-browser/new_sermon.php') {
-		wp_enqueue_script('sb_datepicker');
-		wp_enqueue_script('sb_64');
-		wp_enqueue_style ('sb_datepicker');
+		wp_enqueue_script('jquery-ui-datepicker');
+		wp_enqueue_style('jquery-ui-css', 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css', array(), '1.13.2');
 		wp_enqueue_style ('sb_style');
 	}
 }
@@ -1971,8 +1970,14 @@ function sb_new_sermon() {
 		</form>
 	</div>
 	<script type="text/javascript">
-		jQuery.datePicker.setDateFormat('ymd','-');
-		jQuery('#date').datePicker({startDate:'01/01/1970'});
+		jQuery(function($) {
+			$('#date').datepicker({
+				dateFormat: 'yy-mm-dd',
+				minDate: new Date(1970, 0, 1),
+				changeMonth: true,
+				changeYear: true
+			});
+		});
 		<?php if (empty($curSermon->time)): ?>
 			jQuery('#time').val(timeArr[jQuery('*[selected]', jQuery("select[name='service']")).attr('value')]);
 		<?php endif ?>
@@ -2056,7 +2061,7 @@ function sb_new_sermon() {
 						jQuery('td', this).css('display', 'none');
 						jQuery("option[value='newcode']", this).prop('selected', true);
 						jQuery('.newcode', this).css('display','');
-						jQuery(".newcode input", this).val(Base64.decode(stuff[i]));
+						jQuery(".newcode input", this).val(atob(stuff[i]));
 						break;
 				}
 			});
