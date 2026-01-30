@@ -1,0 +1,791 @@
+<?php
+/**
+ * Options Page.
+ *
+ * Handles the Options admin page for configuring SermonBrowser settings.
+ *
+ * @package SermonBrowser\Admin\Pages
+ * @since 0.6.0
+ */
+
+declare(strict_types=1);
+
+namespace SermonBrowser\Admin\Pages;
+
+/**
+ * Class OptionsPage
+ *
+ * Manages plugin options including upload settings, podcast URLs, and import options.
+ */
+class OptionsPage
+{
+    /**
+     * WordPress database instance.
+     *
+     * @var \wpdb
+     */
+    private $wpdb;
+
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        global $wpdb;
+        $this->wpdb = $wpdb;
+    }
+
+    /**
+     * Render the options page.
+     *
+     * @return void
+     */
+    public function render(): void
+    {
+        // Security check.
+        if (!current_user_can('manage_options')) {
+            wp_die(__("You do not have the correct permissions to edit the SermonBrowser options", 'sermon-browser'));
+        }
+
+        // Handle form submissions.
+        $this->handlePost();
+
+        // Display alerts.
+        sb_do_alerts();
+
+        // Render the page.
+        $this->renderPage();
+    }
+
+    /**
+     * Handle POST submissions.
+     *
+     * @return void
+     */
+    private function handlePost(): void
+    {
+        if (isset($_POST['resetdefault'])) {
+            $this->handleResetDefaults();
+        } elseif (isset($_POST['save'])) {
+            $this->handleSaveOptions();
+        }
+    }
+
+    /**
+     * Handle reset to default options.
+     *
+     * @return void
+     */
+    private function handleResetDefaults(): void
+    {
+        // Verify nonce.
+        if (!isset($_POST['sermon_options_save_reset_nonce']) ||
+            !wp_verify_nonce($_POST['sermon_options_save_reset_nonce'], 'sermon_options_save_reset')) {
+            wp_die(__("You do not have the correct permissions to edit the SermonBrowser options", 'sermon-browser'));
+        }
+
+        $dir = sb_get_default('sermon_path');
+
+        // Set podcast URL.
+        if (sb_display_url() === "#") {
+            sb_update_option('podcast_url', site_url() . sb_query_char(false) . 'podcast');
+        } else {
+            sb_update_option('podcast_url', sb_display_url() . sb_query_char(false) . 'podcast');
+        }
+
+        // Reset all options to defaults.
+        sb_update_option('upload_dir', $dir);
+        sb_update_option('upload_url', sb_get_default('attachment_url'));
+        sb_update_option('display_method', 'dynamic');
+        sb_update_option('sermons_per_page', '10');
+        sb_update_option('filter_type', 'oneclick');
+        sb_update_option('filter_hide', 'hide');
+        sb_update_option('hide_no_attachments', false);
+        sb_update_option('mp3_shortcode', '[audio mp3="%SERMONURL%"]');
+        sb_update_option('esv_api_key', '');
+
+        // Create upload directories.
+        $this->createUploadDirectories($dir);
+
+        // Reset bible books database.
+        $this->resetBibleBooks();
+
+        // Display status message.
+        $this->displayUploadStatus();
+    }
+
+    /**
+     * Handle save options.
+     *
+     * @return void
+     */
+    private function handleSaveOptions(): void
+    {
+        // Verify nonce.
+        if (!isset($_POST['sermon_options_save_reset_nonce']) ||
+            !wp_verify_nonce($_POST['sermon_options_save_reset_nonce'], 'sermon_options_save_reset')) {
+            wp_die(__("You do not have the correct permissions to edit the SermonBrowser options", 'sermon-browser'));
+        }
+
+        $dir = rtrim(str_replace("\\", "/", sanitize_text_field(stripslashes($_POST['dir']))), "/") . "/";
+
+        // Save options.
+        sb_update_option('podcast_url', esc_url($_POST['podcast']));
+
+        if ((int) $_POST['perpage'] > 0) {
+            sb_update_option('sermons_per_page', (int) $_POST['perpage']);
+        }
+
+        if ((int) $_POST['perpage'] === -100) {
+            update_option('show_donate_reminder', 'off');
+        }
+
+        sb_update_option('upload_dir', $dir);
+        sb_update_option('filter_type', sanitize_key($_POST['filtertype']));
+        sb_update_option('filter_hide', isset($_POST['filterhide']));
+        sb_update_option('upload_url', trailingslashit(site_url()) . $dir);
+        sb_update_option('import_prompt', isset($_POST['import_prompt']));
+        sb_update_option('import_title', isset($_POST['import_title']));
+        sb_update_option('import_artist', isset($_POST['import_artist']));
+        sb_update_option('import_album', isset($_POST['import_album']));
+        sb_update_option('import_comments', isset($_POST['import_comments']));
+        sb_update_option('import_filename', sanitize_key($_POST['import_filename']));
+        sb_update_option('hide_no_attachments', isset($_POST['hide_no_attachments']));
+        sb_update_option('mp3_shortcode', sanitize_text_field(stripslashes($_POST['mp3_shortcode'])));
+        sb_update_option('esv_api_key', esc_html(stripslashes($_POST['esv_api_key'])));
+
+        // Create upload directories.
+        $this->createUploadDirectories($dir);
+
+        // Display status message.
+        $this->displayUploadStatus(__('Options saved successfully.', 'sermon-browser'));
+    }
+
+    /**
+     * Create upload directories if they don't exist.
+     *
+     * @param string $dir Directory path.
+     * @return void
+     */
+    private function createUploadDirectories(string $dir): void
+    {
+        if (!is_dir(SB_ABSPATH . $dir) && sb_mkdir(SB_ABSPATH . $dir)) {
+            @chmod(SB_ABSPATH . $dir, 0777);
+        }
+
+        if (!is_dir(SB_ABSPATH . $dir . 'images') && sb_mkdir(SB_ABSPATH . $dir . 'images')) {
+            @chmod(SB_ABSPATH . $dir . 'images', 0777);
+        }
+    }
+
+    /**
+     * Reset bible books database to defaults.
+     *
+     * @return void
+     */
+    private function resetBibleBooks(): void
+    {
+        $books = sb_get_default('bible_books');
+        $eng_books = sb_get_default('eng_bible_books');
+
+        // Truncate and repopulate bible books table.
+        $this->wpdb->query("TRUNCATE TABLE {$this->wpdb->prefix}sb_books");
+
+        for ($i = 0; $i < count($books); $i++) {
+            $this->wpdb->query("INSERT INTO {$this->wpdb->prefix}sb_books VALUES (null, '{$books[$i]}')");
+            $this->wpdb->query(
+                "UPDATE {$this->wpdb->prefix}sb_books_sermons SET book_name='{$books[$i]}' WHERE book_name='{$eng_books[$i]}'"
+            );
+        }
+
+        // Rewrite book names for non-English locales.
+        if ($books !== $eng_books) {
+            $this->rewriteSermonBookNames($books, $eng_books);
+        }
+    }
+
+    /**
+     * Rewrite sermon book names for non-English locales.
+     *
+     * @param array $books     Localized book names.
+     * @param array $eng_books English book names.
+     * @return void
+     */
+    private function rewriteSermonBookNames(array $books, array $eng_books): void
+    {
+        $sermon_books = $this->wpdb->get_results(
+            "SELECT id, start, end FROM {$this->wpdb->prefix}sb_sermons"
+        );
+
+        foreach ($sermon_books as $sermon_book) {
+            $start_verse = unserialize($sermon_book->start);
+            $end_verse = unserialize($sermon_book->end);
+
+            $start_index = array_search($start_verse[0]['book'], $eng_books, true);
+            $end_index = array_search($end_verse[0]['book'], $eng_books, true);
+
+            if ($start_index !== false) {
+                $start_verse[0]['book'] = $books[$start_index];
+            }
+
+            if ($end_index !== false) {
+                $end_verse[0]['book'] = $books[$end_index];
+            }
+
+            $sermon_book->start = serialize($start_verse);
+            $sermon_book->end = serialize($end_verse);
+
+            $this->wpdb->query(
+                "UPDATE {$this->wpdb->prefix}sb_sermons SET start='{$sermon_book->start}', end='{$sermon_book->end}' WHERE id={$sermon_book->id}"
+            );
+        }
+    }
+
+    /**
+     * Display upload folder status message.
+     *
+     * @param string|null $successMessage Custom success message.
+     * @return void
+     */
+    private function displayUploadStatus(?string $successMessage = null): void
+    {
+        $checkSermonUpload = sb_checkSermonUploadable();
+
+        switch ($checkSermonUpload) {
+            case "unwriteable":
+                echo '<div id="message" class="updated fade"><p><b>';
+                if (IS_MU && !sb_is_super_admin()) {
+                    _e('Upload is disabled. Please contact your administrator.', 'sermon-browser');
+                } else {
+                    _e('Error: The upload folder is not writeable. You need to CHMOD the folder to 666 or 777.', 'sermon-browser');
+                }
+                echo '</b></div>';
+                break;
+
+            case "notexist":
+                echo '<div id="message" class="updated fade"><p><b>';
+                if (IS_MU && !sb_is_super_admin()) {
+                    _e('Upload is disabled. Please contact your administrator.', 'sermon-browser');
+                } else {
+                    _e('Error: The upload folder you have specified does not exist.', 'sermon-browser');
+                }
+                echo '</b></div>';
+                break;
+
+            default:
+                echo '<div id="message" class="updated fade"><p><b>';
+                if ($successMessage) {
+                    echo esc_html($successMessage);
+                } else {
+                    _e('Default loaded successfully.', 'sermon-browser');
+                }
+                echo '</b></div>';
+                break;
+        }
+    }
+
+    /**
+     * Display error message row.
+     *
+     * @param string $message Error message.
+     * @return string HTML for error row.
+     */
+    private function displayError(string $message): string
+    {
+        return '<tr><td align="right" style="color:#AA0000; font-weight:bold">' .
+            __('Error', 'sermon-browser') . ':</td>' .
+            '<td style="color: #AA0000">' . $message . '</td></tr>';
+    }
+
+    /**
+     * Display warning message row.
+     *
+     * @param string $message Warning message.
+     * @return string HTML for warning row.
+     */
+    private function displayWarning(string $message): string
+    {
+        return '<tr><td align="right" style="color:#FFDC00; font-weight:bold">' .
+            __('Warning', 'sermon-browser') . ':</td>' .
+            '<td style="color: #FF8C00">' . $message . '</td></tr>';
+    }
+
+    /**
+     * Render the options page HTML.
+     *
+     * @return void
+     */
+    private function renderPage(): void
+    {
+        ?>
+        <div class="wrap">
+            <a href="http://www.sermonbrowser.com/">
+                <img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png"
+                     width="191" height="35"
+                     style="margin: 1em 2em; float: right;"/>
+            </a>
+            <form method="post">
+                <h2><?php _e('Basic Options', 'sermon-browser') ?></h2>
+                <br style="clear:both"/>
+                <table border="0" class="widefat">
+                    <?php $this->renderUploadFolderField(); ?>
+                    <?php $this->renderPodcastFields(); ?>
+                    <?php $this->renderMp3ShortcodeField(); ?>
+                    <?php $this->renderEsvApiKeyField(); ?>
+                    <?php $this->renderSermonsPerPageField(); ?>
+                    <?php $this->renderFilterTypeFields(); ?>
+                    <?php $this->renderHideNoAttachmentsField(); ?>
+                    <?php $this->renderPhpIniWarnings(); ?>
+                </table>
+
+                <h2><?php _e('Import Options', 'sermon-browser') ?></h2>
+                <p>
+                    <?php
+                    printf(
+                        __(
+                            'SermonBrowser can speed up the process of importing existing MP3s by reading the information stored in each MP3 file and pre-filling the SermonBrowser fields. Use this section to specify what information you want imported into SermonBrowser. Once you have selected the options, go to %s to import your files.',
+                            'sermon-browser'
+                        ),
+                        '<a href="' . admin_url('admin.php?page=sermon-browser/files.php') . '">' .
+                        __('Files', 'sermon-browser') . '</a>'
+                    );
+                    ?>
+                </p>
+                <table border="0" class="widefat">
+                    <?php $this->renderImportOptions(); ?>
+                </table>
+
+                <?php wp_nonce_field('sermon_options_save_reset', 'sermon_options_save_reset_nonce'); ?>
+                <p class="submit">
+                    <input type="submit" name="save" value="<?php _e('Save', 'sermon-browser') ?> &raquo;"/>
+                    <input type="submit" name="resetdefault" value="<?php _e('Reset to defaults', 'sermon-browser') ?>"/>
+                </p>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render upload folder field.
+     *
+     * @return void
+     */
+    private function renderUploadFolderField(): void
+    {
+        if (!IS_MU || sb_is_super_admin()) {
+            ?>
+            <tr>
+                <td align="right" style="vertical-align:middle">
+                    <?php _e('Upload folder', 'sermon-browser') ?>:
+                </td>
+                <td>
+                    <input type="text" name="dir"
+                           value="<?php echo htmlspecialchars(sb_get_option('upload_dir')) ?>"
+                           style="width:100%"/>
+                </td>
+            </tr>
+            <?php
+        } else {
+            ?>
+            <input type="hidden" name="dir"
+                   value="<?php echo htmlspecialchars(sb_get_option('upload_dir')) ?>">
+            <?php
+        }
+    }
+
+    /**
+     * Render podcast URL fields.
+     *
+     * @return void
+     */
+    private function renderPodcastFields(): void
+    {
+        ?>
+        <tr>
+            <td align="right" style="vertical-align:middle">
+                <?php _e('Public podcast feed', 'sermon-browser') ?>:
+            </td>
+            <td>
+                <input type="text" name="podcast"
+                       value="<?php echo htmlspecialchars(sb_get_option('podcast_url')) ?>"
+                       style="width:100%"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="right"><?php _e('Private podcast feed', 'sermon-browser') ?>:</td>
+            <td>
+                <?php
+                if (sb_display_url() === '') {
+                    echo htmlspecialchars(site_url());
+                } else {
+                    echo htmlspecialchars(sb_display_url());
+                }
+                echo sb_query_char();
+                ?>podcast
+            </td>
+        </tr>
+        <?php
+    }
+
+    /**
+     * Render MP3 shortcode field.
+     *
+     * @return void
+     */
+    private function renderMp3ShortcodeField(): void
+    {
+        ?>
+        <tr>
+            <td align="right" style="vertical-align:middle">
+                <?php _e('MP3 shortcode', 'sermon-browser') ?>:
+                <br/><?php _e('Default: ', 'sermon-browser') ?>[audio mp3=&quot;%SERMONURL%&quot;]
+            </td>
+            <td>
+                <input type="text" name="mp3_shortcode"
+                       value="<?php echo htmlspecialchars(sb_get_option('mp3_shortcode')) ?>"
+                       style="width:100%"/>
+            </td>
+        </tr>
+        <?php
+    }
+
+    /**
+     * Render ESV API key field.
+     *
+     * @return void
+     */
+    private function renderEsvApiKeyField(): void
+    {
+        $template = sb_get_option('single_template');
+        $extra_text = '';
+
+        if (!sb_get_option('esv_api_key') && strpos($template, '[esvtext]') !== null) {
+            $extra_text = __('<br/>Without an API key, your site will display text from the KJV, instead.', 'sermon-browser');
+        }
+        ?>
+        <tr>
+            <td align="right" style="vertical-align:middle">
+                <?php _e('ESV API Key (required to display the ESV text)', 'sermon-browser') ?>:
+                <br/>
+                <?php
+                echo __(
+                    'You can sign up for an API Key <a href="https://api.esv.org/account/create-application/">here</a> (you\'ll need to create an account).<br/>A key looks like this: 82e261b8b5b6ed0b6e7f09332d2acc48d88ee7fa',
+                    'sermon-browser'
+                ) . $extra_text;
+                ?>
+            </td>
+            <td>
+                <input type="text" name="esv_api_key"
+                       value="<?php echo htmlspecialchars(sb_get_option('esv_api_key')) ?>"
+                       style="width:100%"/>
+            </td>
+        </tr>
+        <?php
+    }
+
+    /**
+     * Render sermons per page field.
+     *
+     * @return void
+     */
+    private function renderSermonsPerPageField(): void
+    {
+        ?>
+        <tr>
+            <td align="right" style="vertical-align:middle">
+                <?php _e('Sermons per page', 'sermon-browser') ?>:
+            </td>
+            <td>
+                <input type="text" name="perpage" value="<?php echo sb_get_option('sermons_per_page') ?>"/>
+            </td>
+        </tr>
+        <?php
+    }
+
+    /**
+     * Render filter type fields.
+     *
+     * @return void
+     */
+    private function renderFilterTypeFields(): void
+    {
+        $ft = sb_get_option('filter_type');
+        $filter_options = [
+            'dropdown' => __('Drop-down', 'sermon-browser'),
+            'oneclick' => __('One-click', 'sermon-browser'),
+            'none'     => __('None', 'sermon-browser'),
+        ];
+        ?>
+        <tr>
+            <td align="right" style="vertical-align:top" rowspan="2">
+                <?php _e('Filter type', 'sermon-browser') ?>:
+            </td>
+            <td>
+                <?php
+                foreach ($filter_options as $value => $filter_option) {
+                    $checked = ($ft === $value) ? 'checked="checked"' : '';
+                    echo "<input type=\"radio\" name=\"filtertype\" value=\"{$value}\" {$checked}/> {$filter_option}<br/>\n";
+                }
+                ?>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input type="checkbox" name="filterhide"
+                    <?php echo (sb_get_option('filter_hide') === 'hide') ? 'checked="checked"' : ''; ?>
+                       value="hide"/>
+                <?php _e('Minimise filter', 'sermon-browser'); ?>
+            </td>
+        </tr>
+        <?php
+    }
+
+    /**
+     * Render hide no attachments field.
+     *
+     * @return void
+     */
+    private function renderHideNoAttachmentsField(): void
+    {
+        ?>
+        <tr>
+            <td align="right"><?php _e('Hide sermons without attachments?', 'sermon-browser') ?></td>
+            <td>
+                <input type="checkbox" name="hide_no_attachments"
+                    <?php echo sb_get_option('hide_no_attachments') ? 'checked="checked"' : ''; ?>
+                       value="1"/>
+            </td>
+        </tr>
+        <?php
+    }
+
+    /**
+     * Render PHP.ini warnings.
+     *
+     * @return void
+     */
+    private function renderPhpIniWarnings(): void
+    {
+        $allow_uploads = ini_get('file_uploads');
+        $max_filesize = sb_return_kbytes(ini_get('upload_max_filesize'));
+        $max_post = sb_return_kbytes(ini_get('post_max_size'));
+        $max_execution = ini_get('max_execution_time');
+        $max_input = ini_get('max_input_time');
+        $max_memory = sb_return_kbytes(ini_get('memory_limit'));
+        $checkSermonUpload = sb_checkSermonUploadable();
+
+        if (IS_MU) {
+            $this->renderMuWarnings($checkSermonUpload, $allow_uploads, $max_filesize, $max_post, $max_execution, $max_input);
+        } else {
+            $this->renderStandardWarnings($checkSermonUpload, $allow_uploads, $max_filesize, $max_post, $max_execution, $max_input, $max_memory);
+        }
+    }
+
+    /**
+     * Render multisite-specific warnings.
+     *
+     * @param string $checkSermonUpload Upload status.
+     * @param string $allow_uploads     Whether uploads are allowed.
+     * @param int    $max_filesize      Max file size in KB.
+     * @param int    $max_post          Max post size in KB.
+     * @param int    $max_execution     Max execution time.
+     * @param int    $max_input         Max input time.
+     * @return void
+     */
+    private function renderMuWarnings(
+        string $checkSermonUpload,
+        string $allow_uploads,
+        int $max_filesize,
+        int $max_post,
+        int $max_execution,
+        int $max_input
+    ): void {
+        if ($checkSermonUpload === "unwriteable") {
+            echo $this->displayError(
+                __('The upload folder is not writeable. You need to specify a folder that you have permissions to write to.', 'sermon-browser')
+            );
+        } elseif ($checkSermonUpload === "notexist") {
+            echo $this->displayError(
+                __('The upload folder you have specified does not exist.', 'sermon-browser')
+            );
+        }
+
+        if ($allow_uploads === '0') {
+            echo $this->displayError(
+                __('Your administrator does not allow file uploads. You will need to upload via FTP.', 'sermon-browser')
+            );
+        }
+
+        $max_filesize = min($max_filesize, $max_post);
+        if ($max_filesize < 15360) {
+            echo $this->displayWarning(
+                __('The maximum file size you can upload is only ', 'sermon-browser') .
+                $max_filesize .
+                __('k. You may need to upload via FTP.', 'sermon-browser')
+            );
+        }
+
+        $max_execution = (($max_execution < $max_input) || $max_input == -1) ? $max_execution : $max_input;
+        if ($max_execution < 600) {
+            echo $this->displayWarning(
+                __('The maximum time allowed for any script to run is only ', 'sermon-browser') .
+                $max_execution .
+                __(' seconds. If your files take longer than this to upload, you will need to upload via FTP.', 'sermon-browser')
+            );
+        }
+    }
+
+    /**
+     * Render standard (non-multisite) warnings.
+     *
+     * @param string $checkSermonUpload Upload status.
+     * @param string $allow_uploads     Whether uploads are allowed.
+     * @param int    $max_filesize      Max file size in KB.
+     * @param int    $max_post          Max post size in KB.
+     * @param int    $max_execution     Max execution time.
+     * @param int    $max_input         Max input time.
+     * @param int    $max_memory        Max memory in KB.
+     * @return void
+     */
+    private function renderStandardWarnings(
+        string $checkSermonUpload,
+        string $allow_uploads,
+        int $max_filesize,
+        int $max_post,
+        int $max_execution,
+        int $max_input,
+        int $max_memory
+    ): void {
+        if ($checkSermonUpload === "unwriteable") {
+            echo $this->displayError(
+                __('The upload folder is not writeable. You need to specify a folder that you have permissions to write to, or CHMOD this folder to 666 or 777.', 'sermon-browser')
+            );
+        } elseif ($checkSermonUpload === "notexist") {
+            echo $this->displayError(
+                __('The upload folder you have specified does not exist.', 'sermon-browser')
+            );
+        }
+
+        if ($allow_uploads === '0') {
+            echo $this->displayError(
+                __('Your php.ini file does not allow uploads. Please change file_uploads in php.ini.', 'sermon-browser')
+            );
+        }
+
+        if ($max_filesize < 15360) {
+            echo $this->displayWarning(
+                __('The maximum file size you can upload is only ', 'sermon-browser') .
+                $max_filesize .
+                __('k. Please change upload_max_filesize to at least 15M in php.ini.', 'sermon-browser')
+            );
+        }
+
+        if ($max_post < 15360) {
+            echo $this->displayWarning(
+                __('The maximum file size you send through the browser is only ', 'sermon-browser') .
+                $max_post .
+                __('k. Please change post_max_size to at least 15M in php.ini.', 'sermon-browser')
+            );
+        }
+
+        if ($max_execution < 600) {
+            echo $this->displayWarning(
+                __('The maximum time allowed for any script to run is only ', 'sermon-browser') .
+                $max_execution .
+                __(' seconds. Please change max_execution_time to at least 600 in php.ini.', 'sermon-browser')
+            );
+        }
+
+        if ($max_input < 600 && $max_input != -1) {
+            echo $this->displayWarning(
+                __('The maximum time allowed for an upload script to run is only ', 'sermon-browser') .
+                $max_input .
+                __(' seconds. Please change max_input_time to at least 600 in php.ini.', 'sermon-browser')
+            );
+        }
+
+        if ($max_memory < 16384) {
+            echo $this->displayWarning(
+                __('The maximum amount of memory allowed is only ', 'sermon-browser') .
+                $max_memory .
+                __('k. Please change memory_limit to at least 16M in php.ini.', 'sermon-browser')
+            );
+        }
+    }
+
+    /**
+     * Render import options fields.
+     *
+     * @return void
+     */
+    private function renderImportOptions(): void
+    {
+        ?>
+        <tr>
+            <td align="right"><?php _e('Add files prompt to top of Add Sermon page?', 'sermon-browser') ?></td>
+            <td>
+                <input type="checkbox" name="import_prompt"
+                    <?php echo sb_get_option('import_prompt') ? 'checked="checked"' : ''; ?>
+                       value="1"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="right"><?php _e('Use title tag for sermon title?', 'sermon-browser') ?></td>
+            <td>
+                <input type="checkbox" name="import_title"
+                    <?php echo sb_get_option('import_title') ? 'checked="checked"' : ''; ?>
+                       value="1"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="right"><?php _e('Use artist tag for preacher?', 'sermon-browser') ?></td>
+            <td>
+                <input type="checkbox" name="import_artist"
+                    <?php echo sb_get_option('import_artist') ? 'checked="checked"' : ''; ?>
+                       value="1"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="right"><?php _e('Use album tag for series?', 'sermon-browser') ?></td>
+            <td>
+                <input type="checkbox" name="import_album"
+                    <?php echo sb_get_option('import_album') ? 'checked="checked"' : ''; ?>
+                       value="1"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="right"><?php _e('Use comments tag for sermon description?', 'sermon-browser') ?></td>
+            <td>
+                <input type="checkbox" name="import_comments"
+                    <?php echo sb_get_option('import_comments') ? 'checked="checked"' : ''; ?>
+                       value="1"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="right" style="vertical-align: middle">
+                <?php _e('Attempt to extract date from filename', 'sermon-browser') ?>
+            </td>
+            <td style="vertical-align: middle">
+                <select name="import_filename">
+                    <?php
+                    $filename_options = [
+                        'none' => __('Disabled', 'sermon-browser'),
+                        'uk'   => __('UK-formatted date (dd-mm-yyyy)', 'sermon-browser'),
+                        'us'   => __('US-formatted date (mm-dd-yyyy)', 'sermon-browser'),
+                        'int'  => __('International formatted date (yyyy-mm-dd)', 'sermon-browser'),
+                    ];
+                    $saved_option = sb_get_option('import_filename');
+
+                    foreach ($filename_options as $option => $text) {
+                        $sel = ($saved_option === $option) ? ' selected="selected"' : '';
+                        echo "<option value=\"{$option}\"{$sel}>{$text}</option>\n";
+                    }
+                    ?>
+                </select>
+                <br/>
+                <?php _e('(Use if you name your files something like 2008-11-06-eveningsermon.mp3)', 'sermon-browser'); ?>
+            </td>
+        </tr>
+        <?php
+    }
+}
