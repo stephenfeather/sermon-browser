@@ -32,6 +32,7 @@
  * @method static array findSameDay(string $datetime, int $excludeId)
  * @method static object|null findForTemplate(int $id)
  * @method static array findDatesForIds(array $sermonIds)
+ * @method static array findForFrontendListing(array $filter = [], array $order = [], int $page = 1, int $limit = 0, bool $hideEmpty = false)
  */
 
 declare(strict_types=1);

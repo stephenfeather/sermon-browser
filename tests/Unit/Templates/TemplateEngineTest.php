@@ -390,21 +390,37 @@ class TemplateEngineTest extends TestCase
         $wpdb = Mockery::mock('wpdb');
         $wpdb->options = 'wp_options';
 
+        // Mock esc_like to return the pattern as-is
+        $wpdb->shouldReceive('esc_like')
+            ->once()
+            ->with('sb_template_')
+            ->andReturn('sb_template_');
+
+        // Mock prepare for SELECT query
         $wpdb->shouldReceive('prepare')
             ->once()
             ->with(
-                "DELETE FROM wp_options WHERE option_name LIKE %s",
+                "SELECT option_name FROM wp_options WHERE option_name LIKE %s",
                 '_transient_sb_template_%'
             )
-            ->andReturn("DELETE FROM wp_options WHERE option_name LIKE '_transient_sb_template_%'");
+            ->andReturn("SELECT option_name FROM wp_options WHERE option_name LIKE '_transient_sb_template_%'");
 
-        $wpdb->shouldReceive('query')
+        // Mock get_col to return transient names
+        $wpdb->shouldReceive('get_col')
             ->once()
-            ->andReturn(5);
+            ->andReturn([
+                '_transient_sb_template_single_abc123',
+                '_transient_sb_template_multi_def456',
+            ]);
+
+        // Mock delete_transient for each
+        Functions\expect('delete_transient')
+            ->twice()
+            ->andReturn(true);
 
         $result = $this->engine->clearCache();
 
-        $this->assertEquals(5, $result);
+        $this->assertEquals(2, $result);
     }
 
     // =========================================================================

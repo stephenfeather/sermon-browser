@@ -574,4 +574,170 @@ class SermonRepository extends AbstractRepository
 
         return is_array($results) ? $results : [];
     }
+
+    /**
+     * Find sermons for frontend listing with full filtering and pagination.
+     *
+     * Complex query that joins all related tables (preachers, services, series,
+     * books, tags, stuff) and supports comprehensive filtering for the frontend
+     * sermon list display.
+     *
+     * Filter options:
+     * - title: Search in title, description, and tag names
+     * - preacher: Preacher ID
+     * - date: Start date (inclusive)
+     * - enddate: End date (inclusive)
+     * - series: Series ID
+     * - service: Service ID
+     * - book: Bible book name
+     * - tag: Tag name (partial match)
+     * - id: Specific sermon ID
+     *
+     * @param array<string, mixed> $filter Filter criteria.
+     * @param array<string, string> $order Order criteria ('by' => column, 'dir' => ASC/DESC).
+     * @param int $page Page number (1-based).
+     * @param int $limit Results per page.
+     * @param bool $hideEmpty Only show sermons with attached files.
+     * @return array{items: array<object>, total: int} Results with total count.
+     */
+    public function findForFrontendListing(
+        array $filter = [],
+        array $order = [],
+        int $page = 1,
+        int $limit = 0,
+        bool $hideEmpty = false
+    ): array {
+        $table = $this->getTableName();
+        $preachersTable = $this->db->prefix . 'sb_preachers';
+        $servicesTable = $this->db->prefix . 'sb_services';
+        $seriesTable = $this->db->prefix . 'sb_series';
+        $booksSermonTable = $this->db->prefix . 'sb_books_sermons';
+        $booksTable = $this->db->prefix . 'sb_books';
+        $sermonsTagsTable = $this->db->prefix . 'sb_sermons_tags';
+        $tagsTable = $this->db->prefix . 'sb_tags';
+        $stuffTable = $this->db->prefix . 'sb_stuff';
+
+        // Default filter values
+        $defaultFilter = [
+            'title' => '',
+            'preacher' => 0,
+            'date' => '',
+            'enddate' => '',
+            'series' => 0,
+            'service' => 0,
+            'book' => '',
+            'tag' => '',
+            'id' => '',
+        ];
+        $filter = array_merge($defaultFilter, $filter);
+
+        // Default and validate order
+        $defaultOrder = ['by' => 'm.datetime', 'dir' => 'desc'];
+        $order = array_merge($defaultOrder, $order);
+
+        $orderDir = strtolower($order['dir']);
+        if ($orderDir !== 'desc' && $orderDir !== 'asc') {
+            $orderDir = 'desc';
+        }
+
+        $validSortColumns = [
+            'm.id', 'm.title', 'm.datetime', 'm.start', 'm.end',
+            'p.id', 'p.name', 's.id', 's.name', 'ss.id', 'ss.name'
+        ];
+        $orderBy = in_array($order['by'], $validSortColumns, true)
+            ? $order['by']
+            : 'm.datetime';
+
+        // Special handling for book ordering
+        if ($orderBy === 'b.id') {
+            $orderBy = "b.id {$orderDir}, bs.chapter {$orderDir}, bs.verse";
+        }
+
+        // Build conditions
+        $conditions = '1=1 ';
+        $bookJoinCondition = '';
+
+        if ($filter['title'] !== '') {
+            $search = '%' . $this->db->esc_like($filter['title']) . '%';
+            $conditions .= $this->db->prepare(
+                " AND (m.title LIKE %s OR m.description LIKE %s OR t.name LIKE %s)",
+                $search,
+                $search,
+                $search
+            );
+        }
+
+        if ((int) $filter['preacher'] !== 0) {
+            $conditions .= $this->db->prepare(' AND m.preacher_id = %d', (int) $filter['preacher']);
+        }
+
+        if ($filter['date'] !== '') {
+            $conditions .= $this->db->prepare(' AND m.datetime >= %s', $filter['date']);
+        }
+
+        if ($filter['enddate'] !== '') {
+            $conditions .= $this->db->prepare(' AND m.datetime <= %s', $filter['enddate']);
+        }
+
+        if ((int) $filter['series'] !== 0) {
+            $conditions .= $this->db->prepare(' AND m.series_id = %d', (int) $filter['series']);
+        }
+
+        if ((int) $filter['service'] !== 0) {
+            $conditions .= $this->db->prepare(' AND m.service_id = %d', (int) $filter['service']);
+        }
+
+        if ($filter['book'] !== '') {
+            $conditions .= $this->db->prepare(' AND bs.book_name = %s', $filter['book']);
+        } else {
+            $bookJoinCondition = " AND bs.order = 0 AND bs.type = 'start'";
+        }
+
+        if ($filter['tag'] !== '') {
+            $conditions .= $this->db->prepare(
+                " AND t.name LIKE %s",
+                '%' . $this->db->esc_like($filter['tag']) . '%'
+            );
+        }
+
+        if ($filter['id'] !== '') {
+            $conditions .= $this->db->prepare(' AND m.id = %s', $filter['id']);
+        }
+
+        if ($hideEmpty) {
+            $conditions .= " AND stuff.name != ''";
+        }
+
+        // Calculate offset
+        $offset = $limit * ($page - 1);
+
+        // Build the query
+        $sql = "SELECT SQL_CALC_FOUND_ROWS DISTINCT
+                m.id, m.title, m.description, m.datetime, m.time, m.start, m.end,
+                p.id as pid, p.name as preacher, p.description as preacher_description, p.image,
+                s.id as sid, s.name as service,
+                ss.id as ssid, ss.name as series
+            FROM {$table} as m
+            LEFT JOIN {$preachersTable} as p ON m.preacher_id = p.id
+            LEFT JOIN {$servicesTable} as s ON m.service_id = s.id
+            LEFT JOIN {$seriesTable} as ss ON m.series_id = ss.id
+            LEFT JOIN {$booksSermonTable} as bs ON bs.sermon_id = m.id{$bookJoinCondition}
+            LEFT JOIN {$booksTable} as b ON bs.book_name = b.name
+            LEFT JOIN {$sermonsTagsTable} as st ON st.sermon_id = m.id
+            LEFT JOIN {$tagsTable} as t ON t.id = st.tag_id
+            LEFT JOIN {$stuffTable} as stuff ON stuff.sermon_id = m.id
+            WHERE {$conditions}
+            ORDER BY {$orderBy} {$orderDir}
+            LIMIT {$offset}, {$limit}";
+
+        // Execute query
+        $this->db->query('SET SQL_BIG_SELECTS=1');
+        $results = $this->db->get_results($sql);
+        $total = (int) $this->db->get_var("SELECT FOUND_ROWS()");
+
+        return [
+            'items' => is_array($results) ? $results : [],
+            'total' => $total,
+        ];
+    }
 }

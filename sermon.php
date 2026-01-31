@@ -487,7 +487,7 @@ function sb_query_char ($return_entity = true) {
 * @return string
 */
 function sb_shortcode($atts, $content=null) {
-	global $wpdb, $record_count;
+	global $record_count;
 	ob_start();
 	$atts = shortcode_atts(array(
 		'filter' => sb_get_option('filter_type'),
@@ -507,8 +507,7 @@ function sb_shortcode($atts, $content=null) {
 	if ($atts['id'] != '') {
 		if (strtolower($atts['id']) == 'latest') {
 			$atts['id'] = '';
-			$wpdb->query('SET SQL_BIG_SELECTS=1');
-			$query = $wpdb->get_results(sb_create_multi_sermon_query($atts, array(), 1, 1));
+			$query = sb_get_sermons($atts, array(), 1, 1);
 			$atts['id'] = $query[0]->id;
 		}
 		$sermon = sb_get_single_sermon((int) $atts['id']);
@@ -795,34 +794,40 @@ function sb_define_constants() {
 * @return array
 */
 function sb_get_bible_books () {
-	global $wpdb;
-	return $wpdb->get_col("SELECT name FROM {$wpdb->prefix}sb_books order by id");
+	return \SermonBrowser\Facades\Book::findAllNames();
 }
 
 /**
 * Get multiple sermons from the database
 *
-* Uses sb_create_multi_sermon_query to general the SQL statement
+* Uses Sermon Facade for database operations.
 * @param array $filter
-* @param string $order
+* @param array $order
 * @param integer $page
 * @param integer $limit
 * @global integer record_count
 * @return array
 */
 function sb_get_sermons($filter, $order, $page = 1, $limit = 0, $hide_empty = false) {
-	global $wpdb, $record_count;
-	if ($limit == 0)
+	global $record_count;
+	if ($limit == 0) {
 		$limit = sb_get_option('sermons_per_page');
-	$wpdb->query('SET SQL_BIG_SELECTS=1');
-	$query = $wpdb->get_results(sb_create_multi_sermon_query($filter, $order, $page, $limit, $hide_empty));
-	$record_count = $wpdb->get_var("SELECT FOUND_ROWS()");
-	return $query;
+	}
+	$result = \SermonBrowser\Facades\Sermon::findForFrontendListing(
+		(array) $filter,
+		(array) $order,
+		(int) $page,
+		(int) $limit,
+		(bool) $hide_empty
+	);
+	$record_count = $result['total'];
+	return $result['items'];
 }
 
 /**
 * Create SQL query for returning multiple sermons
 *
+* @deprecated 0.6.0 Use sb_get_sermons() which now uses Sermon::findForFrontendListing()
 * @param array $filter
 * @param string $order
 * @param integer $page
@@ -830,6 +835,7 @@ function sb_get_sermons($filter, $order, $page = 1, $limit = 0, $hide_empty = fa
 * @return string SQL query
 */
 function sb_create_multi_sermon_query ($filter, $order, $page = 1, $limit = 0, $hide_empty = false) {
+	_deprecated_function(__FUNCTION__, '0.6.0', 'sb_get_sermons()');
 	global $wpdb;
 	$default_filter = array(
 		'title' => '',

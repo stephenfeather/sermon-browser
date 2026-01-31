@@ -134,13 +134,6 @@ class TemplateEngine
      */
     public function clearCache(): int
     {
-        global $wpdb;
-
-        $sql = $wpdb->prepare(
-            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-            '_transient_sb_template_%'
-        );
-
-        return (int) $wpdb->query($sql);
+        return \SermonBrowser\Repositories\AbstractRepository::deleteTransientsByPattern('sb_template_');
     }
 }

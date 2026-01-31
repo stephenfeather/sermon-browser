@@ -316,4 +316,35 @@ abstract class AbstractRepository implements RepositoryInterface
     {
         return $this->find($id) !== null;
     }
+
+    /**
+     * Delete transients matching a pattern.
+     *
+     * Utility method to bulk-delete WordPress transients by prefix pattern.
+     * Consolidates $wpdb usage for transient operations in the repository layer.
+     *
+     * @param string $pattern The transient prefix pattern (e.g., 'sb_template_').
+     * @return int Number of transients deleted.
+     */
+    public static function deleteTransientsByPattern(string $pattern): int
+    {
+        global $wpdb;
+
+        $transients = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+                '_transient_' . $wpdb->esc_like($pattern) . '%'
+            )
+        );
+
+        $count = 0;
+        foreach ($transients as $transient) {
+            $key = str_replace('_transient_', '', $transient);
+            if (delete_transient($key)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
 }

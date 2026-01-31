@@ -227,6 +227,23 @@ class BookRepository extends AbstractRepository
     }
 
     /**
+     * Get all book names ordered by ID.
+     *
+     * Returns a simple array of book names for dropdown lists.
+     *
+     * @return array<string> Array of book names.
+     */
+    public function findAllNames(): array
+    {
+        $table = $this->getTableName();
+        $results = $this->db->get_col(
+            "SELECT name FROM {$table} ORDER BY id"
+        );
+
+        return is_array($results) ? $results : [];
+    }
+
+    /**
      * Get all books with sermon counts for filter dropdowns.
      *
      * Returns books that have at least one sermon reference, with counts.

@@ -155,7 +155,6 @@ function sb_japan() {
 * Displays alerts in admin for new users
 */
 function sb_do_alerts() {
-	global $wpdb;
 	if (stripos(sb_get_option('mp3_shortcode'), '%SERMONURL%') === false) {
 		echo '<div id="message" class="updated fade"><p><b>';
 		_e('Error:</b> The MP3 shortcode must link to individual sermon files. You do this by including <span style="color:red">%SERMONURL%</span> in your shortcode (e.g. [audio mp3="%SERMONURL%"]). SermonBrowser will then replace %SERMONURL% with a link to each sermon.', 'sermon-browser');
@@ -184,7 +183,6 @@ function sb_build_textarea($name, $html) {
 * Displays stats in the dashboard
 */
 function sb_rightnow () {
-	global $wpdb;
 	$file_count = File::countByType('file');
 	$output_string = '';
 	if ($file_count > 0) {
@@ -240,8 +238,6 @@ function sb_rightnow () {
  * @return array Modified glance items with sermon count.
  */
 function sb_dashboard_glance( $items ) {
-	global $wpdb;
-
 	$sermon_count = Sermon::count();
 
 	if ( $sermon_count > 0 ) {
@@ -344,7 +340,6 @@ function sb_print_import_options_message($long = false) {
 * echoes the upload form
 */
 function sb_print_upload_form () {
-	global $wpdb;
 ?>
 	<table width="100%" cellspacing="2" cellpadding="5" class="widefat">
 		<form method="post" enctype="multipart/form-data" action ="<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>" >

@@ -16,6 +16,7 @@
  * @method static void resetBooksForLocale(array $books, array $engBooks)
  * @method static array getSermonsWithVerseData()
  * @method static bool updateSermonVerseData(int $sermonId, string $start, string $end)
+ * @method static array findAllNames()
  * @method static array findAllWithSermonCount()
  * @method static array findBySermonIdsWithCount(array $sermonIds)
  */
