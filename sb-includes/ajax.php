@@ -1,21 +1,27 @@
 <?php
 define ('SB_AJAX', true);
 
+use SermonBrowser\Facades\Preacher;
+use SermonBrowser\Facades\Service;
+use SermonBrowser\Facades\Series;
+use SermonBrowser\Facades\File;
+use SermonBrowser\Facades\Sermon;
+
 // Throughout this plugin, p stands for preacher, s stands for service and ss stands for series
 if (isset($_POST['pname'])) { // preacher
 	$pname = sanitize_text_field($_POST['pname']);
 	if (isset($_POST['pid'])) {
 		$pid = (int) $_POST['pid'];
 		if (isset($_POST['del'])) {
-			$wpdb->query("DELETE FROM {$wpdb->prefix}sb_preachers WHERE id = $pid;");
+			Preacher::delete($pid);
 		} else {
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_preachers SET name = %s WHERE id = $pid;", $pname));
+			Preacher::update($pid, ['name' => $pname]);
 		}
 		echo 'done';
 		die();
 	} else {
-		$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_preachers VALUES (null, %s, '', '');", $pname));
-		echo $wpdb->insert_id;
+		$newId = Preacher::create(['name' => $pname, 'description' => '', 'image' => '']);
+		echo $newId;
 		die();
 	}
 } elseif (isset($_POST['sname'])) { // service
@@ -26,20 +32,15 @@ if (isset($_POST['pname'])) { // preacher
 	if (isset($_POST['sid'])) {
 		$sid = (int) $_POST['sid'];
 		if (isset($_POST['del'])) {
-			$wpdb->query("DELETE FROM {$wpdb->prefix}sb_services WHERE id = $sid;");
+			Service::delete($sid);
 		} else {
-			$old_time = $wpdb->get_var("SELECT time FROM {$wpdb->prefix}sb_services WHERE id = $sid;");
-			if (!$old_time)
-				$old_time = '00:00';
-			$difference = strtotime($stime) - strtotime($old_time);
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_services SET name = %s, time = %s WHERE id = $sid;", $sname, $stime));
-			$wpdb->query("UPDATE {$wpdb->prefix}sb_sermons SET datetime = DATE_ADD(datetime, INTERVAL {$difference} SECOND) WHERE override = 0 AND service_id = $sid;");
+			Service::updateWithTimeShift($sid, $sname, $stime);
 		}
 		echo 'done';
 		die();
 	} else {
-		$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_services VALUES (null, %s, %s);", $sname, $stime));
-		echo $wpdb->insert_id;
+		$newId = Service::create(['name' => $sname, 'time' => $stime]);
+		echo $newId;
 		die();
 	}
 } elseif (isset($_POST['ssname'])) { // series
@@ -47,15 +48,15 @@ if (isset($_POST['pname'])) { // preacher
 	if (isset($_POST['ssid'])) {
 		$ssid = (int) $_POST['ssid'];
 		if (isset($_POST['del'])) {
-			$wpdb->query("DELETE FROM {$wpdb->prefix}sb_series WHERE id = $ssid;");
+			Series::delete($ssid);
 		} else {
-			$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_series SET name = %s WHERE id = $ssid;", $ssname));
+			Series::update($ssid, ['name' => $ssname]);
 		}
 		echo 'done';
 		die();
 	} else {
-		$wpdb->query($wpdb->prepare("INSERT INTO {$wpdb->prefix}sb_series VALUES (null, %s, 0);", $ssname));
-		echo $wpdb->insert_id;
+		$newId = Series::create(['name' => $ssname, 'page_id' => 0]);
+		echo $newId;
 		die();
 	}
 } elseif (isset($_POST['fname']) && validate_file (sb_get_option('upload_dir').$_POST['fname']) === 0) { // Files
@@ -65,7 +66,7 @@ if (isset($_POST['pname'])) { // preacher
 		$oname = isset($_POST['oname']) ? sanitize_file_name($_POST['oname']) : '';
 		if (isset($_POST['del'])) {
 			if (!file_exists(SB_ABSPATH.sb_get_option('upload_dir').$fname) || unlink(SB_ABSPATH.sb_get_option('upload_dir').$fname)) {
-				$wpdb->query("DELETE FROM {$wpdb->prefix}sb_stuff WHERE id = {$fid};");
+				File::delete($fid);
 				echo 'deleted';
 				die();
 			} else {
@@ -85,7 +86,7 @@ if (isset($_POST['pname'])) { // preacher
 			}
 			if ($file_allowed) {
 				if ((validate_file (sb_get_option('upload_dir').$_POST['oname']) === 0) && !is_writable(SB_ABSPATH.sb_get_option('upload_dir').$fname) && rename(SB_ABSPATH.sb_get_option('upload_dir').$oname, SB_ABSPATH.sb_get_option('upload_dir').$fname)) {
-					$wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}sb_stuff SET name = %s WHERE id = $fid;", $fname));
+					File::update($fid, ['name' => $fname]);
 					echo 'renamed';
 					die();
 				} else {
@@ -101,25 +102,18 @@ if (isset($_POST['pname'])) { // preacher
 } elseif (isset($_POST['fetch'])) { // ajax pagination
     wp_timezone_override_offset();
 	$st = (int) $_POST['fetch'] - 1;
+	$filter = [];
 	if (!empty($_POST['title'])) {
-		$cond = $wpdb->prepare("and m.title LIKE '%%%s%%' ", sanitize_text_field($_POST['title']));
-	} else
-		$cond = '';
+		$filter['title'] = sanitize_text_field($_POST['title']);
+	}
 	if ($_POST['preacher'] != 0) {
-		$cond .= 'and m.preacher_id = ' . (int) $_POST['preacher'] . ' ';
+		$filter['preacher_id'] = (int) $_POST['preacher'];
 	}
 	if ($_POST['series'] != 0) {
-		$cond .= 'and m.series_id = ' . (int) $_POST['series'] . ' ';
+		$filter['series_id'] = (int) $_POST['series'];
 	}
-	$m = $wpdb->get_results("SELECT SQL_CALC_FOUND_ROWS m.id, m.title, m.datetime, p.name as pname, s.name as sname, ss.name as ssname
-	FROM {$wpdb->prefix}sb_sermons as m
-	LEFT JOIN {$wpdb->prefix}sb_preachers as p ON m.preacher_id = p.id
-	LEFT JOIN {$wpdb->prefix}sb_services as s ON m.service_id = s.id
-	LEFT JOIN {$wpdb->prefix}sb_series as ss ON m.series_id = ss.id
-	WHERE 1=1 {$cond}
-	ORDER BY m.datetime desc, s.time desc LIMIT {$st}, ".sb_get_option('sermons_per_page'));
-
-	$cnt = $wpdb->get_var("SELECT FOUND_ROWS()");
+	$m = Sermon::findForAdminListFiltered($filter, sb_get_option('sermons_per_page'), $st);
+	$cnt = Sermon::countFiltered($filter);
 	?>
 	<?php foreach ($m as $sermon): ?>
 		<tr class="<?php echo ++$i % 2 == 0 ? 'alternate' : '' ?>">
@@ -150,13 +144,13 @@ if (isset($_POST['pname'])) { // preacher
 } elseif (isset($_POST['fetchU']) || isset($_POST['fetchL']) || isset($_POST['search'])) { // ajax pagination (uploads)
 	if (isset($_POST['fetchU'])) {
 		$st = (int) $_POST['fetchU'] - 1;
-		$abc = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id = 0 AND f.type = 'file' ORDER BY f.name LIMIT {$st}, ".sb_get_option('sermons_per_page'));
+		$abc = File::findUnlinkedWithTitle(sb_get_option('sermons_per_page'), $st);
 	} elseif (isset($_POST['fetchL'])) {
 		$st = (int) $_POST['fetchL'] - 1;
-		$abc = $wpdb->get_results("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.sermon_id <> 0 AND f.type = 'file' ORDER BY f.name LIMIT {$st}, ".sb_get_option('sermons_per_page'));
+		$abc = File::findLinkedWithTitle(sb_get_option('sermons_per_page'), $st);
 	} else {
 		$s = sanitize_text_field($_POST['search']);
-		$abc = $wpdb->get_results($wpdb->prepare("SELECT f.*, s.title FROM {$wpdb->prefix}sb_stuff AS f LEFT JOIN {$wpdb->prefix}sb_sermons AS s ON f.sermon_id = s.id WHERE f.name LIKE '%%%s%%' AND f.type = 'file' ORDER BY f.name;", $s));
+		$abc = File::searchByName($s);
 	}
 ?>
 <?php if (count($abc) >= 1): ?>

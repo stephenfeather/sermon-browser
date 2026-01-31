@@ -365,6 +365,19 @@ class SermonRepository extends AbstractRepository
      */
     public function findForAdminList(int $limit = 0, int $offset = 0): array
     {
+        return $this->findForAdminListFiltered([], $limit, $offset);
+    }
+
+    /**
+     * Get sermons for admin listing with related names and filtering.
+     *
+     * @param array<string, mixed> $filter Filter criteria (title, preacher_id, series_id).
+     * @param int $limit Maximum results.
+     * @param int $offset Number to skip.
+     * @return array<object> Array of sermons with pname, sname, ssname columns.
+     */
+    public function findForAdminListFiltered(array $filter = [], int $limit = 0, int $offset = 0): array
+    {
         $table = $this->getTableName();
         $preachersTable = $this->db->prefix . 'sb_preachers';
         $seriesTable = $this->db->prefix . 'sb_series';
@@ -375,7 +388,25 @@ class SermonRepository extends AbstractRepository
                 LEFT JOIN {$preachersTable} as p ON m.preacher_id = p.id
                 LEFT JOIN {$servicesTable} as s ON m.service_id = s.id
                 LEFT JOIN {$seriesTable} as ss ON m.series_id = ss.id
-                ORDER BY m.datetime DESC, s.time DESC";
+                WHERE 1=1";
+
+        // Apply filters
+        if (!empty($filter['title'])) {
+            $sql .= $this->db->prepare(
+                ' AND m.title LIKE %s',
+                '%' . $this->db->esc_like($filter['title']) . '%'
+            );
+        }
+
+        if (!empty($filter['preacher_id']) && (int) $filter['preacher_id'] !== 0) {
+            $sql .= $this->db->prepare(' AND m.preacher_id = %d', (int) $filter['preacher_id']);
+        }
+
+        if (!empty($filter['series_id']) && (int) $filter['series_id'] !== 0) {
+            $sql .= $this->db->prepare(' AND m.series_id = %d', (int) $filter['series_id']);
+        }
+
+        $sql .= ' ORDER BY m.datetime DESC, s.time DESC';
 
         if ($limit > 0) {
             $sql .= $this->db->prepare(' LIMIT %d, %d', $offset, $limit);

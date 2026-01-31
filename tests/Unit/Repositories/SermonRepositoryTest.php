@@ -415,4 +415,73 @@ class SermonRepositoryTest extends TestCase
         $this->assertCount(1, $result);
         $this->assertSame('2024', $result[0]->year);
     }
+
+    /**
+     * Test findForAdminListFiltered returns sermons with filters.
+     */
+    public function testFindForAdminListFiltered(): void
+    {
+        $expectedSermons = [
+            (object) [
+                'id' => 1,
+                'title' => 'Test Sermon',
+                'datetime' => '2024-01-15 10:00:00',
+                'pname' => 'John Doe',
+                'sname' => 'Sunday Morning',
+                'ssname' => 'Romans',
+            ],
+        ];
+
+        $this->wpdb->shouldReceive('esc_like')
+            ->once()
+            ->with('Test')
+            ->andReturn('Test');
+
+        $this->wpdb->shouldReceive('prepare')
+            ->andReturn('SELECT...');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $result = $this->repository->findForAdminListFiltered(
+            ['title' => 'Test', 'preacher_id' => 5],
+            10,
+            0
+        );
+
+        $this->assertCount(1, $result);
+        $this->assertSame('Test Sermon', $result[0]->title);
+        $this->assertSame('John Doe', $result[0]->pname);
+        $this->assertSame('Sunday Morning', $result[0]->sname);
+        $this->assertSame('Romans', $result[0]->ssname);
+    }
+
+    /**
+     * Test findForAdminList delegates to findForAdminListFiltered.
+     */
+    public function testFindForAdminListDelegatesToFiltered(): void
+    {
+        $expectedSermons = [
+            (object) [
+                'id' => 1,
+                'title' => 'Sermon 1',
+                'datetime' => '2024-01-15',
+                'pname' => 'Preacher',
+                'sname' => 'Service',
+                'ssname' => 'Series',
+            ],
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->andReturn('SELECT...');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $result = $this->repository->findForAdminList(10, 0);
+
+        $this->assertCount(1, $result);
+    }
 }

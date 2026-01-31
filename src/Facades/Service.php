@@ -20,6 +20,8 @@
  * @method static array findAllWithSermonCount()
  * @method static array findAllForFilter()
  * @method static array findBySermonIdsWithCount(array $sermonIds)
+ * @method static bool updateWithTimeShift(int $id, string $name, string $time)
+ * @method static string|null getTime(int $id)
  */
 
 declare(strict_types=1);
