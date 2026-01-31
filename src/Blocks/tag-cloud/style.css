@@ -1,0 +1,34 @@
+/**
+ * Sermon Tag Cloud Block - Frontend Styles
+ *
+ * @package sermon-browser
+ */
+
+.sb-tag-cloud {
+	--sb-tag-color: inherit;
+	--sb-tag-hover-color: currentColor;
+	--sb-tag-spacing: 0.5em;
+}
+
+.sb-tag-cloud__tags {
+	line-height: 1.8;
+}
+
+.sb-tag-cloud__tag {
+	display: inline;
+	margin-right: var(--sb-tag-spacing);
+	color: var(--sb-tag-color);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.sb-tag-cloud__tag:hover,
+.sb-tag-cloud__tag:focus {
+	color: var(--sb-tag-hover-color);
+	text-decoration: underline;
+}
+
+.sb-tag-cloud__count {
+	font-size: 0.75em;
+	opacity: 0.7;
+}

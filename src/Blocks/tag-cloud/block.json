@@ -1,0 +1,48 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "sermon-browser/tag-cloud",
+	"version": "0.6.0",
+	"title": "Sermon Tag Cloud",
+	"category": "widgets",
+	"icon": "tag",
+	"description": "Display a cloud of sermon tags with varying font sizes based on popularity.",
+	"keywords": ["sermon", "tag", "cloud", "category"],
+	"textdomain": "sermon-browser",
+	"attributes": {
+		"limit": {
+			"type": "number",
+			"default": 0
+		},
+		"minFontPercent": {
+			"type": "number",
+			"default": 80
+		},
+		"maxFontPercent": {
+			"type": "number",
+			"default": 150
+		},
+		"showCount": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"color": {
+			"text": true,
+			"background": true,
+			"link": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true
+		}
+	},
+	"render": "file:./render.php"
+}

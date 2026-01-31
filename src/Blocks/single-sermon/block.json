@@ -1,0 +1,68 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "sermon-browser/single-sermon",
+	"version": "0.6.0",
+	"title": "Single Sermon",
+	"category": "widgets",
+	"icon": "microphone",
+	"description": "Display a single sermon with details, media, and tags.",
+	"keywords": ["sermon", "single", "audio", "preacher"],
+	"textdomain": "sermon-browser",
+	"attributes": {
+		"sermonId": {
+			"type": "number",
+			"default": 0
+		},
+		"useLatest": {
+			"type": "boolean",
+			"default": false
+		},
+		"showDescription": {
+			"type": "boolean",
+			"default": true
+		},
+		"showPreacher": {
+			"type": "boolean",
+			"default": true
+		},
+		"showDate": {
+			"type": "boolean",
+			"default": true
+		},
+		"showSeries": {
+			"type": "boolean",
+			"default": true
+		},
+		"showPassage": {
+			"type": "boolean",
+			"default": true
+		},
+		"showMedia": {
+			"type": "boolean",
+			"default": true
+		},
+		"showTags": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"color": {
+			"text": true,
+			"background": true,
+			"link": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true
+		}
+	},
+	"render": "file:./render.php"
+}

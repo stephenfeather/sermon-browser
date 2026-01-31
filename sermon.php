@@ -86,6 +86,28 @@ add_action('init', function () {
     }
 });
 
+// Register REST API routes for Gutenberg blocks (Phase 5).
+add_action('plugins_loaded', function () {
+    $registry = \SermonBrowser\REST\RestApiRegistry::getInstance();
+    $registry->addController(new \SermonBrowser\REST\Endpoints\SermonsController());
+    $registry->addController(new \SermonBrowser\REST\Endpoints\TagsController());
+    $registry->addController(new \SermonBrowser\REST\Endpoints\PreachersController());
+    $registry->addController(new \SermonBrowser\REST\Endpoints\SeriesController());
+    $registry->addController(new \SermonBrowser\REST\Endpoints\ServicesController());
+    $registry->addController(new \SermonBrowser\REST\Endpoints\FilesController());
+    $registry->addController(new \SermonBrowser\REST\Endpoints\SearchController());
+    $registry->init();
+}, 15);
+
+// Register Gutenberg blocks (Phase 5).
+add_action('plugins_loaded', function () {
+    $registry = \SermonBrowser\Blocks\BlockRegistry::getInstance();
+    $registry->addBlock('tag-cloud');
+    $registry->addBlock('single-sermon');
+    $registry->addBlock('sermon-list');
+    $registry->init();
+}, 20);
+
 // Phase 6: Template migration on plugin activation.
 register_activation_hook(__FILE__, function () {
     $migrator = new \SermonBrowser\Templates\TemplateMigrator();
