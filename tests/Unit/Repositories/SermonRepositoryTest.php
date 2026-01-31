@@ -355,4 +355,64 @@ class SermonRepositoryTest extends TestCase
 
         $this->assertNull($result);
     }
+
+    /**
+     * Test findDatesForIds returns date components for sermon IDs.
+     */
+    public function testFindDatesForIds(): void
+    {
+        $expectedDates = [
+            (object) ['year' => '2024', 'month' => '1', 'day' => '7'],
+            (object) ['year' => '2024', 'month' => '1', 'day' => '14'],
+            (object) ['year' => '2024', 'month' => '1', 'day' => '21'],
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn('SELECT...');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedDates);
+
+        $result = $this->repository->findDatesForIds([1, 2, 3]);
+
+        $this->assertCount(3, $result);
+        $this->assertSame('2024', $result[0]->year);
+        $this->assertSame('1', $result[0]->month);
+        $this->assertSame('7', $result[0]->day);
+    }
+
+    /**
+     * Test findDatesForIds returns empty array for empty input.
+     */
+    public function testFindDatesForIdsReturnsEmptyForEmptyInput(): void
+    {
+        $result = $this->repository->findDatesForIds([]);
+
+        $this->assertSame([], $result);
+    }
+
+    /**
+     * Test findDatesForIds handles single sermon ID.
+     */
+    public function testFindDatesForIdsSingleId(): void
+    {
+        $expectedDates = [
+            (object) ['year' => '2024', 'month' => '6', 'day' => '15'],
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn('SELECT...');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedDates);
+
+        $result = $this->repository->findDatesForIds([42]);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('2024', $result[0]->year);
+    }
 }

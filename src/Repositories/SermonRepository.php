@@ -512,4 +512,35 @@ class SermonRepository extends AbstractRepository
 
         return $result ?: null;
     }
+
+    /**
+     * Get date components for specific sermon IDs (oneclick filter).
+     *
+     * Returns year, month, day for each sermon's datetime.
+     * Result objects have: year, month, day.
+     *
+     * @param array<int> $sermonIds Array of sermon IDs to get dates for.
+     * @return array<object> Array of date objects.
+     */
+    public function findDatesForIds(array $sermonIds): array
+    {
+        if (empty($sermonIds)) {
+            return [];
+        }
+
+        $table = $this->getTableName();
+
+        $placeholders = implode(', ', array_fill(0, count($sermonIds), '%d'));
+        $sql = $this->db->prepare(
+            "SELECT YEAR(datetime) AS year, MONTH(datetime) AS month, DAY(datetime) AS day
+             FROM {$table}
+             WHERE id IN ({$placeholders})
+             ORDER BY datetime ASC",
+            ...$sermonIds
+        );
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
 }

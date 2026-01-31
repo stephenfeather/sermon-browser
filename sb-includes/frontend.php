@@ -876,7 +876,7 @@ function sb_url_minus_parameter ($param1, $param2='') {
 
 //Displays the filter on sermon search page
 function sb_print_filters($filter) {
-	global $wpdb, $more_applied, $filter_options;
+	global $more_applied, $filter_options;
 	$hide_filter = FALSE;
 	if ($filter['filterhide'] == 'hide') {
 		$hide_filter = TRUE;
@@ -927,13 +927,12 @@ function sb_print_filters($filter) {
 		$ids = array();
 		foreach ($sermons as $sermon)
 			$ids[] = $sermon->id;
-		$ids = "('".implode ("', '", $ids)."')";
 
-		$preachers = $wpdb->get_results("SELECT p.*, count(p.id) AS count FROM {$wpdb->prefix}sb_preachers AS p JOIN {$wpdb->prefix}sb_sermons AS sermons ON p.id = sermons.preacher_id WHERE sermons.id IN {$ids} GROUP BY p.id ORDER BY count DESC, sermons.datetime DESC");
-		$series = $wpdb->get_results("SELECT ss.*, count(ss.id) AS count FROM {$wpdb->prefix}sb_series AS ss JOIN {$wpdb->prefix}sb_sermons AS sermons ON ss.id = sermons.series_id  WHERE sermons.id IN {$ids} GROUP BY ss.id ORDER BY sermons.datetime DESC");
-		$services = $wpdb->get_results("SELECT s.*, count(s.id) AS count FROM {$wpdb->prefix}sb_services AS s JOIN {$wpdb->prefix}sb_sermons AS sermons ON s.id = sermons.service_id  WHERE sermons.id IN {$ids} GROUP BY s.id ORDER BY count DESC");
-		$book_count = $wpdb->get_results("SELECT bs.book_name AS name, count(distinct bs.sermon_id) AS count FROM {$wpdb->prefix}sb_books_sermons AS bs JOIN {$wpdb->prefix}sb_books as b ON bs.book_name=b.name AND bs.sermon_id IN {$ids} GROUP BY b.id");
-		$dates = $wpdb->get_results("SELECT YEAR(datetime) as year, MONTH (datetime) as month, DAY(datetime) as day FROM {$wpdb->prefix}sb_sermons WHERE id IN {$ids} ORDER BY datetime ASC");
+		$preachers = \SermonBrowser\Facades\Preacher::findBySermonIdsWithCount($ids);
+		$series = \SermonBrowser\Facades\Series::findBySermonIdsWithCount($ids);
+		$services = \SermonBrowser\Facades\Service::findBySermonIdsWithCount($ids);
+		$book_count = \SermonBrowser\Facades\Book::findBySermonIdsWithCount($ids);
+		$dates = \SermonBrowser\Facades\Sermon::findDatesForIds($ids);
 
 		$more_applied = array();
 		$output = str_replace ('*preacher*', isset($preachers[0]->name) ? $preachers[0]->name : '', $output);
@@ -979,10 +978,10 @@ function sb_print_filters($filter) {
 	} elseif ($filter['filter'] == 'dropdown') {
 		// Drop-down filter
 		$translated_books = array_combine(sb_get_default('eng_bible_books'), sb_get_default('bible_books'));
-		$preachers = $wpdb->get_results("SELECT p.*, count(p.id) AS count FROM {$wpdb->prefix}sb_preachers AS p JOIN {$wpdb->prefix}sb_sermons AS s ON p.id = s.preacher_id GROUP BY p.id ORDER BY count DESC, s.datetime DESC");
-		$series = $wpdb->get_results("SELECT ss.*, count(ss.id) AS count FROM {$wpdb->prefix}sb_series AS ss JOIN {$wpdb->prefix}sb_sermons AS sermons ON ss.id = sermons.series_id GROUP BY ss.id ORDER BY sermons.datetime DESC");
-		$services = $wpdb->get_results("SELECT s.*, count(s.id) AS count FROM {$wpdb->prefix}sb_services AS s JOIN {$wpdb->prefix}sb_sermons AS sermons ON s.id = sermons.service_id GROUP BY s.id ORDER BY count DESC");
-		$book_count = $wpdb->get_results("SELECT bs.book_name AS name, count(distinct bs.sermon_id) AS count FROM {$wpdb->prefix}sb_books_sermons AS bs JOIN {$wpdb->prefix}sb_books AS b ON bs.book_name = b.name GROUP BY b.id");
+		$preachers = \SermonBrowser\Facades\Preacher::findAllForFilter();
+		$series = \SermonBrowser\Facades\Series::findAllForFilter();
+		$services = \SermonBrowser\Facades\Service::findAllForFilter();
+		$book_count = \SermonBrowser\Facades\Book::findAllWithSermonCount();
 		$sb = array(
 			'Title' => 'm.title',
 			'Preacher' => 'preacher',

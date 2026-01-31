@@ -225,4 +225,60 @@ class BookRepository extends AbstractRepository
 
         return $result !== false;
     }
+
+    /**
+     * Get all books with sermon counts for filter dropdowns.
+     *
+     * Returns books that have at least one sermon reference, with counts.
+     * Result objects have: name, count (distinct sermon count).
+     *
+     * @return array<object> Array of books with count.
+     */
+    public function findAllWithSermonCount(): array
+    {
+        $booksSermonTable = $this->getBooksSermonTableName();
+        $booksTable = $this->getTableName();
+
+        $sql = "SELECT bs.book_name AS name, COUNT(DISTINCT bs.sermon_id) AS count
+                FROM {$booksSermonTable} bs
+                JOIN {$booksTable} b ON bs.book_name = b.name
+                GROUP BY b.id";
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Get books with counts for specific sermon IDs (oneclick filter).
+     *
+     * Returns books referenced by the given sermons, with counts.
+     * Result objects have: name, count (distinct sermon count).
+     *
+     * @param array<int> $sermonIds Array of sermon IDs to filter by.
+     * @return array<object> Array of books with count.
+     */
+    public function findBySermonIdsWithCount(array $sermonIds): array
+    {
+        if (empty($sermonIds)) {
+            return [];
+        }
+
+        $booksSermonTable = $this->getBooksSermonTableName();
+        $booksTable = $this->getTableName();
+
+        $placeholders = implode(', ', array_fill(0, count($sermonIds), '%d'));
+        $sql = $this->db->prepare(
+            "SELECT bs.book_name AS name, COUNT(DISTINCT bs.sermon_id) AS count
+             FROM {$booksSermonTable} bs
+             JOIN {$booksTable} b ON bs.book_name = b.name
+             WHERE bs.sermon_id IN ({$placeholders})
+             GROUP BY b.id",
+            ...$sermonIds
+        );
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
 }

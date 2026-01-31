@@ -129,4 +129,62 @@ class SeriesRepository extends AbstractRepository
 
         return is_array($results) ? $results : [];
     }
+
+    /**
+     * Get all series with sermon counts for filter dropdowns.
+     *
+     * Returns series ordered by most recent sermon datetime.
+     * Result objects have: id, name, page_id, count.
+     *
+     * @return array<object> Array of series with count.
+     */
+    public function findAllForFilter(): array
+    {
+        $table = $this->getTableName();
+        $sermonsTable = $this->db->prefix . 'sb_sermons';
+
+        $sql = "SELECT ss.*, COUNT(ss.id) AS count
+                FROM {$table} ss
+                JOIN {$sermonsTable} sermons ON ss.id = sermons.series_id
+                GROUP BY ss.id
+                ORDER BY sermons.datetime DESC";
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Get series with counts for specific sermon IDs (oneclick filter).
+     *
+     * Returns series containing the given sermons, with counts.
+     * Result objects have: id, name, page_id, count.
+     *
+     * @param array<int> $sermonIds Array of sermon IDs to filter by.
+     * @return array<object> Array of series with count.
+     */
+    public function findBySermonIdsWithCount(array $sermonIds): array
+    {
+        if (empty($sermonIds)) {
+            return [];
+        }
+
+        $table = $this->getTableName();
+        $sermonsTable = $this->db->prefix . 'sb_sermons';
+
+        $placeholders = implode(', ', array_fill(0, count($sermonIds), '%d'));
+        $sql = $this->db->prepare(
+            "SELECT ss.*, COUNT(ss.id) AS count
+             FROM {$table} ss
+             JOIN {$sermonsTable} sermons ON ss.id = sermons.series_id
+             WHERE sermons.id IN ({$placeholders})
+             GROUP BY ss.id
+             ORDER BY sermons.datetime DESC",
+            ...$sermonIds
+        );
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
 }

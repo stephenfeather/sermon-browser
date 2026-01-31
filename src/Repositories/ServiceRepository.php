@@ -183,4 +183,62 @@ class ServiceRepository extends AbstractRepository
 
         return $time !== null ? (string) $time : null;
     }
+
+    /**
+     * Get all services with sermon counts for filter dropdowns.
+     *
+     * Returns services ordered by sermon count DESC.
+     * Result objects have: id, name, time, count.
+     *
+     * @return array<object> Array of services with count.
+     */
+    public function findAllForFilter(): array
+    {
+        $table = $this->getTableName();
+        $sermonsTable = $this->db->prefix . 'sb_sermons';
+
+        $sql = "SELECT s.*, COUNT(s.id) AS count
+                FROM {$table} s
+                JOIN {$sermonsTable} sermons ON s.id = sermons.service_id
+                GROUP BY s.id
+                ORDER BY count DESC";
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Get services with counts for specific sermon IDs (oneclick filter).
+     *
+     * Returns services for the given sermons, with counts.
+     * Result objects have: id, name, time, count.
+     *
+     * @param array<int> $sermonIds Array of sermon IDs to filter by.
+     * @return array<object> Array of services with count.
+     */
+    public function findBySermonIdsWithCount(array $sermonIds): array
+    {
+        if (empty($sermonIds)) {
+            return [];
+        }
+
+        $table = $this->getTableName();
+        $sermonsTable = $this->db->prefix . 'sb_sermons';
+
+        $placeholders = implode(', ', array_fill(0, count($sermonIds), '%d'));
+        $sql = $this->db->prepare(
+            "SELECT s.*, COUNT(s.id) AS count
+             FROM {$table} s
+             JOIN {$sermonsTable} sermons ON s.id = sermons.service_id
+             WHERE sermons.id IN ({$placeholders})
+             GROUP BY s.id
+             ORDER BY count DESC",
+            ...$sermonIds
+        );
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
 }

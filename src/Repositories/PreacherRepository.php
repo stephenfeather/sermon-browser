@@ -114,4 +114,62 @@ class PreacherRepository extends AbstractRepository
 
         return (int) $count > 0;
     }
+
+    /**
+     * Get all preachers with sermon counts for filter dropdowns.
+     *
+     * Returns preachers ordered by sermon count DESC, then by most recent sermon.
+     * Result objects have: id, name, description, image, count.
+     *
+     * @return array<object> Array of preachers with count.
+     */
+    public function findAllForFilter(): array
+    {
+        $table = $this->getTableName();
+        $sermonsTable = $this->db->prefix . 'sb_sermons';
+
+        $sql = "SELECT p.*, COUNT(p.id) AS count
+                FROM {$table} p
+                JOIN {$sermonsTable} s ON p.id = s.preacher_id
+                GROUP BY p.id
+                ORDER BY count DESC, s.datetime DESC";
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Get preachers with counts for specific sermon IDs (oneclick filter).
+     *
+     * Returns preachers who preached the given sermons, with counts.
+     * Result objects have: id, name, description, image, count.
+     *
+     * @param array<int> $sermonIds Array of sermon IDs to filter by.
+     * @return array<object> Array of preachers with count.
+     */
+    public function findBySermonIdsWithCount(array $sermonIds): array
+    {
+        if (empty($sermonIds)) {
+            return [];
+        }
+
+        $table = $this->getTableName();
+        $sermonsTable = $this->db->prefix . 'sb_sermons';
+
+        $placeholders = implode(', ', array_fill(0, count($sermonIds), '%d'));
+        $sql = $this->db->prepare(
+            "SELECT p.*, COUNT(p.id) AS count
+             FROM {$table} p
+             JOIN {$sermonsTable} sermons ON p.id = sermons.preacher_id
+             WHERE sermons.id IN ({$placeholders})
+             GROUP BY p.id
+             ORDER BY count DESC, sermons.datetime DESC",
+            ...$sermonIds
+        );
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
 }
