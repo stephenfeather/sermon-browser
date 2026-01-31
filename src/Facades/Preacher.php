@@ -16,6 +16,8 @@
  * @method static array findBy(string $column, mixed $value)
  * @method static object|null findOneBy(string $column, mixed $value)
  * @method static bool exists(int $id)
+ * @method static array findAllSorted()
+ * @method static array findAllWithSermonCount()
  * @method static array findAllForFilter()
  * @method static array findBySermonIdsWithCount(array $sermonIds)
  */

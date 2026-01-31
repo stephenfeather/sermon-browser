@@ -106,8 +106,6 @@ class SB_Sermons_Widget extends WP_Widget {
 	 * @param array $instance Previously saved values from database.
 	 */
 	public function form($instance) {
-		global $wpdb;
-
 		$title = isset($instance['title']) ? $instance['title'] : '';
 		$limit = isset($instance['limit']) ? (int) $instance['limit'] : 5;
 		$preacher = isset($instance['preacher']) ? (int) $instance['preacher'] : 0;
@@ -117,9 +115,9 @@ class SB_Sermons_Widget extends WP_Widget {
 		$show_book = isset($instance['show_book']) ? (bool) $instance['show_book'] : false;
 		$show_date = isset($instance['show_date']) ? (bool) $instance['show_date'] : false;
 
-		$dpreachers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_preachers ORDER BY name");
-		$dseries = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_series ORDER BY name");
-		$dservices = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_services ORDER BY name");
+		$dpreachers = \SermonBrowser\Facades\Preacher::findAllSorted();
+		$dseries = \SermonBrowser\Facades\Series::findAllSorted();
+		$dservices = \SermonBrowser\Facades\Service::findAllSorted();
 		?>
 		<p>
 			<label for="<?php echo esc_attr($this->get_field_id('title')); ?>"><?php esc_html_e('Title:', 'sermon-browser'); ?></label>
