@@ -38,23 +38,19 @@ function sb_upgrade_options () {
 	delete_option('sb_sermon_style_output');
 }
 
-// Runs the version upgrade procedures (re-save templates, add options added since last db update)
+// Runs the version upgrade procedures (add options added since last db update)
 function sb_version_upgrade ($old_version, $new_version) {
-	require_once(SB_INCLUDES_DIR.'/dictionary.php');
-	$sbmf = sb_get_option('search_template');
-	if ($sbmf)
-		sb_update_option('search_output', strtr($sbmf, sb_search_results_dictionary()));
-	$sbsf = sb_get_option('single_template');
-	if ($sbsf)
-		sb_update_option('single_output', strtr($sbsf, sb_sermon_page_dictionary()));
 	sb_update_option('code_version', $new_version);
 	if (sb_get_option('filter_type') == '')
 		sb_update_option('filter_type', 'dropdown');
+
+	// Clear template cache so new template engine takes effect.
+	delete_transient('sb_template_search');
+	delete_transient('sb_template_single');
 }
 
 //Runs the database upgrade procedures (modifies database structure)
 function sb_database_upgrade ($old_version) {
-	require_once(SB_INCLUDES_DIR.'/dictionary.php');
 	require_once(SB_INCLUDES_DIR.'/admin.php');
 	global $wpdb;
 	$sermonUploadDir = sb_get_default('sermon_path');
@@ -88,9 +84,6 @@ function sb_database_upgrade ($old_version) {
 			$wpdb->query("ALTER TABLE {$wpdb->prefix}sb_sermons ADD page_id INT(10) NOT NULL");
 			add_option('sb_display_method', 'dynamic');
 			add_option('sb_sermons_per_page', '10');
-			add_option('sb_sermon_multi_output', base64_encode(strtr(base64_decode(get_option('sb_sermon_multi_form')), sb_search_results_dictionary())));
-			add_option('sb_sermon_single_output', base64_encode(strtr(base64_decode(get_option('sb_sermon_single_form')), sb_sermon_page_dictionary())));
-			add_option('sb_sermon_style_output', base64_encode(stripslashes(base64_decode(get_option('sb_sermon_style')))));
 			add_option('sb_sermon_style_date_modified', strtotime('now'));
 			update_option('sb_sermon_db_version', '1.4');
 		case '1.4' :

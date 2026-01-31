@@ -15,9 +15,9 @@
 | Phase 3: JS Modernization | ✅ COMPLETE | Legacy JS removed (673 lines) |
 | Phase 4: REST API | ✅ COMPLETE | 167 tests, all endpoints |
 | Phase 5: Gutenberg Blocks | ⏳ NOT STARTED | - |
-| Phase 6: Remove eval() | ⏳ NOT STARTED | - |
+| Phase 6: Remove eval() | ✅ COMPLETE | Security fix, 108 new tests |
 
-**Tests:** 248 passing (Repository + AJAX + REST)
+**Tests:** 356 passing (Repository + AJAX + REST + Templates)
 
 ## Workflow Requirements
 
@@ -776,10 +776,10 @@ src/
 ## Phase 6: Remove eval() Templates
 
 ### Goals
-- Eliminate security risk from `eval()` execution
+- Eliminate security risk from `eval()` execution **completely**
 - Improve performance (no runtime code generation)
 - Enable proper template caching
-- Maintain backward compatibility with existing templates
+- **Clean cutover** - no dual-system maintenance
 
 ### Current State
 
@@ -804,115 +804,184 @@ eval($output);
 '[preacher_link]' => '<a href="<?php sb_print_preacher_link($sermon["Sermon"]) ?>">...'
 ```
 
-This means `[sermon_title]` in the template becomes literal PHP code that gets `eval()`'d.
+**Scope is manageable:**
+- Only **2 templates** per site (search results + single sermon)
+- Only **~50 unique tags** total across both dictionaries
+- Tags remain identical - only rendering method changes
 
 ### Target State
 
-**Template Engine Options:**
+**Clean architecture with no eval():**
 
-| Option | Pros | Cons |
-|--------|------|------|
-| Twig | Popular, safe, feature-rich | External dependency |
-| Blade (standalone) | Clean syntax | Laravel association |
-| Mustache | Logic-less, simple | Limited features |
-| Custom tag parser | No dependencies | Must build from scratch |
-| PHP templates | Native, fast | Security concerns |
-
-**Recommendation: Hybrid approach**
-
-1. **New templates**: PHP-based files in `templates/` directory (like WooCommerce)
-2. **Legacy support**: Custom parser that converts `[tag]` to function calls (no eval)
-3. **Migration path**: Provide template converter tool
-
-**New structure:**
 ```
-templates/
-  sermon-single.php              # Modern PHP template
-  sermon-list.php
-  sermon-filter.php
-  partials/
-    sermon-card.php
-    preacher-info.php
-    file-list.php
-  legacy/
-    compat-renderer.php          # Renders old-style templates safely
 src/
   Templates/
-    TemplateEngine.php           # Loader and renderer
-    TagParser.php                # Converts [tags] to function calls
-    TemplateCache.php            # Compiled template cache
-    LegacyConverter.php          # Migration tool
+    TemplateEngine.php           # Main renderer
+    TagParser.php                # Regex-based [tag] replacement
+    TagRenderer.php              # One method per tag (no eval)
+    TemplateMigrator.php         # Upgrade hook auto-converter
+templates/
+  defaults/
+    search-results.html          # Default search template
+    single-sermon.html           # Default single template
 ```
 
-### Key Decisions Needed
+**Rendering flow:**
+```
+User template with [tags]
+       ↓
+TagParser::parse() - regex matches [tag_name]
+       ↓
+TagRenderer::renderTagName($data) - direct function call
+       ↓
+Safe HTML output (no eval)
+```
 
-1. **Template format**: Keep `[tag]` syntax or adopt new format?
-   - Recommendation: **Keep [tag] syntax** for user familiarity, but render safely
+### Key Decisions (CONFIRMED)
 
-2. **Storage location**: Keep in database or move to files?
-   - Recommendation: **Support both** - files for developers, database for users
+1. **Template format**: ✅ **Keep [tag] syntax**
+   - Users don't learn new format
+   - Auto-migration is deterministic
 
-3. **Caching strategy**: File-based or transient-based?
-   - Recommendation: **File-based** in `wp-content/cache/sermon-browser/`
+2. **Storage location**: ✅ **Database only** (simplify)
+   - Theme overrides via filter hooks, not file hierarchy
+   - Less complexity than WooCommerce-style template system
 
-4. **Migration timeline**: Force migration or run indefinitely?
-   - Recommendation: Run both systems; deprecate old after 1 year
+3. **Caching strategy**: ✅ **Transient-based**
+   - WordPress native, no file permission issues
+   - Cache key: `sb_template_{type}_{hash}`
 
-5. **Default templates**: Ship defaults as files or keep generating?
-   - Recommendation: Ship as files, allow database override
+4. **Migration timeline**: ✅ **Forced on upgrade** (REVISED)
+   - No dual-system - eval() code deleted entirely
+   - Auto-backup of old templates before conversion
+   - Admin notice if conversion has issues
+
+5. **Backward compatibility**: ✅ **Via auto-converter, not legacy renderer**
+   - Converter validates all tags are supported
+   - Unknown tags preserved as literal text (safe)
+   - `_output` options deleted (no more generated PHP)
 
 ### Dependencies
-- Phase 1 (Repository layer for data)
-- Phase 2 (Clean separation of concerns)
+- Phase 1 (Repository layer for data) ✅ COMPLETE
+- Phase 2 (Clean separation of concerns) ✅ COMPLETE
 
 ### Implementation Steps
 
-1. **Create TagParser class**
+1. **Create TagRenderer class** (~50 methods)
+   ```php
+   class TagRenderer {
+       public function sermonTitle(array $sermon): string {
+           return esc_html(stripslashes($sermon['Sermon']->title));
+       }
+       public function preacherLink(array $sermon): string {
+           return sprintf('<a href="%s">%s</a>',
+               esc_url($this->getPreacherUrl($sermon)),
+               esc_html(stripslashes($sermon['Sermon']->preacher))
+           );
+       }
+       // ... one method per tag
+   }
+   ```
+
+2. **Create TagParser class**
    ```php
    class TagParser {
-       public function parse(string $template, array $data): string {
-           // Match [tag_name] and call corresponding method
-           // NO eval() - direct function calls
+       public function parse(string $template, array $data, string $context): string {
+           return preg_replace_callback(
+               '/\[([a-z_]+)\]/',
+               fn($m) => $this->renderer->render($m[1], $data, $context),
+               $template
+           );
        }
    }
    ```
 
-2. **Map all existing tags to methods**
-   - Create `TagRenderer` class with a method per tag
-   - `renderSermonTitle($sermon)`, `renderPreacherLink($sermon)`, etc.
+3. **Create TemplateMigrator for upgrade hook**
+   ```php
+   class TemplateMigrator {
+       public function migrate(): MigrationResult {
+           // 1. Backup existing templates
+           $this->backupTemplates();
 
-3. **Create TemplateEngine**
-   - Load templates from files or database
-   - Use TagParser for old-format templates
-   - Direct PHP include for new-format templates
+           // 2. Validate all tags are supported
+           $issues = $this->validateTemplates();
 
-4. **Create default template files**
-   - Convert current defaults to PHP templates
-   - Use `get_template_part()` style loading
+           // 3. Delete _output options (generated PHP)
+           delete_option('sb_search_output');
+           delete_option('sb_single_output');
 
-5. **Add template override system**
-   - Check theme directory first (like WooCommerce)
-   - `theme/sermon-browser/sermon-single.php`
+           // 4. Return result for admin notice
+           return new MigrationResult($issues);
+       }
+   }
+   ```
 
-6. **Create LegacyConverter tool**
-   - Admin page to convert old templates to new format
-   - One-click migration
+4. **Update sb_shortcode()** to use TemplateEngine
+   - Replace `eval()` calls with `TemplateEngine::render()`
+   - Delete dictionary.php (no longer needed)
 
-7. **Update sb_shortcode()** to use TemplateEngine
+5. **Add upgrade hook**
+   ```php
+   register_activation_hook(__FILE__, [TemplateMigrator::class, 'migrate']);
+   // Also run on version check for existing installs
+   ```
 
-8. **Remove eval() calls**
+6. **Add admin notice** for migration status
+   - Success: "Templates migrated successfully"
+   - Warning: "Templates migrated with X unknown tags preserved as text"
+
+7. **Write tests** for TagRenderer (each tag = 1 test)
 
 ### Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Breaking existing templates | High | High | Keep legacy renderer indefinitely |
-| Performance regression | Low | Medium | Template caching |
-| User confusion | Medium | Medium | Clear documentation, migration wizard |
-| Theme conflicts | Medium | Medium | Namespaced template directory |
+| Unknown custom tags | Low | Low | Preserved as literal text |
+| Conversion bugs | Medium | Medium | Backup before migration |
+| User confusion | Low | Low | Clear admin notice |
+| Output differences | Medium | Medium | Test default templates thoroughly |
 
 ### Estimated Scope
-**Large** - 4-6 weeks of focused work
+**Medium** - 2-3 weeks (reduced from 4-6 due to simpler architecture)
+
+### Implementation Complete (2026-01-30)
+
+| Commit | Date | Change | Files Added |
+|--------|------|--------|-------------|
+| `bb9ee35` | Jan 30 | **Phase 6: Remove eval() templates** | **11 files, 4,651 lines** |
+
+**Files created:**
+```
+src/Templates/
+  TagRenderer.php              # 50+ tag methods with proper escaping (973 lines)
+  TagParser.php                # Regex parser with loop handling (524 lines)
+  TemplateEngine.php           # Main renderer with transient caching (146 lines)
+  TemplateMigrator.php         # Upgrade migration logic (182 lines)
+  MigrationResult.php          # Migration result value class (93 lines)
+
+tests/Unit/Templates/
+  TagRendererTest.php          # 43 tests
+  TagParserTest.php            # 21 tests
+  TemplateEngineTest.php       # 13 tests
+  TemplateMigratorTest.php     # 17 tests
+  MigrationResultTest.php      # 14 tests
+```
+
+**Key changes:**
+- `sermon.php` - Replaced eval() calls at lines 516-527 and 555-563 with TemplateEngine
+- Added activation hook and version check for auto-migration
+- Admin notice warns about breaking change for v1.0.0
+
+**Architecture:**
+- **TagRenderer**: One method per template tag, returns loop markers for iteration
+- **TagParser**: Three-pass processing (loop markers → loop expansion → tag replacement)
+- **TemplateEngine**: Loads templates, delegates to TagParser, uses transient caching
+- **TemplateMigrator**: Backs up templates, validates tags, deletes `_output` options
+
+**Testing verified:**
+- ✅ 108 new tests (356 total)
+- ✅ Manual testing via Chrome MCP: sermon list, single sermon, filtered views
+- ✅ All template tags render correctly without eval()
 
 ---
 
@@ -1026,13 +1095,17 @@ wp sermon rebuild-stats
    - `sb_print_filters()` → Repository queries via facades
    - `sb_print_tag_clouds()` → Tag facade
 
-2. **Manual testing** - Verify all AJAX operations and admin pages work correctly
+### Remaining Phase
 
-### Future
+2. **Phase 5** - Gutenberg blocks (requires `@wordpress/scripts` build pipeline)
 
-3. **Phase 5** - Gutenberg blocks (requires `@wordpress/scripts` build pipeline)
-4. **Phase 6** - Remove eval() templates (security improvement)
+### Completed Cleanup
+
+- ✅ **Deleted `dictionary.php`** (79 lines) - no longer needed after Phase 6
+  - Removed `_output` option generation from TemplatesPage, sb-install, upgrade
+  - Added template cache clearing on save/upgrade
+  - Cleaned up `sb_special_option_names()`
 
 ---
 
-*Last updated: 2026-01-30 (Phase 2 wiring complete)*
+*Last updated: 2026-01-31 (dictionary.php cleanup complete)*

@@ -52,8 +52,6 @@ class TemplatesPage
             wp_die(__("You do not have the correct permissions to edit the SermonBrowser templates", 'sermon-browser'));
         }
 
-        require(SB_INCLUDES_DIR . '/dictionary.php');
-
         $multi = wp_kses_post($_POST['multi']);
         $single = wp_kses_post($_POST['single']);
         $style = wp_kses_post($_POST['style']);
@@ -68,9 +66,11 @@ class TemplatesPage
         sb_update_option('search_template', $multi);
         sb_update_option('single_template', $single);
         sb_update_option('css_style', $style);
-        sb_update_option('search_output', strtr($multi, sb_search_results_dictionary()));
-        sb_update_option('single_output', strtr($single, sb_sermon_page_dictionary()));
         sb_update_option('style_date_modified', strtotime('now'));
+
+        // Clear template cache so changes take effect immediately.
+        delete_transient('sb_template_search');
+        delete_transient('sb_template_single');
 
         echo '<div id="message" class="updated fade"><p><b>';
         _e('Templates saved successfully.', 'sermon-browser');
