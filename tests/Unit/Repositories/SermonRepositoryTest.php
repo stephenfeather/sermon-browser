@@ -294,4 +294,65 @@ class SermonRepositoryTest extends TestCase
 
         $this->assertSame(10, $result);
     }
+
+    /**
+     * Test findForTemplate returns sermon with legacy property names.
+     */
+    public function testFindForTemplate(): void
+    {
+        $expectedSermon = (object) [
+            'id' => 1,
+            'title' => 'Test Sermon',
+            'datetime' => '2024-01-15 10:00:00',
+            'start' => 'a:1:{i:0;a:3:{s:4:"book";s:4:"John";s:7:"chapter";s:1:"3";s:5:"verse";s:2:"16";}}',
+            'end' => 'a:1:{i:0;a:3:{s:4:"book";s:4:"John";s:7:"chapter";s:1:"3";s:5:"verse";s:2:"21";}}',
+            'description' => 'A sermon about love',
+            'pid' => 5,
+            'preacher' => 'John Doe',
+            'image' => 'john-doe.jpg',
+            'preacher_description' => 'Senior Pastor',
+            'sid' => 2,
+            'service' => 'Sunday Morning',
+            'ssid' => 3,
+            'series' => 'Romans',
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn('SELECT...');
+
+        $this->wpdb->shouldReceive('get_row')
+            ->once()
+            ->andReturn($expectedSermon);
+
+        $result = $this->repository->findForTemplate(1);
+
+        // Verify legacy property names are used
+        $this->assertSame('Test Sermon', $result->title);
+        $this->assertSame(5, $result->pid);
+        $this->assertSame('John Doe', $result->preacher);
+        $this->assertSame('john-doe.jpg', $result->image);
+        $this->assertSame(2, $result->sid);
+        $this->assertSame('Sunday Morning', $result->service);
+        $this->assertSame(3, $result->ssid);
+        $this->assertSame('Romans', $result->series);
+    }
+
+    /**
+     * Test findForTemplate returns null when sermon not found.
+     */
+    public function testFindForTemplateReturnsNullWhenNotFound(): void
+    {
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn('SELECT...');
+
+        $this->wpdb->shouldReceive('get_row')
+            ->once()
+            ->andReturn(null);
+
+        $result = $this->repository->findForTemplate(999);
+
+        $this->assertNull($result);
+    }
 }

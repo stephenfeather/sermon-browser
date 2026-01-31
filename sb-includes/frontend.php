@@ -784,37 +784,50 @@ function sb_print_sameday_sermon_link($sermon) {
 
 //Gets single sermon from the database
 function sb_get_single_sermon($id) {
-	global $wpdb;
 	$id = (int) $id;
-	$sermon = $wpdb->get_row("SELECT m.id, m.title, m.datetime, m.start, m.end, m.description, p.id as pid, p.name as preacher, p.image as image, p.description as preacher_description, s.id as sid, s.name as service FROM {$wpdb->prefix}sb_sermons as m, {$wpdb->prefix}sb_preachers as p, {$wpdb->prefix}sb_services as s where m.preacher_id = p.id and m.service_id = s.id and m.id = {$id}");
-	$series = $wpdb->get_row("SELECT ss.id as ssid, ss.name as series FROM {$wpdb->prefix}sb_sermons as m, {$wpdb->prefix}sb_series as ss WHERE m.series_id = ss.id and m.id = {$id}");
-	if ($sermon) {
-		if ($series) {
-			$sermon->series = $series->series;
-			$sermon->ssid = $series->ssid;
-		}
-		else {
-			$sermon->series = '';
-			$sermon->ssid = 0;
-		}
-		$file = $code = $tags = array();
-		$stuff = $wpdb->get_results("SELECT f.id, f.type, f.name FROM {$wpdb->prefix}sb_stuff as f WHERE sermon_id = $id ORDER BY id desc");
-		$rawtags = $wpdb->get_results("SELECT t.name FROM {$wpdb->prefix}sb_sermons_tags as st LEFT JOIN {$wpdb->prefix}sb_tags as t ON st.tag_id = t.id WHERE st.sermon_id = {$sermon->id} ORDER BY t.name asc");
-		foreach ($rawtags as $tag) {
-			$tags[] = $tag->name;
-		}
-		foreach ($stuff as $cur)
-			${$cur->type}[] = $cur->name;
-		$sermon->start = unserialize($sermon->start);
-		$sermon->end = unserialize($sermon->end);
-		return array(
-			'Sermon' => $sermon,
-			'Files' => $file,
-			'Code' => $code,
-			'Tags' => $tags,
-		);
-	} else
+
+	// Get sermon with relations using Facade (includes preacher, service, series)
+	$sermon = \SermonBrowser\Facades\Sermon::findForTemplate($id);
+
+	if (!$sermon) {
 		return false;
+	}
+
+	// Handle null series (series_id = 0)
+	if ($sermon->ssid === null) {
+		$sermon->ssid = 0;
+		$sermon->series = '';
+	}
+
+	// Get stuff (files and code) using Facade
+	$stuff = \SermonBrowser\Facades\File::findBySermon($id);
+	$file = [];
+	$code = [];
+	foreach ($stuff as $cur) {
+		if ($cur->type === 'file') {
+			$file[] = $cur->name;
+		} elseif ($cur->type === 'code') {
+			$code[] = $cur->name;
+		}
+	}
+
+	// Get tags using Facade
+	$tagObjects = \SermonBrowser\Facades\Tag::findBySermon($id);
+	$tags = [];
+	foreach ($tagObjects as $tag) {
+		$tags[] = $tag->name;
+	}
+
+	// Unserialize start/end passages
+	$sermon->start = unserialize($sermon->start);
+	$sermon->end = unserialize($sermon->end);
+
+	return [
+		'Sermon' => $sermon,
+		'Files' => $file,
+		'Code' => $code,
+		'Tags' => $tags,
+	];
 }
 
 //Prints the filter line for a given parameter

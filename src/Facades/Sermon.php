@@ -29,6 +29,7 @@
  * @method static object|null findNextByDate(string $datetime, int $excludeId)
  * @method static object|null findPreviousByDate(string $datetime, int $excludeId)
  * @method static array findSameDay(string $datetime, int $excludeId)
+ * @method static object|null findForTemplate(int $id)
  */
 
 declare(strict_types=1);

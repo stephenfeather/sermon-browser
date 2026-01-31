@@ -466,4 +466,50 @@ class SermonRepository extends AbstractRepository
 
         return is_array($results) ? $results : [];
     }
+
+    /**
+     * Get sermon with related data using legacy property names for templates.
+     *
+     * Returns a sermon object with property names matching the legacy
+     * template system expectations: pid, preacher, image, sid, service,
+     * ssid, series (instead of preacher_id, preacher_name, etc.)
+     *
+     * @param int $id The sermon ID.
+     * @return object|null The sermon with related data using legacy aliases.
+     */
+    public function findForTemplate(int $id): ?object
+    {
+        $table = $this->getTableName();
+        $preachersTable = $this->db->prefix . 'sb_preachers';
+        $seriesTable = $this->db->prefix . 'sb_series';
+        $servicesTable = $this->db->prefix . 'sb_services';
+
+        $sql = $this->db->prepare(
+            "SELECT
+                m.id,
+                m.title,
+                m.datetime,
+                m.start,
+                m.end,
+                m.description,
+                p.id AS pid,
+                p.name AS preacher,
+                p.image AS image,
+                p.description AS preacher_description,
+                s.id AS sid,
+                s.name AS service,
+                ss.id AS ssid,
+                ss.name AS series
+            FROM {$table} m
+            LEFT JOIN {$preachersTable} p ON m.preacher_id = p.id
+            LEFT JOIN {$servicesTable} s ON m.service_id = s.id
+            LEFT JOIN {$seriesTable} ss ON m.series_id = ss.id
+            WHERE m.id = %d",
+            $id
+        );
+
+        $result = $this->db->get_row($sql);
+
+        return $result ?: null;
+    }
 }
