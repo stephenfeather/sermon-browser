@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Base test case for Sermon Browser tests.
  *

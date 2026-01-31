@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Setup verification test.
  *

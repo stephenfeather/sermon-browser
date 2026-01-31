@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<ruleset name="FA WPMCP">
+    <description>PSR-12 Coding Standards for FA WPMCP plugin</description>
+
+    <!-- What to scan -->
+    <file>.</file>
+
+    <!-- Only scan PHP files -->
+    <arg name="extensions" value="php"/>
+
+    <!-- Exclude paths -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/coverage/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/opc/*</exclude-pattern>
+    <exclude-pattern>*/.venv/*</exclude-pattern>
+    <exclude-pattern>*/thoughts/*</exclude-pattern>
+    <exclude-pattern>*/.tldr/*</exclude-pattern>
+    <exclude-pattern>*/.claude/*</exclude-pattern>
+    <exclude-pattern>*/bin/*</exclude-pattern>
+    <exclude-pattern>*/plans/*</exclude-pattern>
+
+    <!-- Show progress -->
+    <arg value="ps"/>
+
+    <!-- Show sniff codes in all reports -->
+    <arg value="ns"/>
+
+    <!-- Use colors in output -->
+    <arg name="colors"/>
+
+    <!-- Check up to 8 files simultaneously -->
+    <arg name="parallel" value="8"/>
+
+    <!-- PSR-12 Coding Standard -->
+    <rule ref="PSR12"/>
+
+    <!-- Allow snake_case method names (PHPUnit tests + WordPress REST API) -->
+    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+        <exclude-pattern>*/src/REST/*</exclude-pattern>
+    </rule>
+
+    <!-- Legacy files without strict_types - exclude until migrated -->
+    <rule ref="Generic.PHP.RequireStrictTypes.MissingDeclaration">
+        <exclude-pattern>*/sb-includes/*</exclude-pattern>
+        <exclude-pattern>*/src/bootstrap.php</exclude-pattern>
+        <exclude-pattern>sermon.php</exclude-pattern>
+    </rule>
+
+    <!-- WordPress mock classes in test bootstrap -->
+    <rule ref="PSR1.Classes.ClassDeclaration">
+        <exclude-pattern>*/tests/bootstrap.php</exclude-pattern>
+        <exclude-pattern>*/sb-includes/widget.php</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Classes.ValidClassName.NotCamelCaps">
+        <exclude-pattern>*/tests/bootstrap.php</exclude-pattern>
+        <exclude-pattern>*/sb-includes/widget.php</exclude-pattern>
+    </rule>
+
+    <!-- Version upgrade switch fall-through is intentional -->
+    <rule ref="PSR2.ControlStructures.SwitchDeclaration.TerminatingComment">
+        <exclude-pattern>*/sb-includes/upgrade.php</exclude-pattern>
+    </rule>
+
+    <!-- Plugin file header format (WordPress convention) -->
+    <rule ref="PSR12.Files.FileHeader.IncorrectOrder">
+        <exclude-pattern>sermon.php</exclude-pattern>
+    </rule>
+
+    <!-- Enforce strict types -->
+    <rule ref="Generic.PHP.RequireStrictTypes"/>
+
+    <!-- Check for PHP cross-version compatibility -->
+    <config name="testVersion" value="8.1-"/>
+
+    <!-- Allow longer lines for readability -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="120"/>
+            <property name="absoluteLineLimit" value="0"/>
+        </properties>
+    </rule>
+</ruleset>
