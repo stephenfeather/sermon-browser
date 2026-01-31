@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sermon Editor Page.
  *
@@ -28,13 +29,6 @@ use SermonBrowser\Facades\Book;
 class SermonEditorPage
 {
     /**
-     * WordPress database instance.
-     *
-     * @var \wpdb
-     */
-    private $wpdb;
-
-    /**
      * Allowed HTML tags for kses filtering.
      *
      * @var array
@@ -46,8 +40,7 @@ class SermonEditorPage
      */
     public function __construct()
     {
-        global $wpdb, $allowedposttags;
-        $this->wpdb = $wpdb;
+        global $allowedposttags;
         $this->allowedPostTags = $allowedposttags ?? [];
     }
 
@@ -110,8 +103,10 @@ class SermonEditorPage
         $startz = $endz = [];
         $startBooks = $_POST['start']['book'] ?? [];
         for ($foo = 0; $foo < count($startBooks); $foo++) {
-            if (!empty($_POST['start']['chapter'][$foo]) && !empty($_POST['end']['chapter'][$foo])
-                && !empty($_POST['start']['verse'][$foo]) && !empty($_POST['end']['verse'][$foo])) {
+            if (
+                !empty($_POST['start']['chapter'][$foo]) && !empty($_POST['end']['chapter'][$foo])
+                && !empty($_POST['start']['verse'][$foo]) && !empty($_POST['end']['verse'][$foo])
+            ) {
                 $startz[] = [
                     'book' => sanitize_text_field($_POST['start']['book'][$foo]),
                     'chapter' => (int) $_POST['start']['chapter'][$foo],
@@ -205,30 +200,38 @@ class SermonEditorPage
             if (!current_user_can('publish_pages')) {
                 wp_die(__("You do not have the correct permissions to create sermons", 'sermon-browser'));
             }
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_sermons VALUES (null, %s, '$preacher_id', '$date', '$service_id', '$series_id', %s, %s, %s, %s, '$override', 0)",
-                $title,
-                $start,
-                $end,
-                $description,
-                $time
-            ));
-            return $this->wpdb->insert_id;
+            return Sermon::create([
+                'title' => $title,
+                'preacher_id' => $preacher_id,
+                'datetime' => $date,
+                'service_id' => $service_id,
+                'series_id' => $series_id,
+                'start' => $start,
+                'end' => $end,
+                'description' => $description,
+                'time' => $time,
+                'override' => $override,
+            ]);
         } else {
             // Edit existing.
             if (!current_user_can('publish_posts')) {
                 wp_die(__("You do not have the correct permissions to edit sermons", 'sermon-browser'));
             }
             $id = (int) $_GET['mid'];
-            $this->wpdb->query($this->wpdb->prepare(
-                "UPDATE {$this->wpdb->prefix}sb_sermons SET title = %s, preacher_id = '$preacher_id', datetime = '$date', series_id = '$series_id', start = %s, end = %s, description = %s, time = '$time', service_id = '$service_id', override = '$override' WHERE id = $id",
-                $title,
-                $start,
-                $end,
-                $description
-            ));
-            $this->wpdb->query("UPDATE {$this->wpdb->prefix}sb_stuff SET sermon_id = 0 WHERE sermon_id = $id AND type = 'file'");
-            $this->wpdb->query("DELETE FROM {$this->wpdb->prefix}sb_stuff WHERE sermon_id = $id AND type <> 'file'");
+            Sermon::update($id, [
+                'title' => $title,
+                'preacher_id' => $preacher_id,
+                'datetime' => $date,
+                'series_id' => $series_id,
+                'start' => $start,
+                'end' => $end,
+                'description' => $description,
+                'time' => $time,
+                'service_id' => $service_id,
+                'override' => $override,
+            ]);
+            File::unlinkFromSermon($id);
+            File::deleteNonFilesBySermon($id);
             return $id;
         }
     }
@@ -243,24 +246,28 @@ class SermonEditorPage
      */
     private function saveBiblePassages(int $id, array $startz, array $endz): void
     {
-        $this->wpdb->query("DELETE FROM {$this->wpdb->prefix}sb_books_sermons WHERE sermon_id = $id;");
+        Book::deleteBySermonId($id);
 
         foreach ($startz as $i => $st) {
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_books_sermons VALUES(null, %s, %s, %s, $i, 'start', $id);",
+            Book::insertPassageRef(
                 $st['book'],
-                $st['chapter'],
-                $st['verse']
-            ));
+                (string) $st['chapter'],
+                (string) $st['verse'],
+                $i,
+                'start',
+                $id
+            );
         }
 
         foreach ($endz as $i => $ed) {
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_books_sermons VALUES(null, %s, %s, %s, $i, 'end', $id);",
+            Book::insertPassageRef(
                 $ed['book'],
-                $ed['chapter'],
-                $ed['verse']
-            ));
+                (string) $ed['chapter'],
+                (string) $ed['verse'],
+                $i,
+                'end',
+                $id
+            );
         }
     }
 
@@ -278,10 +285,7 @@ class SermonEditorPage
         // Handle file attachments.
         foreach ($_POST['file'] ?? [] as $uid => $file) {
             if ($file != 0) {
-                $this->wpdb->query($this->wpdb->prepare(
-                    "UPDATE {$this->wpdb->prefix}sb_stuff SET sermon_id = $id WHERE id = %s;",
-                    sanitize_file_name($file)
-                ));
+                File::linkToSermon((int) sanitize_file_name($file), $id);
             } elseif (isset($_FILES['upload']['error'][$uid]) && $_FILES['upload']['error'][$uid] === UPLOAD_ERR_OK) {
                 $error = $this->handleFileUpload($id, $uid) || $error;
             }
@@ -290,10 +294,13 @@ class SermonEditorPage
         // Handle URLs.
         foreach ((array) ($_POST['url'] ?? []) as $urlz) {
             if (!empty($urlz)) {
-                $this->wpdb->query($this->wpdb->prepare(
-                    "INSERT INTO {$this->wpdb->prefix}sb_stuff VALUES(null, 'url', %s, $id, 0, 0);",
-                    esc_url($urlz)
-                ));
+                File::create([
+                    'type' => 'url',
+                    'name' => esc_url($urlz),
+                    'sermon_id' => $id,
+                    'count' => 0,
+                    'duration' => 0,
+                ]);
             }
         }
 
@@ -315,7 +322,13 @@ class SermonEditorPage
                     'srcdoc' => true,
                 ];
                 $code = base64_encode(wp_kses(stripslashes($code), $embed_allowedposttags));
-                $this->wpdb->query("INSERT INTO {$this->wpdb->prefix}sb_stuff VALUES(null, 'code', '$code', $id, 0, 0)");
+                File::create([
+                    'type' => 'code',
+                    'name' => $code,
+                    'sermon_id' => $id,
+                    'count' => 0,
+                    'duration' => 0,
+                ]);
             }
         }
 
@@ -355,13 +368,18 @@ class SermonEditorPage
         $prefix = '';
         $dest = SB_ABSPATH . sb_get_option('upload_dir') . $prefix . $filename;
 
-        if ($this->wpdb->get_var("SELECT COUNT(*) FROM {$this->wpdb->prefix}sb_stuff WHERE name = '" . esc_sql($filename) . "'") == 0
-            && move_uploaded_file($_FILES['upload']['tmp_name'][$uid], $dest)) {
+        if (
+            !File::existsByName($filename)
+            && move_uploaded_file($_FILES['upload']['tmp_name'][$uid], $dest)
+        ) {
             $filename = $prefix . $filename;
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_stuff VALUES (null, 'file', %s, $id, 0, 0)",
-                $filename
-            ));
+            File::create([
+                'type' => 'file',
+                'name' => $filename,
+                'sermon_id' => $id,
+                'count' => 0,
+                'duration' => 0,
+            ]);
             return false;
         } else {
             echo '<div id="message" class="updated fade"><p><b>' . $filename . __(' already exists.', 'sermon-browser') . '</b></div>';
@@ -378,7 +396,7 @@ class SermonEditorPage
     private function saveTags(int $id): void
     {
         $tags = explode(',', $_POST['tags'] ?? '');
-        $this->wpdb->query("DELETE FROM {$this->wpdb->prefix}sb_sermons_tags WHERE sermon_id = $id;");
+        Tag::detachAllFromSermon($id);
 
         foreach ($tags as $tag) {
             $clean_tag = sanitize_text_field($tag);
@@ -386,20 +404,8 @@ class SermonEditorPage
                 continue;
             }
 
-            $existing_id = $this->wpdb->get_var($this->wpdb->prepare(
-                "SELECT id FROM {$this->wpdb->prefix}sb_tags WHERE name=%s",
-                $clean_tag
-            ));
-
-            if (is_null($existing_id)) {
-                $this->wpdb->query($this->wpdb->prepare(
-                    "INSERT INTO {$this->wpdb->prefix}sb_tags VALUES (null, %s)",
-                    $clean_tag
-                ));
-                $existing_id = $this->wpdb->insert_id;
-            }
-
-            $this->wpdb->query("INSERT INTO {$this->wpdb->prefix}sb_sermons_tags VALUES (null, $id, $existing_id)");
+            $tag_id = Tag::findOrCreate($clean_tag);
+            Tag::attachToSermon($id, $tag_id);
         }
 
         sb_delete_unused_tags();
@@ -418,10 +424,7 @@ class SermonEditorPage
             return $id3_tags;
         }
 
-        $file_data = $this->wpdb->get_row($this->wpdb->prepare(
-            "SELECT name, type FROM {$this->wpdb->prefix}sb_stuff WHERE id = %s",
-            $_GET['getid3']
-        ));
+        $file_data = File::find((int) $_GET['getid3']);
 
         if ($file_data === null) {
             return $id3_tags;
@@ -527,19 +530,7 @@ class SermonEditorPage
             return '';
         }
 
-        $series_id = $this->wpdb->get_var(
-            "SELECT id FROM {$this->wpdb->prefix}sb_series WHERE name LIKE '{$album}'"
-        );
-
-        if ($series_id === null) {
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_series VALUES (null, %s, '0')",
-                $album
-            ));
-            $series_id = $this->wpdb->insert_id;
-        }
-
-        return $series_id;
+        return Series::findOrCreate($album);
     }
 
     /**
@@ -554,20 +545,7 @@ class SermonEditorPage
             return '';
         }
 
-        $preacher_id = $this->wpdb->get_var($this->wpdb->prepare(
-            "SELECT id FROM {$this->wpdb->prefix}sb_preachers WHERE name LIKE %s",
-            $artist
-        ));
-
-        if ($preacher_id === null) {
-            $this->wpdb->query($this->wpdb->prepare(
-                "INSERT INTO {$this->wpdb->prefix}sb_preachers VALUES (null, %s, '', '')",
-                $artist
-            ));
-            $preacher_id = $this->wpdb->insert_id;
-        }
-
-        return $preacher_id;
+        return Preacher::findOrCreate($artist);
     }
 
     /**
@@ -607,18 +585,10 @@ class SermonEditorPage
      */
     private function loadFormData(): array
     {
-        $preachers = $this->wpdb->get_results(
-            "SELECT * FROM {$this->wpdb->prefix}sb_preachers ORDER BY name asc"
-        );
-        $services = $this->wpdb->get_results(
-            "SELECT * FROM {$this->wpdb->prefix}sb_services ORDER BY name asc"
-        );
-        $series = $this->wpdb->get_results(
-            "SELECT * FROM {$this->wpdb->prefix}sb_series ORDER BY name asc"
-        );
-        $files = $this->wpdb->get_results(
-            "SELECT * FROM {$this->wpdb->prefix}sb_stuff WHERE sermon_id = 0 AND type = 'file' ORDER BY name asc"
-        );
+        $preachers = Preacher::findAllSorted();
+        $services = Service::findAllSorted();
+        $series = Series::findAllSorted();
+        $files = File::findUnlinked();
 
         // Sync files - remove entries for files that no longer exist.
         $wanted = [-1];
@@ -643,20 +613,12 @@ class SermonEditorPage
 
         if (isset($_GET['mid'])) {
             $mid = (int) $_GET['mid'];
-            $curSermon = $this->wpdb->get_row(
-                "SELECT * FROM {$this->wpdb->prefix}sb_sermons WHERE id = $mid"
-            );
-            $files = $this->wpdb->get_results(
-                "SELECT * FROM {$this->wpdb->prefix}sb_stuff WHERE sermon_id IN (0, $mid) AND type = 'file' ORDER BY name asc"
-            );
+            $curSermon = Sermon::find($mid);
+            $files = File::findBySermonOrUnlinked($mid);
             $startArr = unserialize($curSermon->start) ?: [];
             $endArr = unserialize($curSermon->end) ?: [];
 
-            $rawtags = $this->wpdb->get_results(
-                "SELECT t.name FROM {$this->wpdb->prefix}sb_sermons_tags as st " .
-                "LEFT JOIN {$this->wpdb->prefix}sb_tags as t ON st.tag_id = t.id " .
-                "WHERE st.sermon_id = $mid ORDER BY t.name asc"
-            );
+            $rawtags = Tag::findBySermon($mid);
             $tagNames = [];
             foreach ($rawtags as $tag) {
                 $tagNames[] = $tag->name;
@@ -856,7 +818,11 @@ class SermonEditorPage
                         <td>
                             <strong><?php _e('Title', 'sermon-browser') ?></strong>
                             <div>
-                                <input type="text" value="<?php if (isset($id3_tags['title'])) {echo $id3_tags['title'];} elseif (isset($curSermon->title)) {echo htmlspecialchars(stripslashes($curSermon->title));} ?>" name="title" size="60" style="width:400px;" />
+                                <input type="text" value="<?php if (isset($id3_tags['title'])) {
+                                    echo $id3_tags['title'];
+                                                          } elseif (isset($curSermon->title)) {
+                                                              echo htmlspecialchars(stripslashes($curSermon->title));
+                                                          } ?>" name="title" size="60" style="width:400px;" />
                             </div>
                         </td>
                         <td>
@@ -870,16 +836,17 @@ class SermonEditorPage
                         <td>
                             <strong><?php _e('Preacher', 'sermon-browser') ?></strong><br/>
                                 <select id="preacher" name="preacher" onchange="createNewPreacher(this)">
-                                    <?php if (count($preachers) == 0): ?>
+                                    <?php if (count($preachers) == 0) : ?>
                                         <option value="" selected="selected"></option>
-                                    <?php else: ?>
-                                        <?php foreach ($preachers as $preacher):
-                                                if (isset($id3_tags['preacher']))
-                                                    {$preacher_id = $id3_tags['preacher'];}
-                                                elseif (isset ($curSermon->preacher_id))
-                                                    {$preacher_id = $curSermon->preacher_id;}
-                                                else
-                                                    {$preacher_id = -1;} ?>
+                                    <?php else : ?>
+                                        <?php foreach ($preachers as $preacher) :
+                                            if (isset($id3_tags['preacher'])) {
+                                                $preacher_id = $id3_tags['preacher'];
+                                            } elseif (isset($curSermon->preacher_id)) {
+                                                $preacher_id = $curSermon->preacher_id;
+                                            } else {
+                                                $preacher_id = -1;
+                                            } ?>
                                         <option value="<?php echo $preacher->id ?>" <?php echo $preacher->id == $preacher_id ? 'selected="selected"' : ''?>><?php echo htmlspecialchars(stripslashes($preacher->name), ENT_QUOTES) ?></option>
                                         <?php endforeach ?>
                                     <?php endif ?>
@@ -889,16 +856,17 @@ class SermonEditorPage
                         <td>
                             <strong><?php _e('Series', 'sermon-browser') ?></strong><br/>
                             <select id="series" name="series" onchange="createNewSeries(this)">
-                                <?php if (count($series) == 0): ?>
+                                <?php if (count($series) == 0) : ?>
                                     <option value="" selected="selected"></option>
-                                <?php else: ?>
-                                    <?php foreach ($series as $item):
-                                            if (isset($id3_tags['series']))
-                                                {$series_id = $id3_tags['series'];}
-                                            elseif (isset($curSermon->series_id))
-                                                {$series_id = $curSermon->series_id;}
-                                            else
-                                                {$series_id = -1;} ?>
+                                <?php else : ?>
+                                    <?php foreach ($series as $item) :
+                                        if (isset($id3_tags['series'])) {
+                                            $series_id = $id3_tags['series'];
+                                        } elseif (isset($curSermon->series_id)) {
+                                            $series_id = $curSermon->series_id;
+                                        } else {
+                                            $series_id = -1;
+                                        } ?>
                                         <option value="<?php echo $item->id ?>" <?php echo $item->id == $series_id ? 'selected="selected"' : '' ?>><?php echo htmlspecialchars(stripslashes($item->name), ENT_QUOTES) ?></option>
                                     <?php endforeach ?>
                                 <?php endif ?>
@@ -910,18 +878,21 @@ class SermonEditorPage
                         <td style="overflow: visible">
                             <strong><?php _e('Date', 'sermon-browser') ?></strong> (yyyy-mm-dd)
                             <div>
-                                <input type="text" id="date" name="date" value="<?php if ((isset($curSermon->datetime) && $curSermon->datetime != '1970-01-01 00:00:00') || isset($id3_tags['date'])) echo isset($id3_tags['date']) ? $id3_tags['date'] : substr(stripslashes($curSermon->datetime),0,10) ?>" />
+                                <input type="text" id="date" name="date" value="<?php if ((isset($curSermon->datetime) && $curSermon->datetime != '1970-01-01 00:00:00') || isset($id3_tags['date'])) {
+                                    echo isset($id3_tags['date']) ? $id3_tags['date'] : substr(stripslashes($curSermon->datetime), 0, 10);
+                                                                                } ?>" />
                             </div>
                         </td>
                         <td rowspan="3">
                             <strong><?php _e('Description', 'sermon-browser') ?></strong>
                             <div>
-                                <?php   if (isset($id3_tags['description']))
-                                            {$desc = $id3_tags['description'];}
-                                        elseif (isset($curSermon->description))
-                                            {$desc = stripslashes($curSermon->description);}
-                                        else
-                                            {$desc = '';} ?>
+                                <?php   if (isset($id3_tags['description'])) {
+                                    $desc = $id3_tags['description'];
+                                } elseif (isset($curSermon->description)) {
+                                    $desc = stripslashes($curSermon->description);
+                                } else {
+                                    $desc = '';
+                                } ?>
                                 <textarea name="description" cols="50" rows="7"><?php echo $desc; ?></textarea>
                             </div>
                         </td>
@@ -930,10 +901,10 @@ class SermonEditorPage
                         <td>
                             <strong><?php _e('Service', 'sermon-browser') ?></strong><br/>
                             <select id="service" name="service" onchange="createNewService(this)">
-                                <?php if (count($services) == 0): ?>
+                                <?php if (count($services) == 0) : ?>
                                     <option value="" selected="selected"></option>
-                                <?php else: ?>
-                                    <?php foreach ($services as $service): ?>
+                                <?php else : ?>
+                                    <?php foreach ($services as $service) : ?>
                                         <option value="<?php echo $service->id ?>" <?php echo (isset($curSermon->service_id) && $service->id == $curSermon->service_id) ? 'selected="selected"' : '' ?>><?php echo htmlspecialchars(stripslashes($service->name), ENT_QUOTES) ?></option>
                                     <?php endforeach ?>
                                 <?php endif ?>
@@ -966,7 +937,7 @@ class SermonEditorPage
                                     <td>
                                         <select id="startbook" name="start[book][]" onchange="syncBook(this)" class="start1">
                                             <option value=""></option>
-                                            <?php foreach ($books as $book): ?>
+                                            <?php foreach ($books as $book) : ?>
                                                 <option value="<?php echo $book ?>"><?php echo $translated_books[$book] ?></option>
                                             <?php endforeach ?>
                                         </select>
@@ -982,7 +953,7 @@ class SermonEditorPage
                                     <td>
                                         <select id="endbook" name="end[book][]" class="end">
                                             <option value=""></option>
-                                            <?php foreach ($books as $book): ?>
+                                            <?php foreach ($books as $book) : ?>
                                                 <option value="<?php echo $book ?>"><?php echo $translated_books[$book] ?></option>
                                             <?php endforeach ?>
                                         </select>
@@ -1013,7 +984,7 @@ class SermonEditorPage
                                     <td class="filelist">
                                         <select id="file" name="file[]">
                                         <?php echo count($files) == 0 ? '<option value="0">No files found</option>' : '<option value="0"></option>' ?>
-                                        <?php foreach ($files as $file): ?>
+                                        <?php foreach ($files as $file) : ?>
                                             <option value="<?php echo $file->id ?>"><?php echo $file->name ?></option>
                                         <?php endforeach ?>
                                         </select>
@@ -1034,10 +1005,10 @@ class SermonEditorPage
         <script type="text/javascript">
             jQuery.datePicker.setDateFormat('ymd','-');
             jQuery('#date').datePicker({startDate:'01/01/1970'});
-            <?php if (empty($curSermon->time)): ?>
+            <?php if (empty($curSermon->time)) : ?>
                 jQuery('#time').val(timeArr[jQuery('*[selected]', jQuery("select[name='service']")).attr('value')]);
             <?php endif ?>
-            <?php if ($mid !== null || (isset($_GET['getid3']))): ?>
+            <?php if ($mid !== null || (isset($_GET['getid3']))) : ?>
                 stuff = new Array();
                 type = new Array();
                 start1 = new Array();
@@ -1048,58 +1019,55 @@ class SermonEditorPage
                 end3 = new Array();
 
                 <?php
-                    if ($mid !== null) {
-                        $assocFiles = $this->wpdb->get_results("SELECT id FROM {$this->wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'file' ORDER BY name asc;");
-                        $assocURLs = $this->wpdb->get_results("SELECT name FROM {$this->wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'url' ORDER BY name asc;");
-                        $assocCode = $this->wpdb->get_results("SELECT name FROM {$this->wpdb->prefix}sb_stuff WHERE sermon_id = {$mid} AND type = 'code' ORDER BY name asc;");
-                    } else {
-                        $assocFiles = $assocURLs = $assocCode = [];
-                    }
+                if ($mid !== null) {
+                    $assocFiles = File::findBySermonAndType($mid, 'file');
+                    $assocURLs = File::findBySermonAndType($mid, 'url');
+                    $assocCode = File::findBySermonAndType($mid, 'code');
+                } else {
+                    $assocFiles = $assocURLs = $assocCode = [];
+                }
                     $r = false;
-                    if (isset($_GET['getid3'])) {
-                        $file_data = $this->wpdb->get_row($this->wpdb->prepare(
-                            "SELECT name, type FROM {$this->wpdb->prefix}sb_stuff WHERE id = %s",
-                            $_GET['getid3']
-                        ));
-                        if ($file_data !== null) {
-                            if ($file_data->type === 'url') {
-                                $assocURLs[] = $file_data;
-                            } else {
-                                $newFile = new \stdClass();
-                                $newFile->id = esc_js($_GET['getid3']);
-                                $assocFiles[] = $newFile;
-                            }
+                if (isset($_GET['getid3'])) {
+                    $file_data = File::find((int) $_GET['getid3']);
+                    if ($file_data !== null) {
+                        if ($file_data->type === 'url') {
+                            $assocURLs[] = $file_data;
+                        } else {
+                            $newFile = new \stdClass();
+                            $newFile->id = esc_js($_GET['getid3']);
+                            $assocFiles[] = $newFile;
                         }
                     }
+                }
                 ?>
 
-                <?php for ($lolz = 0; $lolz < count($assocFiles); $lolz++): ?>
+                <?php for ($lolz = 0; $lolz < count($assocFiles); $lolz++) : ?>
                     <?php $r = true ?>
                     addFile();
                     stuff.push(<?php echo $assocFiles[$lolz]->id ?>);
                     type.push('file');
                 <?php endfor ?>
 
-                <?php for ($lolz = 0; $lolz < count($assocURLs); $lolz++): ?>
+                <?php for ($lolz = 0; $lolz < count($assocURLs); $lolz++) : ?>
                     <?php $r = true ?>
                     addFile();
                     stuff.push('<?php echo $assocURLs[$lolz]->name ?>');
                     type.push('url');
                 <?php endfor ?>
 
-                <?php for ($lolz = 0; $lolz < count($assocCode); $lolz++): ?>
+                <?php for ($lolz = 0; $lolz < count($assocCode); $lolz++) : ?>
                     <?php $r = true ?>
                     addFile();
                     stuff.push('<?php echo $assocCode[$lolz]->name ?>');
                     type.push('code');
                 <?php endfor ?>
 
-                <?php if ($r): ?>
+                <?php if ($r) : ?>
                 jQuery('.choose:last').remove();
                 <?php endif ?>
 
-                <?php for ($lolz = 0; $lolz < count($startArr); $lolz++): ?>
-                    <?php if ($lolz != 0): ?>
+                <?php for ($lolz = 0; $lolz < count($startArr); $lolz++) : ?>
+                    <?php if ($lolz != 0) : ?>
                         addPassage();
                     <?php endif ?>
                     start1.push("<?php echo $startArr[$lolz]['book'] ?>");

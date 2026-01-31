@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Series Facade.
  *
@@ -20,6 +21,8 @@
  * @method static array findAllWithSermonCount()
  * @method static array findAllForFilter()
  * @method static array findBySermonIdsWithCount(array $sermonIds)
+ * @method static object|null findByNameLike(string $name)
+ * @method static int findOrCreate(string $name)
  */
 
 declare(strict_types=1);

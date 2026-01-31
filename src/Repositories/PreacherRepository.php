@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Preacher Repository.
  *
@@ -171,5 +172,60 @@ class PreacherRepository extends AbstractRepository
         $results = $this->db->get_results($sql);
 
         return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Find preacher by name using case-insensitive LIKE match.
+     *
+     * Used for ID3 import to match existing preachers.
+     *
+     * @param string $name The preacher name to search for.
+     * @return object|null The preacher or null.
+     */
+    public function findByNameLike(string $name): ?object
+    {
+        if ($name === '') {
+            return null;
+        }
+
+        $table = $this->getTableName();
+
+        $sql = $this->db->prepare(
+            "SELECT * FROM {$table} WHERE name LIKE %s LIMIT 1",
+            $name
+        );
+
+        $result = $this->db->get_row($sql);
+
+        return $result ?: null;
+    }
+
+    /**
+     * Find or create a preacher by name.
+     *
+     * Used for ID3 import to auto-create preachers from artist tags.
+     * Uses case-insensitive matching to find existing preachers.
+     *
+     * @param string $name The preacher name.
+     * @return int The preacher ID (existing or newly created).
+     */
+    public function findOrCreate(string $name): int
+    {
+        if ($name === '') {
+            return 0;
+        }
+
+        // Try to find existing preacher (case-insensitive)
+        $existing = $this->findByNameLike($name);
+        if ($existing !== null) {
+            return (int) $existing->id;
+        }
+
+        // Create new preacher with empty description and image
+        return $this->create([
+            'name' => $name,
+            'description' => '',
+            'image' => '',
+        ]);
     }
 }

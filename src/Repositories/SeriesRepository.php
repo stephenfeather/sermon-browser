@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Series Repository.
  *
@@ -186,5 +187,59 @@ class SeriesRepository extends AbstractRepository
         $results = $this->db->get_results($sql);
 
         return is_array($results) ? $results : [];
+    }
+
+    /**
+     * Find series by name using case-insensitive LIKE match.
+     *
+     * Used for ID3 import to match existing series.
+     *
+     * @param string $name The series name to search for.
+     * @return object|null The series or null.
+     */
+    public function findByNameLike(string $name): ?object
+    {
+        if ($name === '') {
+            return null;
+        }
+
+        $table = $this->getTableName();
+
+        $sql = $this->db->prepare(
+            "SELECT * FROM {$table} WHERE name LIKE %s LIMIT 1",
+            $name
+        );
+
+        $result = $this->db->get_row($sql);
+
+        return $result ?: null;
+    }
+
+    /**
+     * Find or create a series by name.
+     *
+     * Used for ID3 import to auto-create series from album tags.
+     * Uses case-insensitive matching to find existing series.
+     *
+     * @param string $name The series name.
+     * @return int The series ID (existing or newly created).
+     */
+    public function findOrCreate(string $name): int
+    {
+        if ($name === '') {
+            return 0;
+        }
+
+        // Try to find existing series (case-insensitive)
+        $existing = $this->findByNameLike($name);
+        if ($existing !== null) {
+            return (int) $existing->id;
+        }
+
+        // Create new series with default page_id of 0
+        return $this->create([
+            'name' => $name,
+            'page_id' => 0,
+        ]);
     }
 }
