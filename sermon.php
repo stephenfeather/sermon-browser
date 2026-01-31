@@ -56,6 +56,7 @@ use SermonBrowser\Facades\Service;
 use SermonBrowser\Facades\File;
 use SermonBrowser\Facades\Tag;
 use SermonBrowser\Admin\Ajax\AjaxRegistry;
+use SermonBrowser\Templates\TemplateEngine;
 
 /**
 * Initialisation
@@ -81,6 +82,33 @@ add_action('init', function () {
     if (defined('DOING_AJAX') && DOING_AJAX) {
         AjaxRegistry::getInstance()->register();
     }
+});
+
+// Phase 6: Template migration on plugin activation.
+register_activation_hook(__FILE__, function () {
+    $migrator = new \SermonBrowser\Templates\TemplateMigrator();
+    $result = $migrator->migrate();
+    set_transient('sb_migration_result', $result, HOUR_IN_SECONDS);
+});
+
+// Phase 6: Display template migration result as admin notice.
+add_action('admin_notices', function () {
+    $result = get_transient('sb_migration_result');
+    if (!$result) {
+        return;
+    }
+
+    if ($result->isSuccess()) {
+        echo '<div class="notice notice-success is-dismissible">';
+        echo '<p>' . esc_html($result->getMessage()) . '</p>';
+        echo '</div>';
+    } elseif ($result->hasWarnings()) {
+        echo '<div class="notice notice-warning is-dismissible">';
+        echo '<p>' . esc_html($result->getMessage()) . '</p>';
+        echo '</div>';
+    }
+
+    delete_transient('sb_migration_result');
 });
 
 /**
@@ -228,6 +256,15 @@ function sb_sermon_init () {
 		if ($sb_version != SB_CURRENT_VERSION) {
 			require_once (SB_INCLUDES_DIR.'/upgrade.php');
 			sb_version_upgrade ($sb_version, SB_CURRENT_VERSION);
+		}
+
+		// Phase 6: Run template migration for existing installs upgrading to 0.6.0+.
+		$template_version = sb_get_option('template_version');
+		if (version_compare($template_version ?: '0', '0.6.0', '<')) {
+			$migrator = new \SermonBrowser\Templates\TemplateMigrator();
+			$result = $migrator->migrate();
+			set_transient('sb_migration_result', $result, HOUR_IN_SECONDS);
+			sb_update_option('template_version', '0.6.0');
 		}
 	}
 
@@ -476,14 +513,20 @@ function sb_shortcode($atts, $content=null) {
 		}
 		$sermon = sb_get_single_sermon((int) $atts['id']);
 		if ($sermon) {
-			// Phase 5: Wrap eval in try/catch to prevent fatal errors from template issues.
+			// Phase 6: Use TemplateEngine instead of eval() for security.
 			try {
-				eval('?>' . sb_get_option('single_output'));
-			} catch (ParseError $e) {
+				$engine = new TemplateEngine();
+				echo $engine->render('single', [
+					'Sermon' => $sermon['Sermon'],
+					'Files' => $sermon['Files'] ?? [],
+					'Code' => $sermon['Code'] ?? [],
+					'Tags' => $sermon['Tags'] ?? [],
+				]);
+			} catch (\Exception $e) {
 				echo '<div class="sermon-browser-error">' .
 					esc_html__('Template error', 'sermon-browser') . '</div>';
 				if (defined('WP_DEBUG') && WP_DEBUG) {
-					echo '<!-- Template parse error: ' . esc_html($e->getMessage()) . ' -->';
+					echo '<!-- Template error: ' . esc_html($e->getMessage()) . ' -->';
 				}
 			}
 		} else {
@@ -509,15 +552,19 @@ function sb_shortcode($atts, $content=null) {
 			$page = 1;
 		$hide_empty = sb_get_option('hide_no_attachments');
 		$sermons = sb_get_sermons($atts, $sort_order, $page, (int)$atts['limit'], $hide_empty);
-		$output = '?>' . sb_get_option('search_output');
-		// Phase 5: Wrap eval in try/catch to prevent fatal errors from template issues.
+		// Phase 6: Use TemplateEngine instead of eval() for security.
 		try {
-			eval($output);
-		} catch (ParseError $e) {
+			$engine = new TemplateEngine();
+			echo $engine->render('search', [
+				'sermons' => $sermons,
+				'record_count' => $record_count,
+				'atts' => $atts,
+			]);
+		} catch (\Exception $e) {
 			echo '<div class="sermon-browser-error">' .
 				esc_html__('Template error', 'sermon-browser') . '</div>';
 			if (defined('WP_DEBUG') && WP_DEBUG) {
-				echo '<!-- Template parse error: ' . esc_html($e->getMessage()) . ' -->';
+				echo '<!-- Template error: ' . esc_html($e->getMessage()) . ' -->';
 			}
 		}
 	}
