@@ -360,12 +360,11 @@ function sb_print_most_popular() {
 
 //Modify page title
 function sb_page_title($title) {
-	global $wpdb;
 	if (isset($_GET['sermon_id'])) {
 		$id = (int)$_GET['sermon_id'];
-		$sermon = $wpdb->get_row("SELECT m.title, p.name FROM {$wpdb->prefix}sb_sermons as m LEFT JOIN {$wpdb->prefix}sb_preachers as p ON m.preacher_id = p.id where m.id = $id");
+		$sermon = \SermonBrowser\Facades\Sermon::findWithRelations($id);
 		if ($sermon)
-			return $title.' ('.stripslashes($sermon->title).' - '.stripslashes($sermon->name).')';
+			return $title.' ('.stripslashes($sermon->title).' - '.stripslashes($sermon->preacher_name).')';
 		else
 			return $title.' ('.__('No sermons found.', 'sermon-browser').')';
 	}
@@ -629,27 +628,32 @@ function sb_print_tags($tags) {
 
 //Prints tag cloud
 function sb_print_tag_clouds($minfont=80, $maxfont=150) {
-	global $wpdb;
-	$rawtags = $wpdb->get_results("SELECT name FROM {$wpdb->prefix}sb_tags as t RIGHT JOIN {$wpdb->prefix}sb_sermons_tags as st ON t.id = st.tag_id");
-	foreach ($rawtags as $tag) {
-		if (isset($cnt[$tag->name]))
-			$cnt[$tag->name]++;
-		else
-			$cnt[$tag->name] = 1;
+	$tags = \SermonBrowser\Facades\Tag::findAllWithSermonCount();
+
+	if (empty($tags)) {
+		return;
 	}
-	unset($cnt['']);
+
+	// Build count array from tag objects
+	$cnt = [];
+	foreach ($tags as $tag) {
+		if (!empty($tag->name)) {
+			$cnt[$tag->name] = (int) $tag->sermon_count;
+		}
+	}
+
+	if (empty($cnt)) {
+		return;
+	}
+
 	$fontrange = $maxfont - $minfont;
-	$maxcnt = 0;
-	$mincnt = 1000000;
-	foreach ($cnt as $cur) {
-		if ($cur > $maxcnt) $maxcnt = $cur;
-		if ($cur < $mincnt) $mincnt = $cur;
-	}
-	$cntrange = $maxcnt + 1 - $mincnt;
+	$maxcnt = max($cnt);
+	$mincnt = min($cnt);
 	$minlog = log($mincnt);
 	$maxlog = log($maxcnt);
 	$logrange = $maxlog == $minlog ? 1 : $maxlog - $minlog;
 	arsort($cnt);
+	$out = [];
 	foreach ($cnt as $tag => $count) {
 		$size = $minfont + $fontrange * (log($count) - $minlog) / $logrange;
 		$out[] = '<a style="font-size:'.(int) $size.'%" href="'.sb_get_tag_link($tag).'">'.$tag.'</a>';
@@ -749,8 +753,7 @@ function sb_print_preacher_image($sermon) {
 
 //Prints link to sermon preached next (but not today)
 function sb_print_next_sermon_link($sermon) {
-	global $wpdb;
-	$next = $wpdb->get_row("SELECT id, title FROM {$wpdb->prefix}sb_sermons WHERE DATE(datetime) > DATE('{$sermon->datetime}') AND id <> {$sermon->id} ORDER BY datetime asc LIMIT 1");
+	$next = \SermonBrowser\Facades\Sermon::findNextByDate($sermon->datetime, (int) $sermon->id);
 	if (!$next) return;
 	echo '<a href="';
 	sb_print_sermon_link($next);
@@ -759,8 +762,7 @@ function sb_print_next_sermon_link($sermon) {
 
 //Prints link to sermon preached on previous days
 function sb_print_prev_sermon_link($sermon) {
-	global $wpdb;
-	$prev = $wpdb->get_row("SELECT id, title FROM {$wpdb->prefix}sb_sermons WHERE DATE(datetime) < DATE('{$sermon->datetime}') AND id <> {$sermon->id} ORDER BY datetime desc LIMIT 1");
+	$prev = \SermonBrowser\Facades\Sermon::findPreviousByDate($sermon->datetime, (int) $sermon->id);
 	if (!$prev) return;
 	echo '<a href="';
 	sb_print_sermon_link($prev);
@@ -769,9 +771,8 @@ function sb_print_prev_sermon_link($sermon) {
 
 //Prints links to other sermons preached on the same day
 function sb_print_sameday_sermon_link($sermon) {
-	global $wpdb;
-	$same = $wpdb->get_results("SELECT id, title FROM {$wpdb->prefix}sb_sermons WHERE DATE(datetime) = DATE('{$sermon->datetime}') AND id <> {$sermon->id}");
-	if (!$same) {
+	$same = \SermonBrowser\Facades\Sermon::findSameDay($sermon->datetime, (int) $sermon->id);
+	if (empty($same)) {
 		_e('None', 'sermon-browser');
 		return;
 	}

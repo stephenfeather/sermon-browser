@@ -26,6 +26,9 @@
  * @method static int countFiltered(array $filter = [])
  * @method static array searchByTitle(string $search, int $limit = 0)
  * @method static array findForAdminList(int $limit = 0, int $offset = 0)
+ * @method static object|null findNextByDate(string $datetime, int $excludeId)
+ * @method static object|null findPreviousByDate(string $datetime, int $excludeId)
+ * @method static array findSameDay(string $datetime, int $excludeId)
  */
 
 declare(strict_types=1);

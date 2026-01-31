@@ -385,4 +385,85 @@ class SermonRepository extends AbstractRepository
 
         return is_array($results) ? $results : [];
     }
+
+    /**
+     * Get next sermon by date (excluding same day).
+     *
+     * Used for sermon navigation links. Compares by DATE only,
+     * not exact datetime, and excludes the current sermon.
+     *
+     * @param string $datetime The current sermon's datetime.
+     * @param int $excludeId The current sermon ID to exclude.
+     * @return object|null The next sermon or null.
+     */
+    public function findNextByDate(string $datetime, int $excludeId): ?object
+    {
+        $table = $this->getTableName();
+
+        $sql = $this->db->prepare(
+            "SELECT id, title FROM {$table}
+             WHERE DATE(datetime) > DATE(%s) AND id <> %d
+             ORDER BY datetime ASC
+             LIMIT 1",
+            $datetime,
+            $excludeId
+        );
+
+        $result = $this->db->get_row($sql);
+
+        return $result ?: null;
+    }
+
+    /**
+     * Get previous sermon by date (excluding same day).
+     *
+     * Used for sermon navigation links. Compares by DATE only,
+     * not exact datetime, and excludes the current sermon.
+     *
+     * @param string $datetime The current sermon's datetime.
+     * @param int $excludeId The current sermon ID to exclude.
+     * @return object|null The previous sermon or null.
+     */
+    public function findPreviousByDate(string $datetime, int $excludeId): ?object
+    {
+        $table = $this->getTableName();
+
+        $sql = $this->db->prepare(
+            "SELECT id, title FROM {$table}
+             WHERE DATE(datetime) < DATE(%s) AND id <> %d
+             ORDER BY datetime DESC
+             LIMIT 1",
+            $datetime,
+            $excludeId
+        );
+
+        $result = $this->db->get_row($sql);
+
+        return $result ?: null;
+    }
+
+    /**
+     * Get sermons preached on the same day.
+     *
+     * Used for "also preached that day" links.
+     *
+     * @param string $datetime The current sermon's datetime.
+     * @param int $excludeId The current sermon ID to exclude.
+     * @return array<object> Array of sermons on the same day.
+     */
+    public function findSameDay(string $datetime, int $excludeId): array
+    {
+        $table = $this->getTableName();
+
+        $sql = $this->db->prepare(
+            "SELECT id, title FROM {$table}
+             WHERE DATE(datetime) = DATE(%s) AND id <> %d",
+            $datetime,
+            $excludeId
+        );
+
+        $results = $this->db->get_results($sql);
+
+        return is_array($results) ? $results : [];
+    }
 }
