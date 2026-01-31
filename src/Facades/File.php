@@ -47,6 +47,8 @@
  * @method static array getPopularSermons(int $limit)
  * @method static array getPopularSeries(int $limit)
  * @method static array getPopularPreachers(int $limit)
+ * @method static string|null getFileDuration(string $name)
+ * @method static bool setFileDuration(string $name, string $duration)
  */
 
 declare(strict_types=1);

@@ -750,6 +750,48 @@ class FileRepository extends AbstractRepository
     }
 
     /**
+     * Get duration for a file by name.
+     *
+     * @param string $name The file name.
+     * @return string|null The duration or null if not found/empty.
+     */
+    public function getFileDuration(string $name): ?string
+    {
+        $table = $this->getTableName();
+
+        $result = $this->db->get_var(
+            $this->db->prepare(
+                "SELECT duration FROM {$table} WHERE type = 'file' AND name = %s",
+                $name
+            )
+        );
+
+        return $result ?: null;
+    }
+
+    /**
+     * Set duration for a file by name.
+     *
+     * @param string $name The file name.
+     * @param string $duration The duration string.
+     * @return bool True on success.
+     */
+    public function setFileDuration(string $name, string $duration): bool
+    {
+        $table = $this->getTableName();
+
+        $result = $this->db->query(
+            $this->db->prepare(
+                "UPDATE {$table} SET duration = %s WHERE type = 'file' AND name = %s",
+                $duration,
+                $name
+            )
+        );
+
+        return $result !== false;
+    }
+
+    /**
      * Combine two rankings into a single ranking.
      *
      * @param array<object> $byAverage Items ranked by average (with id, name).

@@ -22,21 +22,20 @@ function sb_media_size($media_name, $media_type) {
 
 //Returns duration of .mp3 file
 function sb_mp3_duration($media_name, $media_type) {
-	global $wpdb;
 	if (strtolower(substr($media_name, -3)) == 'mp3' && $media_type == 'Files') {
-		$duration = $wpdb->get_var("SELECT duration FROM {$wpdb->prefix}sb_stuff WHERE type = 'file' AND name = '".esc_sql($media_name)."'");
-		if ($duration)
-			return $duration;
-		else {
-			if (!class_exists('getID3')) {
-			    require(ABSPATH.WPINC.'/ID3/getid3.php');
-			}
-			$getID3 = new getID3;
-			$MediaFileInfo = $getID3->analyze(SB_ABSPATH.sb_get_option('upload_dir').$media_name);
-			$duration = isset($MediaFileInfo['playtime_string']) ? $MediaFileInfo['playtime_string'] : '';
-			$wpdb->query("UPDATE {$wpdb->prefix}sb_stuff SET duration = '".esc_sql($duration)."' WHERE type = 'file' AND name = '".esc_sql($media_name)."'");
+		$duration = \SermonBrowser\Facades\File::getFileDuration($media_name);
+		if ($duration) {
 			return $duration;
 		}
+		// Duration not cached, analyze the file
+		if (!class_exists('getID3')) {
+			require(ABSPATH.WPINC.'/ID3/getid3.php');
+		}
+		$getID3 = new getID3;
+		$MediaFileInfo = $getID3->analyze(SB_ABSPATH.sb_get_option('upload_dir').$media_name);
+		$duration = isset($MediaFileInfo['playtime_string']) ? $MediaFileInfo['playtime_string'] : '';
+		\SermonBrowser\Facades\File::setFileDuration($media_name, $duration);
+		return $duration;
 	}
 }
 
