@@ -467,7 +467,6 @@ function sb_edit_link ($id) {
 // Returns URL for search links
 // Relative links now deprecated
 function sb_build_url($arr, $clear = false) {
-	global $wpdb;
 	// Word list for URL building purpose
 	$wl = array('preacher', 'title', 'date', 'enddate', 'series', 'service', 'sortby', 'dir', 'book', 'stag', 'podcast');
 	$foo = array_merge((array) $_GET, (array) $_POST, $arr);
@@ -486,13 +485,14 @@ function sb_build_url($arr, $clear = false) {
 
 // Adds javascript and CSS where required
 function sb_add_headers() {
-	global $post, $wpdb, $wp_scripts;
+	global $post, $wp_scripts;
 	if (isset($post->ID) && $post->ID != '') {
 		echo "<!-- Added by SermonBrowser (version ".SB_CURRENT_VERSION.") - http://www.sermonbrowser.com/ -->\r";
 		echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"".__('Sermon podcast', 'sermon-browser')."\" href=\"".sb_get_option('podcast_url')."\" />\r";
 		wp_enqueue_style('sb_style');
-		$pageid = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE post_content LIKE '%[sermons%' AND (post_status = 'publish' OR post_status = 'private') AND ID={$post->ID} AND post_date < NOW();");
-		if ($pageid !== NULL) {
+		// Check if post contains sermon shortcode (replaces database query)
+		$has_sermon_shortcode = isset($post->post_content) && strpos($post->post_content, '[sermons') !== false;
+		if ($has_sermon_shortcode) {
 			if (sb_get_option('filter_type') == 'dropdown') {
 				wp_enqueue_script('jquery-ui-datepicker');
 				wp_enqueue_style('jquery-ui-css', 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css', array(), '1.13.2');
