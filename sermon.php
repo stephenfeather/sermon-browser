@@ -203,7 +203,7 @@ function sb_hijack()
 */
 function sb_sermon_init()
 {
-    global $wpdb, $defaultMultiForm, $defaultSingleForm, $defaultStyle;
+    global $defaultMultiForm, $defaultSingleForm, $defaultStyle;
     if (IS_MU) {
             load_plugin_textdomain('sermon-browser', '', 'sb-includes');
     } else {
@@ -424,7 +424,6 @@ function sb_get_default($default_type)
 */
 function sb_display_front_end()
 {
-    global $wpdb, $post;
     $pageid = sb_get_page_id();
     if ($pageid === 0) {
         return false;
@@ -436,23 +435,54 @@ function sb_display_front_end()
 /**
 * Get the page_id of the main sermons page
 *
+* Uses WP_Query to find pages/posts containing the [sermon] or [sermons] shortcode.
+*
 * @return integer
 */
 function sb_get_page_id()
 {
-    global $wpdb, $post;
-    $pageid = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE (post_content LIKE '%[sermons]%' OR post_content LIKE '%[sermon]%') AND (post_type = 'page') AND (post_status = 'publish' OR post_status = 'private') ORDER BY post_date ASC LIMIT 1;");
-    if (!$pageid) {
-        $pageid = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE (post_content LIKE '%[sermons]%' OR post_content LIKE '%[sermon]%') AND (post_status = 'publish' OR post_status = 'private') ORDER BY post_date ASC LIMIT 1;");
+    // Try 1: Look for pages with [sermons] or [sermon] shortcode
+    $query = new WP_Query([
+        'post_type' => 'page',
+        'post_status' => ['publish', 'private'],
+        's' => '[sermon',
+        'orderby' => 'date',
+        'order' => 'ASC',
+        'posts_per_page' => 1,
+        'fields' => 'ids',
+    ]);
+
+    if ($query->have_posts()) {
+        // Verify it actually contains our shortcode (WP_Query 's' is fuzzy)
+        foreach ($query->posts as $post_id) {
+            $content = get_post_field('post_content', $post_id);
+            if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
+                return (int) $post_id;
+            }
+        }
     }
-    if (!$pageid) {
-        $pageid = $wpdb->get_var("SELECT ID FROM {$wpdb->posts} WHERE (post_content LIKE '%[sermon %' OR post_content LIKE '%[sermons %') AND (post_status = 'publish' OR post_status = 'private') ORDER BY post_date ASC LIMIT 1;");
+
+    // Try 2: Look in any post type
+    $query = new WP_Query([
+        'post_type' => 'any',
+        'post_status' => ['publish', 'private'],
+        's' => '[sermon',
+        'orderby' => 'date',
+        'order' => 'ASC',
+        'posts_per_page' => 10,
+        'fields' => 'ids',
+    ]);
+
+    if ($query->have_posts()) {
+        foreach ($query->posts as $post_id) {
+            $content = get_post_field('post_content', $post_id);
+            if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
+                return (int) $post_id;
+            }
+        }
     }
-    if (!$pageid) {
-        return 0;
-    } else {
-        return intval($pageid);
-    }
+
+    return 0;
 }
 
 /**
@@ -462,7 +492,7 @@ function sb_get_page_id()
 */
 function sb_display_url()
 {
-    global $wpdb, $post, $sb_display_url;
+    global $sb_display_url;
     if ($sb_display_url == '') {
         $pageid = sb_get_page_id();
         if ($pageid == 0) {
