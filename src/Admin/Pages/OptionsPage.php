@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Options Page.
  *
@@ -72,8 +73,10 @@ class OptionsPage
     private function handleResetDefaults(): void
     {
         // Verify nonce.
-        if (!isset($_POST['sermon_options_save_reset_nonce']) ||
-            !wp_verify_nonce($_POST['sermon_options_save_reset_nonce'], 'sermon_options_save_reset')) {
+        if (
+            !isset($_POST['sermon_options_save_reset_nonce']) ||
+            !wp_verify_nonce($_POST['sermon_options_save_reset_nonce'], 'sermon_options_save_reset')
+        ) {
             wp_die(__("You do not have the correct permissions to edit the SermonBrowser options", 'sermon-browser'));
         }
 
@@ -115,8 +118,10 @@ class OptionsPage
     private function handleSaveOptions(): void
     {
         // Verify nonce.
-        if (!isset($_POST['sermon_options_save_reset_nonce']) ||
-            !wp_verify_nonce($_POST['sermon_options_save_reset_nonce'], 'sermon_options_save_reset')) {
+        if (
+            !isset($_POST['sermon_options_save_reset_nonce']) ||
+            !wp_verify_nonce($_POST['sermon_options_save_reset_nonce'], 'sermon_options_save_reset')
+        ) {
             wp_die(__("You do not have the correct permissions to edit the SermonBrowser options", 'sermon-browser'));
         }
 

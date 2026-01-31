@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sermon Pagination AJAX Handler.
  *

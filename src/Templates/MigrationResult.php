@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Migration Result value class.
  *

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Tag Parser for regex-based template tag replacement.
  *

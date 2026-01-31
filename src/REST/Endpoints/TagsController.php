@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Tags REST Controller.
  *

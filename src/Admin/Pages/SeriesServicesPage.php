@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Series & Services Page.
  *
@@ -193,7 +194,7 @@ class SeriesServicesPage
         ?>
         <a name="manage-<?php echo esc_attr($type); ?>"></a>
         <div class="wrap">
-            <?php if ($type === 'Series'): ?>
+            <?php if ($type === 'Series') : ?>
                 <a href="http://www.sermonbrowser.com/">
                     <img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png"
                          width="191" height="35" style="margin: 1em 2em; float: right;"/>
@@ -211,7 +212,7 @@ class SeriesServicesPage
                 <tr>
                     <th scope="col" style="text-align:center"><?php _e('ID', 'sermon-browser'); ?></th>
                     <th scope="col"><?php _e('Name', 'sermon-browser'); ?></th>
-                    <?php if ($type === 'Services'): ?>
+                    <?php if ($type === 'Services') : ?>
                         <th scope="col">
                             <div style="text-align:center"><?php _e('Default time', 'sermon-browser'); ?></div>
                         </th>
@@ -221,8 +222,8 @@ class SeriesServicesPage
                 </tr>
                 </thead>
                 <tbody id="<?php echo esc_attr($type); ?>-list">
-                <?php if (is_array($data)): ?>
-                    <?php foreach ($data as $item): ?>
+                <?php if (is_array($data)) : ?>
+                    <?php foreach ($data as $item) : ?>
                         <?php $rowClass = (++$i % 2 === 0) ? 'alternate' : ''; ?>
                         <tr class="<?php echo esc_attr($type . ' ' . $rowClass); ?>"
                             id="row<?php echo esc_attr($type . $item->id); ?>">
@@ -230,7 +231,7 @@ class SeriesServicesPage
                             <td id="<?php echo esc_attr($type . $item->id); ?>">
                                 <?php echo esc_html(stripslashes($item->name)); ?>
                             </td>
-                            <?php if ($type === 'Services'): ?>
+                            <?php if ($type === 'Services') : ?>
                                 <td style="text-align:center" id="time<?php echo (int) $item->id; ?>">
                                     <?php echo esc_html($item->time); ?>
                                 </td>

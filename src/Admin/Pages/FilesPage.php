@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Files Page.
  *
@@ -239,8 +240,10 @@ class FilesPage
      */
     private function handleCleanup(): void
     {
-        if (!isset($_POST['sermon_browser_clean_nonce']) ||
-            !wp_verify_nonce($_POST['sermon_browser_clean_nonce'], 'sermon_browser_clean')) {
+        if (
+            !isset($_POST['sermon_browser_clean_nonce']) ||
+            !wp_verify_nonce($_POST['sermon_browser_clean_nonce'], 'sermon_browser_clean')
+        ) {
             wp_die(__('Access denied.', 'sermon-browser'));
         }
 
@@ -418,8 +421,8 @@ class FilesPage
                     </tr>
                 </thead>
                 <tbody id="the-list-u">
-                    <?php if (is_array($unlinked)): ?>
-                        <?php $i = 0; foreach ($unlinked as $file): ?>
+                    <?php if (is_array($unlinked)) : ?>
+                        <?php $i = 0; foreach ($unlinked as $file) : ?>
                             <tr class="file <?php echo (++$i % 2 == 0) ? 'alternate' : '' ?>" id="file<?php echo $file->id ?>">
                                 <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
                                 <td id="<?php echo $file->id ?>"><?php echo substr($file->name, 0, strrpos($file->name, '.')) ?></td>
@@ -454,8 +457,8 @@ class FilesPage
                     </tr>
                 </thead>
                 <tbody id="the-list-l">
-                    <?php if (is_array($linked)): ?>
-                        <?php $i = 0; foreach ($linked as $file): ?>
+                    <?php if (is_array($linked)) : ?>
+                        <?php $i = 0; foreach ($linked as $file) : ?>
                             <tr class="file <?php echo (++$i % 2 == 0) ? 'alternate' : '' ?>" id="file<?php echo $file->id ?>">
                                 <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
                                 <td id="<?php echo $file->id ?>"><?php echo substr($file->name, 0, strrpos($file->name, '.')) ?></td>
@@ -511,10 +514,10 @@ class FilesPage
             <br style="clear:both">
         </div>
         <script>
-            <?php if ($cntu > $sermonsPerPage): ?>
+            <?php if ($cntu > $sermonsPerPage) : ?>
                 jQuery('#uright').html('<a href="javascript:fetchU(2)"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
             <?php endif ?>
-            <?php if ($cntl > $sermonsPerPage): ?>
+            <?php if ($cntl > $sermonsPerPage) : ?>
                 jQuery('#right').html('<a href="javascript:fetchL(2)"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
             <?php endif ?>
         </script>

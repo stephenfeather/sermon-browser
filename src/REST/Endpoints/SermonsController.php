@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sermons REST Controller.
  *

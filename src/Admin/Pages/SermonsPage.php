@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sermons Page.
  *
@@ -187,7 +188,7 @@ class SermonsPage
                 <legend><?php _e('Preacher', 'sermon-browser'); ?></legend>
                 <select id="preacher">
                     <option value="0"></option>
-                    <?php foreach ($preachers as $preacher): ?>
+                    <?php foreach ($preachers as $preacher) : ?>
                         <option value="<?php echo $preacher->id; ?>"><?php echo htmlspecialchars(stripslashes($preacher->name), ENT_QUOTES); ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -196,7 +197,7 @@ class SermonsPage
                 <legend><?php _e('Series', 'sermon-browser'); ?></legend>
                 <select id="series">
                     <option value="0"></option>
-                    <?php foreach ($series as $item): ?>
+                    <?php foreach ($series as $item) : ?>
                         <option value="<?php echo $item->id; ?>"><?php echo htmlspecialchars(stripslashes($item->name), ENT_QUOTES); ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -318,7 +319,7 @@ class SermonsPage
         </div>
     </div>
     <script>
-        <?php if ($cnt > $sermonsPerPage): ?>
+        <?php if ($cnt > $sermonsPerPage) : ?>
             jQuery('#right').html('<a href="javascript:fetch(<?php echo $sermonsPerPage; ?>)">Next &raquo;</a>');
         <?php endif; ?>
     </script>

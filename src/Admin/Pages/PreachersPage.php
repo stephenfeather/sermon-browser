@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Preachers Page.
  *
@@ -83,8 +84,10 @@ class PreachersPage
         }
 
         // Verify nonce.
-        if (!isset($_POST['sermon_manage_preachers_nonce']) ||
-            !wp_verify_nonce($_POST['sermon_manage_preachers_nonce'], 'sermon_manage_preachers')) {
+        if (
+            !isset($_POST['sermon_manage_preachers_nonce']) ||
+            !wp_verify_nonce($_POST['sermon_manage_preachers_nonce'], 'sermon_manage_preachers')
+        ) {
             wp_die(__("You do not have the correct permissions to manage the preachers database", 'sermon-browser'));
         }
 
@@ -251,7 +254,7 @@ class PreachersPage
                         </tr>
                         <tr>
                             <td>
-                                <?php if ($isEdit && $preacher && $preacher->image): ?>
+                                <?php if ($isEdit && $preacher && $preacher->image) : ?>
                                     <div>
                                         <img src="<?php echo esc_url(trailingslashit(site_url()) . sb_get_option('upload_dir') . 'images/' . $preacher->image); ?>">
                                     </div>
@@ -336,14 +339,14 @@ class PreachersPage
                 <tbody>
                 <?php
                 $i = 0;
-                foreach ((array) $preachers as $preacher):
+                foreach ((array) $preachers as $preacher) :
                     $rowClass = (++$i % 2 === 0) ? 'alternate' : '';
                     ?>
                     <tr class="<?php echo $rowClass; ?>">
                         <td style="text-align:center"><?php echo (int) $preacher->id; ?></td>
                         <td><?php echo esc_html(stripslashes($preacher->name)); ?></td>
                         <td style="text-align:center">
-                            <?php if ($preacher->image): ?>
+                            <?php if ($preacher->image) : ?>
                                 <img src="<?php echo esc_url(trailingslashit(site_url()) . sb_get_option('upload_dir') . 'images/' . $preacher->image); ?>">
                             <?php endif; ?>
                         </td>

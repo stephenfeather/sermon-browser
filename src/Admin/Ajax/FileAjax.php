@@ -1,4 +1,5 @@
 <?php
+
 /**
  * File AJAX Handler.
  *

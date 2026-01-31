@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Uninstall Page.
  *
@@ -46,8 +47,10 @@ class UninstallPage
             return;
         }
 
-        if (!isset($_POST['sermon_browser_uninstall_nonce']) ||
-            !wp_verify_nonce($_POST['sermon_browser_uninstall_nonce'], 'sermon_browser_uninstall')) {
+        if (
+            !isset($_POST['sermon_browser_uninstall_nonce']) ||
+            !wp_verify_nonce($_POST['sermon_browser_uninstall_nonce'], 'sermon_browser_uninstall')
+        ) {
             wp_die(__("You do not have the correct permissions to Uninstall SermonBrowser", 'sermon-browser'));
         }
 
@@ -64,7 +67,7 @@ class UninstallPage
         ?>
     <form method="post">
     <div class="wrap">
-        <?php if (IS_MU): ?>
+        <?php if (IS_MU) : ?>
             <h2> <?php _e('Reset SermonBrowser', 'sermon-browser'); ?></h2>
             <p><?php
                 printf(
@@ -75,7 +78,7 @@ class UninstallPage
                 _e('You will NOT be able to undo this action.', 'sermon-browser');
                 ?>
             </p>
-        <?php else: ?>
+        <?php else : ?>
             <h2> <?php _e('Uninstall', 'sermon-browser'); ?></h2>
             <p><?php
                 printf(
@@ -98,12 +101,12 @@ class UninstallPage
             </tr>
         </table>
         <p class="submit"><input type="submit" name="uninstall" value="<?php
-            if (IS_MU) {
-                _e('Delete all', 'sermon-browser');
-            } else {
-                _e('Uninstall', 'sermon-browser');
-            }
-            ?>"
+        if (IS_MU) {
+            _e('Delete all', 'sermon-browser');
+        } else {
+            _e('Uninstall', 'sermon-browser');
+        }
+        ?>"
                                  onclick="return confirm('<?php _e('Do you REALLY want to delete all data?', 'sermon-browser'); ?>')"/>
         </p>
     </div>

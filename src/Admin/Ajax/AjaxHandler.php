@@ -1,4 +1,5 @@
 <?php
+
 /**
  * AJAX Handler base class.
  *

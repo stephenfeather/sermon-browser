@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Tag Renderer for template tag replacement.
  *

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Preacher AJAX Handler.
  *

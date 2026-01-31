@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template Engine for orchestrating template rendering.
  *

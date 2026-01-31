@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template Migrator for plugin upgrades.
  *

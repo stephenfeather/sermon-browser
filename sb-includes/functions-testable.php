@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Pure, testable functions for Sermon Browser.
  *
@@ -20,7 +21,7 @@ declare(strict_types=1);
  * Generate a random filename suffix for temporary files.
  *
  * Replacement for the deprecated preg_replace /e modifier pattern.
- * Original: preg_replace('/([ ])/e', 'chr(rand(97,122))', '		')
+ * Original: preg_replace('/([ ])/e', 'chr(rand(97,122))', '        ')
  *
  * @param int $length Number of random characters to generate.
  * @return string Random lowercase letters.

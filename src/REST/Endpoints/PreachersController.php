@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Preachers REST Controller.
  *

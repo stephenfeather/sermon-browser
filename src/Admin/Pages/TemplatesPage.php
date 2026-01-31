@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Templates Page.
  *
@@ -47,8 +48,10 @@ class TemplatesPage
             return;
         }
 
-        if (!isset($_POST['sermon_template_edit_nonce']) ||
-            !wp_verify_nonce($_POST['sermon_template_edit_nonce'], 'sermon_template_edit')) {
+        if (
+            !isset($_POST['sermon_template_edit_nonce']) ||
+            !wp_verify_nonce($_POST['sermon_template_edit_nonce'], 'sermon_template_edit')
+        ) {
             wp_die(__("You do not have the correct permissions to edit the SermonBrowser templates", 'sermon-browser'));
         }
 
@@ -112,7 +115,7 @@ class TemplatesPage
         </table>
         <p class="submit"><input type="submit" name="save" value="<?php _e('Save', 'sermon-browser'); ?> &raquo;" /> <input type="submit" name="resetdefault" value="<?php _e('Reset to defaults', 'sermon-browser'); ?>"  /></p>
     </div>
-    <?php wp_nonce_field('sermon_template_edit', 'sermon_template_edit_nonce'); ?>
+        <?php wp_nonce_field('sermon_template_edit', 'sermon_template_edit_nonce'); ?>
     </form>
     <script>
         jQuery("form").submit(function() {
