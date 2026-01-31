@@ -1,5 +1,19 @@
 # Sermon Browser
 
+> [!CAUTION]
+> ## ⚠️ BREAKING CHANGES IN v1.0.0 ⚠️
+>
+> **The template system is being completely replaced in v1.0.0.**
+>
+> The legacy template system used `eval()` to process templates, which was **dangerous and vulnerable to code injection attacks**. An attacker with admin access could execute arbitrary PHP code on your server.
+>
+> **What's changing:**
+> - The old `eval()`-based template rendering is being removed
+> - A new secure template system will replace it
+> - **Your existing custom templates will need to be migrated**
+>
+> **Action required:** If you have customized your Sermon Browser templates, please back them up before upgrading to v1.0.0. Migration documentation will be provided with the release.
+
 Upload sermons to your website, where they can be searched, listened to, and downloaded. Easy to use with comprehensive help and tutorials.
 
 ## Modernization
