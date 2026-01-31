@@ -180,9 +180,8 @@ function sb_sort_object($a,$b) {
 }
 
 // Displays the most popular sermons in the sidebar
-function sb_widget_popular ($args) {
-	global $wpdb;
-	// Phase 5: Replace extract() with explicit variable assignments.
+function sb_widget_popular($args) {
+	// Extract widget arguments
 	$before_widget = isset($args['before_widget']) ? $args['before_widget'] : '';
 	$after_widget = isset($args['after_widget']) ? $args['after_widget'] : '';
 	$before_title = isset($args['before_title']) ? $args['before_title'] : '';
@@ -191,161 +190,109 @@ function sb_widget_popular ($args) {
 	$options = isset($args['options']) ? $args['options'] : sb_get_option('popular_widget_options');
 
 	echo $before_widget;
-	if ($options['title'] != '')
-		echo $before_title.$options['title'].$after_title;
+	if ($options['title'] != '') {
+		echo $before_title . $options['title'] . $after_title;
+	}
+
 	$jscript = '';
-	$trigger = array();
-	$output = array();
-	$series_final = array();
-	$preachers_final = array();
+	$trigger = [];
+	$output = [];
+
+	// Popular Sermons using Facade
 	if ($options['display_sermons']) {
-		$sermons = $wpdb->get_results("SELECT sermons.id, sermons.title, sum(stuff.count) AS total
-									   FROM {$wpdb->prefix}sb_stuff AS stuff
-									   LEFT JOIN {$wpdb->prefix}sb_sermons AS sermons ON stuff.sermon_id = sermons.id
-									   GROUP BY sermons.id ORDER BY total DESC LIMIT 0, {$options['limit']}");
+		$sermons = \SermonBrowser\Facades\File::getPopularSermons((int) $options['limit']);
 		if ($sermons) {
-			$output['sermons'] = '<div class="popular-sermons'.$suffix.'"><ul>';
-			foreach ($sermons as $sermon)
-				$output['sermons'] .= '<li><a href="'.sb_build_url(array('sermon_id' => $sermon->id), true).'">'.$sermon->title.'</a></li>';
+			$output['sermons'] = '<div class="popular-sermons' . $suffix . '"><ul>';
+			foreach ($sermons as $sermon) {
+				$output['sermons'] .= '<li><a href="' . sb_build_url(['sermon_id' => $sermon->id], true) . '">' . $sermon->title . '</a></li>';
+			}
 			$output['sermons'] .= '</ul></div>';
-			$trigger[] = '<a id="popular_sermons_trigger'.$suffix.'" href="#">Sermons</a>';
-			$jscript .=  'jQuery("#popular_sermons_trigger'.$suffix.'").click(function() {
+			$trigger[] = '<a id="popular_sermons_trigger' . $suffix . '" href="#">Sermons</a>';
+			$jscript .= 'jQuery("#popular_sermons_trigger' . $suffix . '").click(function() {
 							jQuery(this).attr("style", "font-weight:bold");
-							jQuery("#popular_series_trigger'.$suffix.'").removeAttr("style");
-							jQuery("#popular_preachers_trigger'.$suffix.'").removeAttr("style");
-							jQuery.setSbCookie ("sermons");
-							jQuery("#sb_popular_wrapper'.$suffix.'").fadeOut("slow", function() {
-								jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['sermons']).'").fadeIn("slow");
+							jQuery("#popular_series_trigger' . $suffix . '").removeAttr("style");
+							jQuery("#popular_preachers_trigger' . $suffix . '").removeAttr("style");
+							jQuery.setSbCookie("sermons");
+							jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
+								jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['sermons']) . '").fadeIn("slow");
 							});
 							return false;
 						});';
 		}
 	}
 
+	// Popular Series using Facade
 	if ($options['display_series']) {
-		$series1 = $wpdb->get_results("SELECT series.id, series.name, avg(stuff.count) AS average
-									   FROM {$wpdb->prefix}sb_stuff AS stuff
-									   LEFT JOIN {$wpdb->prefix}sb_sermons AS sermons ON stuff.sermon_id = sermons.id
-									   LEFT JOIN {$wpdb->prefix}sb_series AS series ON sermons.series_id = series.id
-									   GROUP BY series.id ORDER BY average DESC");
-		$series2 = $wpdb->get_results("SELECT series.id, sum(stuff.count) AS total
-									   FROM {$wpdb->prefix}sb_stuff AS stuff
-									   LEFT JOIN {$wpdb->prefix}sb_sermons AS sermons ON stuff.sermon_id = sermons.id
-									   LEFT JOIN {$wpdb->prefix}sb_series AS series ON sermons.series_id = series.id
-									   GROUP BY series.id ORDER BY total DESC");
-		if ($series1) {
-			$i=1;
-			foreach ($series1 as $series) {
-				if ($series->id === null) continue;
-				if (!isset($series_final[$series->id])) {
-					$series_final[$series->id] = new stdClass();
-				}
-				$series_final[$series->id]->name = $series->name;
-				$series_final[$series->id]->rank = $i;
-				$series_final[$series->id]->id = $series->id;
-				$i++;
+		$series_list = \SermonBrowser\Facades\File::getPopularSeries((int) $options['limit']);
+		if ($series_list) {
+			$output['series'] = '<div class="popular-series' . $suffix . '"><ul>';
+			foreach ($series_list as $series) {
+				$output['series'] .= '<li><a href="' . sb_build_url(['series' => $series->id], true) . '">' . $series->name . '</a></li>';
 			}
-			$i=1;
-			foreach ($series2 as $series) {
-				if ($series->id === null || !isset($series_final[$series->id])) continue;
-				$series_final[$series->id]->rank += $i;
-				$i++;
-			}
-			usort($series_final,'sb_sort_object');
-			$series_final = array_slice($series_final, 0, $options['limit']);
-			$output['series'] = '<div class="popular-series'.$suffix.'"><ul>';
-			foreach ($series_final as $series)
-				$output['series'] .= '<li><a href="'.sb_build_url(array('series' => $series->id), true).'">'.$series->name.'</a></li>';
 			$output['series'] .= '</ul></div>';
 		}
-		$trigger[] = '<a id="popular_series_trigger'.$suffix.'" href="#">Series</a>';
-		$jscript .=	 'jQuery("#popular_series_trigger'.$suffix.'").click(function() {
+		$trigger[] = '<a id="popular_series_trigger' . $suffix . '" href="#">Series</a>';
+		$jscript .= 'jQuery("#popular_series_trigger' . $suffix . '").click(function() {
+						jQuery(this).attr("style", "font-weight:bold");
+						jQuery("#popular_sermons_trigger' . $suffix . '").removeAttr("style");
+						jQuery("#popular_preachers_trigger' . $suffix . '").removeAttr("style");
+						jQuery.setSbCookie("series");
+						jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
+							jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['series'] ?? '') . '").fadeIn("slow");
+						});
+						return false;
+					});';
+	}
+
+	// Popular Preachers using Facade
+	if ($options['display_preachers']) {
+		$preachers_list = \SermonBrowser\Facades\File::getPopularPreachers((int) $options['limit']);
+		if ($preachers_list) {
+			$output['preachers'] = '<div class="popular-preachers' . $suffix . '"><ul>';
+			foreach ($preachers_list as $preacher) {
+				$output['preachers'] .= '<li><a href="' . sb_build_url(['preacher' => $preacher->id], true) . '">' . $preacher->name . '</a></li>';
+			}
+			$output['preachers'] .= '</ul></div>';
+			$trigger[] = '<a id="popular_preachers_trigger' . $suffix . '" href="#">Preachers</a>';
+			$jscript .= 'jQuery("#popular_preachers_trigger' . $suffix . '").click(function() {
 							jQuery(this).attr("style", "font-weight:bold");
-							jQuery("#popular_sermons_trigger'.$suffix.'").removeAttr("style");
-							jQuery("#popular_preachers_trigger'.$suffix.'").removeAttr("style");
-							jQuery.setSbCookie ("series");
-							jQuery("#sb_popular_wrapper'.$suffix.'").fadeOut("slow", function() {
-								jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['series']).'").fadeIn("slow");
+							jQuery("#popular_series_trigger' . $suffix . '").removeAttr("style");
+							jQuery("#popular_sermons_trigger' . $suffix . '").removeAttr("style");
+							jQuery.setSbCookie("preachers");
+							jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
+								jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['preachers']) . '").fadeIn("slow");
 							});
 							return false;
 						});';
-	}
-
-	if ($options['display_preachers']) {
-		$preachers1 = $wpdb->get_results("SELECT preachers.id, preachers.name, avg(stuff.count) AS average
-										  FROM {$wpdb->prefix}sb_stuff AS stuff
-										  LEFT JOIN {$wpdb->prefix}sb_sermons AS sermons ON stuff.sermon_id = sermons.id
-										  LEFT JOIN {$wpdb->prefix}sb_preachers AS preachers ON sermons.preacher_id = preachers.id
-										  GROUP BY preachers.id
-										  ORDER BY average DESC");
-		$preachers2 = $wpdb->get_results("SELECT preachers.id, sum(stuff.count) AS total
-										  FROM {$wpdb->prefix}sb_stuff AS stuff
-										  LEFT JOIN {$wpdb->prefix}sb_sermons AS sermons ON stuff.sermon_id = sermons.id
-										  LEFT JOIN {$wpdb->prefix}sb_preachers AS preachers ON sermons.preacher_id = preachers.id
-										  GROUP BY preachers.id
-										  ORDER BY total DESC");
-		if ($preachers1) {
-			$i=1;
-			foreach ($preachers1 as $preacher) {
-				if ($preacher->id === null) continue;
-				if (!isset($preachers_final[$preacher->id])) {
-					$preachers_final[$preacher->id] = new stdClass();
-				}
-				$preachers_final[$preacher->id]->name = $preacher->name;
-				$preachers_final[$preacher->id]->rank = $i;
-				$preachers_final[$preacher->id]->id = $preacher->id;
-				$i++;
-			}
-			$i=1;
-			foreach ($preachers2 as $preacher) {
-				if ($preacher->id === null || !isset($preachers_final[$preacher->id])) continue;
-				$preachers_final[$preacher->id]->rank += $i;
-				$i++;
-			}
-			usort($preachers_final,'sb_sort_object');
-			$preachers_final = array_slice($preachers_final, 0, $options['limit']);
-			$output['preachers'] = '<div class="popular-preachers'.$suffix.'"><ul>';
-			foreach ($preachers_final as $preacher)
-				$output['preachers'] .= '<li><a href="'.sb_build_url(array('preacher' => $preacher->id), true).'">'.$preacher->name.'</a></li>';
-			$output['preachers'] .= '</ul></div>';
-			$trigger[] = '<a id="popular_preachers_trigger'.$suffix.'" href="#">Preachers</a>';
-			$jscript .=	 'jQuery("#popular_preachers_trigger'.$suffix.'").click(function() {
-								jQuery(this).attr("style", "font-weight:bold");
-								jQuery("#popular_series_trigger'.$suffix.'").removeAttr("style");
-								jQuery("#popular_sermons_trigger'.$suffix.'").removeAttr("style");
-								jQuery.setSbCookie("preachers");
-								jQuery("#sb_popular_wrapper'.$suffix.'").fadeOut("slow", function() {
-									jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['preachers']).'").fadeIn("slow");
-								});
-								return false;
-							 });';
 		}
 	}
 
-	$jscript .= 'if (jQuery.getSbCookie() == "preachers") { jQuery("#popular_preachers_trigger'.$suffix.'").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['preachers']).'")};';
-	$jscript .= 'if (jQuery.getSbCookie() == "series") { jQuery("#popular_series_trigger'.$suffix.'").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['series']).'")};';
-	$jscript .= 'if (jQuery.getSbCookie() == "sermons") { jQuery("#popular_sermons_trigger'.$suffix.'").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper'.$suffix.'").html("'.addslashes($output['sermons']).'")};';
-	echo '<p>'.implode(' | ', $trigger).'</p>';
-	echo '<div id="sb_popular_wrapper'.$suffix.'">'.current($output).'</div>';
+	// Cookie-based state restoration
+	$jscript .= 'if (jQuery.getSbCookie() == "preachers") { jQuery("#popular_preachers_trigger' . $suffix . '").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['preachers'] ?? '') . '")};';
+	$jscript .= 'if (jQuery.getSbCookie() == "series") { jQuery("#popular_series_trigger' . $suffix . '").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['series'] ?? '') . '")};';
+	$jscript .= 'if (jQuery.getSbCookie() == "sermons") { jQuery("#popular_sermons_trigger' . $suffix . '").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['sermons'] ?? '') . '")};';
+
+	echo '<p>' . implode(' | ', $trigger) . '</p>';
+	echo '<div id="sb_popular_wrapper' . $suffix . '">' . current($output) . '</div>';
 	echo '<script type="text/javascript">jQuery.setSbCookie = function (value) {
-											document.cookie = "sb_popular="+encodeURIComponent(value);
-										 };</script>';
+			document.cookie = "sb_popular="+encodeURIComponent(value);
+		};</script>';
 	echo '<script type="text/javascript">jQuery.getSbCookie = function () {
-											var cookieValue = null;
-											if (document.cookie && document.cookie != "") {
-												var cookies = document.cookie.split(";");
-												for (var i = 0; i < cookies.length; i++) {
-													var cookie = jQuery.trim(cookies[i]);
-													var name = "sb_popular";
-													if (cookie.substring(0, name.length + 1) == (name + "=")) {
-														cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-														break;
-													}
-												}
-											}
-										 return cookieValue;
-										 }</script>';
-	echo '<script type="text/javascript">jQuery(document).ready(function() {'.$jscript.'});</script>';
+			var cookieValue = null;
+			if (document.cookie && document.cookie != "") {
+				var cookies = document.cookie.split(";");
+				for (var i = 0; i < cookies.length; i++) {
+					var cookie = jQuery.trim(cookies[i]);
+					var name = "sb_popular";
+					if (cookie.substring(0, name.length + 1) == (name + "=")) {
+						cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+						break;
+					}
+				}
+			}
+			return cookieValue;
+		}</script>';
+	echo '<script type="text/javascript">jQuery(document).ready(function() {' . $jscript . '});</script>';
 	echo $after_widget;
 }
 
