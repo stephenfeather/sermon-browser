@@ -12,6 +12,7 @@ namespace SermonBrowser\Tests\Unit\Admin\Ajax;
 
 use SermonBrowser\Tests\TestCase;
 use SermonBrowser\Admin\Ajax\FileAjax;
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Repositories\FileRepository;
 use SermonBrowser\Services\Container;
 use Brain\Monkey\Functions;
@@ -45,6 +46,9 @@ class FileAjaxTest extends TestCase
     {
         parent::setUp();
 
+        // Clear OptionsManager cache before each test
+        OptionsManager::clearCache();
+
         Container::reset();
         $this->mockRepo = Mockery::mock(FileRepository::class);
         Container::getInstance()->set(FileRepository::class, $this->mockRepo);
@@ -55,6 +59,21 @@ class FileAjaxTest extends TestCase
         if (!defined('SB_ABSPATH')) {
             define('SB_ABSPATH', '/var/www/html/');
         }
+    }
+
+    /**
+     * Helper to mock get_option for OptionsManager.
+     *
+     * @param array<string, mixed> $options Options to return.
+     */
+    private function mockOptions(array $options): void
+    {
+        Functions\when('get_option')->alias(function ($key) use ($options) {
+            if ($key === 'sermonbrowser_options') {
+                return base64_encode(serialize($options));
+            }
+            return false;
+        });
     }
 
     /**
@@ -166,10 +185,7 @@ class FileAjaxTest extends TestCase
             ->once()
             ->andReturn('etc-passwd');
 
-        Functions\expect('sb_get_option')
-            ->once()
-            ->with('upload_dir')
-            ->andReturn('wp-content/uploads/sermons/');
+        $this->mockOptions(['upload_dir' => 'wp-content/uploads/sermons/']);
 
         Functions\expect('validate_file')
             ->once()
@@ -206,10 +222,7 @@ class FileAjaxTest extends TestCase
             ->with('test.mp3')
             ->andReturn('test.mp3');
 
-        Functions\expect('sb_get_option')
-            ->twice()
-            ->with('upload_dir')
-            ->andReturn('wp-content/uploads/sermons/');
+        $this->mockOptions(['upload_dir' => 'wp-content/uploads/sermons/']);
 
         Functions\expect('validate_file')
             ->once()
@@ -307,10 +320,7 @@ class FileAjaxTest extends TestCase
             ->twice()
             ->andReturn('hack.mp3', 'old.mp3');
 
-        Functions\expect('sb_get_option')
-            ->once()
-            ->with('upload_dir')
-            ->andReturn('wp-content/uploads/sermons/');
+        $this->mockOptions(['upload_dir' => 'wp-content/uploads/sermons/']);
 
         Functions\expect('validate_file')
             ->once()

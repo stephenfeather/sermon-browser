@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace SermonBrowser\Tests\Unit\Podcast;
 
 use SermonBrowser\Tests\TestCase;
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Podcast\PodcastHelper;
 use SermonBrowser\Repositories\FileRepository;
 use SermonBrowser\Services\Container;
@@ -36,6 +37,9 @@ class PodcastHelperTest extends TestCase
     {
         parent::setUp();
 
+        // Clear OptionsManager cache before each test
+        OptionsManager::clearCache();
+
         // Reset container and set up mock repository
         Container::reset();
         $this->mockFileRepo = Mockery::mock(FileRepository::class);
@@ -46,6 +50,21 @@ class PodcastHelperTest extends TestCase
         $property = $reflection->getProperty('filetypes');
         $property->setAccessible(true);
         $property->setValue(null, null);
+    }
+
+    /**
+     * Helper to mock get_option for OptionsManager.
+     *
+     * @param array<string, mixed> $options Options to return.
+     */
+    private function mockOptions(array $options): void
+    {
+        Functions\when('get_option')->alias(function ($key, $default = null) use ($options) {
+            if ($key === 'sermonbrowser_options') {
+                return base64_encode(serialize($options));
+            }
+            return $default;
+        });
     }
 
     // =========================================================================
@@ -219,7 +238,7 @@ class PodcastHelperTest extends TestCase
      */
     public function testGetMediaSizeReturnsLengthAttributeForFiles(): void
     {
-        Functions\when('sb_get_option')->justReturn('uploads/sermons/');
+        $this->mockOptions(['upload_dir' => 'uploads/sermons/']);
 
         // File doesn't exist, so size will be 0
         $result = PodcastHelper::getMediaSize('sermon.mp3', 'Files');
@@ -232,7 +251,7 @@ class PodcastHelperTest extends TestCase
      */
     public function testGetMediaSizeFormatForNonExistentFile(): void
     {
-        Functions\when('sb_get_option')->justReturn('uploads/sermons/');
+        $this->mockOptions(['upload_dir' => 'uploads/sermons/']);
 
         $result = PodcastHelper::getMediaSize('nonexistent.mp3', 'Files');
 
@@ -394,7 +413,7 @@ class PodcastHelperTest extends TestCase
         Functions\when('trailingslashit')->alias(function ($url) {
             return rtrim($url, '/') . '/';
         });
-        Functions\when('sb_get_option')->justReturn('wp-content/uploads/sermons/');
+        $this->mockOptions(['upload_dir' => 'wp-content/uploads/sermons/']);
 
         $result = PodcastHelper::getFileUrl('sermon.mp3', 'Files');
 

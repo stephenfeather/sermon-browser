@@ -12,6 +12,7 @@ namespace SermonBrowser\Tests\Unit\Admin\Ajax;
 
 use SermonBrowser\Tests\TestCase;
 use SermonBrowser\Admin\Ajax\SermonPaginationAjax;
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Repositories\SermonRepository;
 use SermonBrowser\Services\Container;
 use Brain\Monkey\Actions;
@@ -45,11 +46,29 @@ class SermonPaginationAjaxTest extends TestCase
     {
         parent::setUp();
 
+        // Clear OptionsManager cache before each test
+        OptionsManager::clearCache();
+
         Container::reset();
         $this->mockRepo = Mockery::mock(SermonRepository::class);
         Container::getInstance()->set(SermonRepository::class, $this->mockRepo);
 
         $this->handler = new SermonPaginationAjax();
+    }
+
+    /**
+     * Helper to mock get_option for OptionsManager.
+     *
+     * @param array<string, mixed> $options Options to return.
+     */
+    private function mockOptions(array $options): void
+    {
+        Functions\when('get_option')->alias(function ($key, $default = null) use ($options) {
+            if ($key === 'sermonbrowser_options') {
+                return base64_encode(serialize($options));
+            }
+            return $default;
+        });
     }
 
     /**
@@ -253,9 +272,7 @@ class SermonPaginationAjaxTest extends TestCase
 
         $this->setupVerifyRequestSuccess();
 
-        Functions\expect('sb_get_option')
-            ->with('sermons_per_page', 10)
-            ->andReturn(25);
+        $this->mockOptions(['sermons_per_page' => 25]);
 
         $this->mockRepo->shouldReceive('findAllWithRelations')
             ->once()

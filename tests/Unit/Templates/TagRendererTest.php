@@ -10,8 +10,17 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Tests\Unit\Templates;
 
-use SermonBrowser\Tests\TestCase;
+use Mockery;
+use SermonBrowser\Config\OptionsManager;
+use SermonBrowser\Frontend\BibleText;
+use SermonBrowser\Frontend\FileDisplay;
+use SermonBrowser\Frontend\FilterRenderer;
+use SermonBrowser\Frontend\Pagination;
+use SermonBrowser\Frontend\TemplateHelper;
+use SermonBrowser\Frontend\UrlBuilder;
+use SermonBrowser\Frontend\Widgets\PopularWidget;
 use SermonBrowser\Templates\TagRenderer;
+use SermonBrowser\Tests\TestCase;
 use Brain\Monkey\Functions;
 use stdClass;
 
@@ -19,6 +28,9 @@ use stdClass;
  * Test TagRenderer functionality.
  *
  * Tests the template tag rendering methods for both search and single contexts.
+ *
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
  */
 class TagRendererTest extends TestCase
 {
@@ -74,12 +86,14 @@ class TagRendererTest extends TestCase
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_build_url')
+        $urlBuilder = Mockery::mock('alias:' . UrlBuilder::class);
+        $urlBuilder->shouldReceive('build')
             ->once()
             ->with(['sermon_id' => 1], true)
             ->andReturn('http://example.com/?sermon_id=1');
 
-        $result = $this->renderer->renderSermonTitle($sermon, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderSermonTitle($sermon, 'search');
 
         $this->assertStringContainsString('Test Sermon', $result);
         $this->assertStringContainsString('<a href=', $result);
@@ -159,12 +173,14 @@ class TagRendererTest extends TestCase
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_build_url')
+        $urlBuilder = Mockery::mock('alias:' . UrlBuilder::class);
+        $urlBuilder->shouldReceive('build')
             ->once()
             ->with(['preacher' => 5], false)
             ->andReturn('http://example.com/?preacher=5');
 
-        $result = $this->renderer->renderPreacherLink($sermon, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderPreacherLink($sermon, 'search');
 
         $this->assertStringContainsString('John Doe', $result);
         $this->assertStringContainsString('<a href=', $result);
@@ -205,7 +221,8 @@ class TagRendererTest extends TestCase
         $sermon = $this->createMockSermon();
         $sermon->image = 'pastor.jpg';
 
-        Functions\expect('sb_get_option')
+        $optionsManager = Mockery::mock('alias:' . OptionsManager::class);
+        $optionsManager->shouldReceive('get')
             ->once()
             ->with('upload_dir')
             ->andReturn('wp-content/uploads/sermon-browser/');
@@ -218,7 +235,8 @@ class TagRendererTest extends TestCase
             ->once()
             ->andReturnUsing(fn($url) => rtrim($url, '/') . '/');
 
-        $result = $this->renderer->renderPreacherImage($sermon, 'single');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderPreacherImage($sermon, 'single');
 
         $this->assertStringContainsString('<img', $result);
         $this->assertStringContainsString('pastor.jpg', $result);
@@ -249,12 +267,14 @@ class TagRendererTest extends TestCase
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_build_url')
+        $urlBuilder = Mockery::mock('alias:' . UrlBuilder::class);
+        $urlBuilder->shouldReceive('build')
             ->once()
             ->with(['series' => 10], false)
             ->andReturn('http://example.com/?series=10');
 
-        $result = $this->renderer->renderSeriesLink($sermon, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderSeriesLink($sermon, 'search');
 
         $this->assertStringContainsString('Test Series', $result);
         $this->assertStringContainsString('<a href=', $result);
@@ -267,12 +287,14 @@ class TagRendererTest extends TestCase
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_build_url')
+        $urlBuilder = Mockery::mock('alias:' . UrlBuilder::class);
+        $urlBuilder->shouldReceive('build')
             ->once()
             ->with(['service' => 20], false)
             ->andReturn('http://example.com/?service=20');
 
-        $result = $this->renderer->renderServiceLink($sermon, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderServiceLink($sermon, 'search');
 
         $this->assertStringContainsString('Sunday Morning', $result);
         $this->assertStringContainsString('<a href=', $result);
@@ -289,12 +311,14 @@ class TagRendererTest extends TestCase
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_formatted_date')
+        $templateHelper = Mockery::mock('alias:' . TemplateHelper::class);
+        $templateHelper->shouldReceive('formattedDate')
             ->once()
             ->with($sermon)
             ->andReturn('January 1, 2024');
 
-        $result = $this->renderer->renderDate($sermon, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderDate($sermon, 'search');
 
         $this->assertEquals('January 1, 2024', $result);
     }
@@ -312,11 +336,13 @@ class TagRendererTest extends TestCase
         $sermon->start = serialize([['book' => 'John', 'chapter' => '3', 'verse' => '16']]);
         $sermon->end = serialize([['book' => 'John', 'chapter' => '3', 'verse' => '21']]);
 
-        Functions\expect('sb_get_books')
+        $bibleText = Mockery::mock('alias:' . BibleText::class);
+        $bibleText->shouldReceive('getBooks')
             ->once()
             ->andReturn('John 3:16-21');
 
-        $result = $this->renderer->renderFirstPassage($sermon, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderFirstPassage($sermon, 'search');
 
         $this->assertEquals('John 3:16-21', $result);
     }
@@ -340,27 +366,30 @@ class TagRendererTest extends TestCase
     // =========================================================================
 
     /**
-     * Test renderNextPage calls the correct function.
+     * Test renderNextPage calls Pagination::printNextPageLink.
      */
     public function testRenderNextPageReturnsNextPageLink(): void
     {
-        Functions\expect('sb_print_next_page_link')
+        $pagination = Mockery::mock('alias:' . Pagination::class);
+        $pagination->shouldReceive('printNextPageLink')
             ->once();
 
-        $this->renderer->renderNextPage(null, 'search');
-        // Function outputs directly, we verify it was called
+        $renderer = new TagRenderer();
+        $renderer->renderNextPage(null, 'search');
         $this->assertTrue(true);
     }
 
     /**
-     * Test renderPreviousPage calls the correct function.
+     * Test renderPreviousPage calls Pagination::printPrevPageLink.
      */
     public function testRenderPreviousPageReturnsPreviousPageLink(): void
     {
-        Functions\expect('sb_print_prev_page_link')
+        $pagination = Mockery::mock('alias:' . Pagination::class);
+        $pagination->shouldReceive('printPrevPageLink')
             ->once();
 
-        $this->renderer->renderPreviousPage(null, 'search');
+        $renderer = new TagRenderer();
+        $renderer->renderPreviousPage(null, 'search');
         $this->assertTrue(true);
     }
 
@@ -373,12 +402,14 @@ class TagRendererTest extends TestCase
      */
     public function testRenderPodcastReturnsPodcastUrl(): void
     {
-        Functions\expect('sb_get_option')
+        $optionsManager = Mockery::mock('alias:' . OptionsManager::class);
+        $optionsManager->shouldReceive('get')
             ->once()
             ->with('podcast_url')
             ->andReturn('http://example.com/podcast.xml');
 
-        $result = $this->renderer->renderPodcast(null, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderPodcast(null, 'search');
 
         $this->assertEquals('http://example.com/podcast.xml', $result);
     }
@@ -388,11 +419,13 @@ class TagRendererTest extends TestCase
      */
     public function testRenderPodcastForSearchReturnsCustomPodcastUrl(): void
     {
-        Functions\expect('sb_podcast_url')
+        $urlBuilder = Mockery::mock('alias:' . UrlBuilder::class);
+        $urlBuilder->shouldReceive('podcastUrl')
             ->once()
             ->andReturn('http://example.com/custom-podcast.xml');
 
-        $result = $this->renderer->renderPodcastForSearch(null, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderPodcastForSearch(null, 'search');
 
         $this->assertEquals('http://example.com/custom-podcast.xml', $result);
     }
@@ -402,12 +435,14 @@ class TagRendererTest extends TestCase
      */
     public function testRenderItunesPodcastReturnsItpcUrl(): void
     {
-        Functions\expect('sb_get_option')
+        $optionsManager = Mockery::mock('alias:' . OptionsManager::class);
+        $optionsManager->shouldReceive('get')
             ->once()
             ->with('podcast_url')
             ->andReturn('http://example.com/podcast.xml');
 
-        $result = $this->renderer->renderItunesPodcast(null, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderItunesPodcast(null, 'search');
 
         $this->assertEquals('itpc://example.com/podcast.xml', $result);
     }
@@ -417,11 +452,13 @@ class TagRendererTest extends TestCase
      */
     public function testRenderItunesPodcastForSearchReturnsItpcCustomUrl(): void
     {
-        Functions\expect('sb_podcast_url')
+        $urlBuilder = Mockery::mock('alias:' . UrlBuilder::class);
+        $urlBuilder->shouldReceive('podcastUrl')
             ->once()
             ->andReturn('http://example.com/custom-podcast.xml');
 
-        $result = $this->renderer->renderItunesPodcastForSearch(null, 'search');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderItunesPodcastForSearch(null, 'search');
 
         $this->assertEquals('itpc://example.com/custom-podcast.xml', $result);
     }
@@ -469,17 +506,19 @@ class TagRendererTest extends TestCase
     }
 
     /**
-     * Test renderEditLink calls sb_edit_link for search context.
+     * Test renderEditLink calls TemplateHelper::editLink.
      */
-    public function testRenderEditLinkCallsSbEditLinkForSearchContext(): void
+    public function testRenderEditLinkCallsTemplateHelperEditLink(): void
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_edit_link')
+        $templateHelper = Mockery::mock('alias:' . TemplateHelper::class);
+        $templateHelper->shouldReceive('editLink')
             ->once()
             ->with(1);
 
-        $this->renderer->renderEditLink($sermon, 'search');
+        $renderer = new TagRenderer();
+        $renderer->renderEditLink($sermon, 'search');
         $this->assertTrue(true);
     }
 
@@ -494,11 +533,13 @@ class TagRendererTest extends TestCase
     {
         $tags = ['faith', 'hope', 'love'];
 
-        Functions\expect('sb_build_url')
+        $urlBuilder = Mockery::mock('alias:' . UrlBuilder::class);
+        $urlBuilder->shouldReceive('build')
             ->times(3)
             ->andReturnUsing(fn($arr) => 'http://example.com/?stag=' . $arr['stag']);
 
-        $result = $this->renderer->renderTags($tags, 'single');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderTags($tags, 'single');
 
         $this->assertStringContainsString('faith', $result);
         $this->assertStringContainsString('hope', $result);
@@ -511,47 +552,53 @@ class TagRendererTest extends TestCase
     // =========================================================================
 
     /**
-     * Test renderNextSermon returns next sermon link.
+     * Test renderNextSermon calls TemplateHelper::printNextSermonLink.
      */
     public function testRenderNextSermonReturnsNextSermonLink(): void
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_print_next_sermon_link')
+        $templateHelper = Mockery::mock('alias:' . TemplateHelper::class);
+        $templateHelper->shouldReceive('printNextSermonLink')
             ->once()
             ->with($sermon);
 
-        $this->renderer->renderNextSermon($sermon, 'single');
+        $renderer = new TagRenderer();
+        $renderer->renderNextSermon($sermon, 'single');
         $this->assertTrue(true);
     }
 
     /**
-     * Test renderPrevSermon returns previous sermon link.
+     * Test renderPrevSermon calls TemplateHelper::printPrevSermonLink.
      */
     public function testRenderPrevSermonReturnsPreviousSermonLink(): void
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_print_prev_sermon_link')
+        $templateHelper = Mockery::mock('alias:' . TemplateHelper::class);
+        $templateHelper->shouldReceive('printPrevSermonLink')
             ->once()
             ->with($sermon);
 
-        $this->renderer->renderPrevSermon($sermon, 'single');
+        $renderer = new TagRenderer();
+        $renderer->renderPrevSermon($sermon, 'single');
         $this->assertTrue(true);
     }
 
     /**
-     * Test renderSamedaySermon returns same day sermon link.
+     * Test renderSamedaySermon calls TemplateHelper::printSamedaySermonLink.
      */
     public function testRenderSamedaySermonReturnsSameDaySermonLink(): void
     {
         $sermon = $this->createMockSermon();
 
-        Functions\expect('sb_print_sameday_sermon_link')
+        $templateHelper = Mockery::mock('alias:' . TemplateHelper::class);
+        $templateHelper->shouldReceive('printSamedaySermonLink')
             ->once()
             ->with($sermon);
 
-        $this->renderer->renderSamedaySermon($sermon, 'single');
+        $renderer = new TagRenderer();
+        $renderer->renderSamedaySermon($sermon, 'single');
         $this->assertTrue(true);
     }
 
@@ -568,17 +615,19 @@ class TagRendererTest extends TestCase
         $sermon->start = [['book' => 'John', 'chapter' => '3', 'verse' => '16']];
         $sermon->end = [['book' => 'John', 'chapter' => '3', 'verse' => '21']];
 
-        Functions\expect('sb_add_bible_text')
+        $bibleText = Mockery::mock('alias:' . BibleText::class);
+        $bibleText->shouldReceive('addBibleText')
             ->once()
             ->andReturn('<div class="esv">John 3:16-21 text...</div>');
 
-        $result = $this->renderer->renderBibleText($sermon, 'esv');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderBibleText($sermon, 'esv');
 
         $this->assertStringContainsString('esv', $result);
     }
 
     /**
-     * Test renderEsvText calls renderBibleText with esv.
+     * Test renderEsvText calls BibleText::addBibleText with esv.
      */
     public function testRenderEsvTextCallsRenderBibleTextWithEsv(): void
     {
@@ -586,7 +635,8 @@ class TagRendererTest extends TestCase
         $sermon->start = [['book' => 'John', 'chapter' => '3', 'verse' => '16']];
         $sermon->end = [['book' => 'John', 'chapter' => '3', 'verse' => '21']];
 
-        Functions\expect('sb_add_bible_text')
+        $bibleText = Mockery::mock('alias:' . BibleText::class);
+        $bibleText->shouldReceive('addBibleText')
             ->once()
             ->with(
                 ['book' => 'John', 'chapter' => '3', 'verse' => '16'],
@@ -595,7 +645,8 @@ class TagRendererTest extends TestCase
             )
             ->andReturn('<div class="esv">...</div>');
 
-        $result = $this->renderer->renderEsvText($sermon, 'single');
+        $renderer = new TagRenderer();
+        $result = $renderer->renderEsvText($sermon, 'single');
 
         $this->assertStringContainsString('esv', $result);
     }
@@ -624,41 +675,47 @@ class TagRendererTest extends TestCase
     // =========================================================================
 
     /**
-     * Test renderFiltersForm calls sb_print_filters.
+     * Test renderFiltersForm calls FilterRenderer::render.
      */
-    public function testRenderFiltersFormCallsSbPrintFilters(): void
+    public function testRenderFiltersFormCallsFilterRendererRender(): void
     {
         $atts = ['filter' => 'dropdown', 'filterhide' => ''];
 
-        Functions\expect('sb_print_filters')
+        $filterRenderer = Mockery::mock('alias:' . FilterRenderer::class);
+        $filterRenderer->shouldReceive('render')
             ->once()
             ->with($atts);
 
-        $this->renderer->renderFiltersForm($atts, 'search');
+        $renderer = new TagRenderer();
+        $renderer->renderFiltersForm($atts, 'search');
         $this->assertTrue(true);
     }
 
     /**
-     * Test renderMostPopular calls sb_print_most_popular.
+     * Test renderMostPopular calls PopularWidget::printMostPopular.
      */
-    public function testRenderMostPopularCallsSbPrintMostPopular(): void
+    public function testRenderMostPopularCallsPopularWidgetPrintMostPopular(): void
     {
-        Functions\expect('sb_print_most_popular')
+        $popularWidget = Mockery::mock('alias:' . PopularWidget::class);
+        $popularWidget->shouldReceive('printMostPopular')
             ->once();
 
-        $this->renderer->renderMostPopular(null, 'search');
+        $renderer = new TagRenderer();
+        $renderer->renderMostPopular(null, 'search');
         $this->assertTrue(true);
     }
 
     /**
-     * Test renderTagCloud calls sb_print_tag_clouds.
+     * Test renderTagCloud calls TemplateHelper::printTagClouds.
      */
-    public function testRenderTagCloudCallsSbPrintTagClouds(): void
+    public function testRenderTagCloudCallsTemplateHelperPrintTagClouds(): void
     {
-        Functions\expect('sb_print_tag_clouds')
+        $templateHelper = Mockery::mock('alias:' . TemplateHelper::class);
+        $templateHelper->shouldReceive('printTagClouds')
             ->once();
 
-        $this->renderer->renderTagCloud(null, 'search');
+        $renderer = new TagRenderer();
+        $renderer->renderTagCloud(null, 'search');
         $this->assertTrue(true);
     }
 
@@ -677,32 +734,36 @@ class TagRendererTest extends TestCase
     // =========================================================================
 
     /**
-     * Test renderFile returns file URL.
+     * Test renderFile calls FileDisplay::printUrl.
      */
     public function testRenderFileReturnsFileUrl(): void
     {
         $mediaName = 'sermon.mp3';
 
-        Functions\expect('sb_print_url')
+        $fileDisplay = Mockery::mock('alias:' . FileDisplay::class);
+        $fileDisplay->shouldReceive('printUrl')
             ->once()
             ->with('sermon.mp3');
 
-        $this->renderer->renderFile($mediaName, 'search');
+        $renderer = new TagRenderer();
+        $renderer->renderFile($mediaName, 'search');
         $this->assertTrue(true);
     }
 
     /**
-     * Test renderFileWithDownload returns file with download link.
+     * Test renderFileWithDownload calls FileDisplay::printUrlLink.
      */
     public function testRenderFileWithDownloadReturnsFileWithDownloadLink(): void
     {
         $mediaName = 'sermon.mp3';
 
-        Functions\expect('sb_print_url_link')
+        $fileDisplay = Mockery::mock('alias:' . FileDisplay::class);
+        $fileDisplay->shouldReceive('printUrlLink')
             ->once()
             ->with('sermon.mp3');
 
-        $this->renderer->renderFileWithDownload($mediaName, 'search');
+        $renderer = new TagRenderer();
+        $renderer->renderFileWithDownload($mediaName, 'search');
         $this->assertTrue(true);
     }
 
@@ -734,29 +795,33 @@ class TagRendererTest extends TestCase
         $start = ['book' => 'John', 'chapter' => '3', 'verse' => '16'];
         $end = ['book' => 'John', 'chapter' => '3', 'verse' => '21'];
 
-        Functions\expect('sb_get_books')
+        $bibleText = Mockery::mock('alias:' . BibleText::class);
+        $bibleText->shouldReceive('getBooks')
             ->once()
             ->with($start, $end)
             ->andReturn('John 3:16-21');
 
-        $result = $this->renderer->renderPassage($start, $end);
+        $renderer = new TagRenderer();
+        $result = $renderer->renderPassage($start, $end);
 
         $this->assertEquals('John 3:16-21', $result);
     }
 
     /**
-     * Test renderBiblePassage calls sb_print_bible_passage.
+     * Test renderBiblePassage calls BibleText::printBiblePassage.
      */
-    public function testRenderBiblePassageCallsSbPrintBiblePassage(): void
+    public function testRenderBiblePassageCallsBibleTextPrintBiblePassage(): void
     {
         $sermon = $this->createMockSermon();
         $sermon->start = [['book' => 'John', 'chapter' => '3', 'verse' => '16']];
         $sermon->end = [['book' => 'John', 'chapter' => '3', 'verse' => '21']];
 
-        Functions\expect('sb_print_bible_passage')
+        $bibleText = Mockery::mock('alias:' . BibleText::class);
+        $bibleText->shouldReceive('printBiblePassage')
             ->once();
 
-        $this->renderer->renderBiblePassage($sermon, 'single');
+        $renderer = new TagRenderer();
+        $renderer->renderBiblePassage($sermon, 'single');
         $this->assertTrue(true);
     }
 

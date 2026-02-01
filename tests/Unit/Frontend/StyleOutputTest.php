@@ -10,12 +10,16 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Tests\Unit\Frontend;
 
+use Mockery;
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Tests\TestCase;
 use SermonBrowser\Frontend\StyleOutput;
-use Brain\Monkey\Functions;
 
 /**
  * Test class for StyleOutput.
+ *
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
  */
 class StyleOutputTest extends TestCase
 {
@@ -26,7 +30,8 @@ class StyleOutputTest extends TestCase
     {
         $expectedCss = 'body { color: red; }';
 
-        Functions\expect('sb_get_option')
+        $optionsManager = Mockery::mock('alias:' . OptionsManager::class);
+        $optionsManager->shouldReceive('get')
             ->with('css_style')
             ->once()
             ->andReturn($expectedCss);
@@ -43,7 +48,8 @@ class StyleOutputTest extends TestCase
     {
         $timestamp = 1700000000;
 
-        Functions\expect('sb_get_option')
+        $optionsManager = Mockery::mock('alias:' . OptionsManager::class);
+        $optionsManager->shouldReceive('get')
             ->with('style_date_modified')
             ->once()
             ->andReturn($timestamp);

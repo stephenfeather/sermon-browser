@@ -12,6 +12,7 @@ namespace SermonBrowser\Tests\Unit\Install;
 
 use SermonBrowser\Tests\TestCase;
 use SermonBrowser\Install\Upgrader;
+use SermonBrowser\Config\OptionsManager;
 use Brain\Monkey\Functions;
 
 /**
@@ -19,6 +20,19 @@ use Brain\Monkey\Functions;
  */
 class UpgraderTest extends TestCase
 {
+    /**
+     * Set up test environment.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Clear OptionsManager cache before each test
+        $reflection = new \ReflectionClass(OptionsManager::class);
+        $cacheProperty = $reflection->getProperty('cache');
+        $cacheProperty->setAccessible(true);
+        $cacheProperty->setValue(null, null);
+    }
+
     /**
      * Test upgradeOptions processes standard options correctly.
      */
@@ -30,12 +44,16 @@ class UpgraderTest extends TestCase
                 if ($option === 'sb_podcast') {
                     return 'http://example.com/podcast';
                 }
+                if ($option === 'sermonbrowser_options') {
+                    return false; // Empty cache
+                }
                 return false;
             });
 
-        Functions\expect('sb_update_option')
+        Functions\expect('update_option')
             ->atLeast()
-            ->once();
+            ->once()
+            ->andReturn(true);
 
         Functions\expect('delete_option')
             ->atLeast()
@@ -59,12 +77,16 @@ class UpgraderTest extends TestCase
                 if ($option === 'sb_sermon_style') {
                     return base64_encode(addslashes('div { color: red; }'));
                 }
+                if ($option === 'sermonbrowser_options') {
+                    return false; // Empty cache
+                }
                 return false;
             });
 
-        Functions\expect('sb_update_option')
+        Functions\expect('update_option')
             ->atLeast()
-            ->once();
+            ->once()
+            ->andReturn(true);
 
         Functions\expect('delete_option')
             ->atLeast()
@@ -82,13 +104,20 @@ class UpgraderTest extends TestCase
      */
     public function testVersionUpgradeUpdatesCodeVersion(): void
     {
-        Functions\expect('sb_update_option')
-            ->with('code_version', '2.0.0')
-            ->once();
+        // Mock get_option with sermonbrowser_options containing filter_type
+        $existingOptions = ['filter_type' => 'dropdown'];
+        Functions\expect('get_option')
+            ->andReturnUsing(function ($option) use ($existingOptions) {
+                if ($option === 'sermonbrowser_options') {
+                    return base64_encode(serialize($existingOptions));
+                }
+                return false;
+            });
 
-        Functions\expect('sb_get_option')
-            ->with('filter_type')
-            ->andReturn('dropdown');
+        Functions\expect('update_option')
+            ->atLeast()
+            ->once()
+            ->andReturn(true);
 
         Functions\expect('delete_transient')
             ->with('sb_template_search')
@@ -110,17 +139,20 @@ class UpgraderTest extends TestCase
      */
     public function testVersionUpgradeSetsDefaultFilterType(): void
     {
-        Functions\expect('sb_update_option')
-            ->with('code_version', '2.0.0')
-            ->once();
+        // Mock get_option with empty filter_type
+        $existingOptions = ['filter_type' => ''];
+        Functions\expect('get_option')
+            ->andReturnUsing(function ($option) use ($existingOptions) {
+                if ($option === 'sermonbrowser_options') {
+                    return base64_encode(serialize($existingOptions));
+                }
+                return false;
+            });
 
-        Functions\expect('sb_get_option')
-            ->with('filter_type')
-            ->andReturn('');
-
-        Functions\expect('sb_update_option')
-            ->with('filter_type', 'dropdown')
-            ->once();
+        Functions\expect('update_option')
+            ->atLeast()
+            ->once()
+            ->andReturn(true);
 
         Functions\expect('delete_transient')
             ->twice();

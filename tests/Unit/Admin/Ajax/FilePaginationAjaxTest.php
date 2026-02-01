@@ -12,6 +12,7 @@ namespace SermonBrowser\Tests\Unit\Admin\Ajax;
 
 use SermonBrowser\Tests\TestCase;
 use SermonBrowser\Admin\Ajax\FilePaginationAjax;
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Repositories\FileRepository;
 use SermonBrowser\Services\Container;
 use Brain\Monkey\Actions;
@@ -45,11 +46,29 @@ class FilePaginationAjaxTest extends TestCase
     {
         parent::setUp();
 
+        // Clear OptionsManager cache before each test
+        OptionsManager::clearCache();
+
         Container::reset();
         $this->mockRepo = Mockery::mock(FileRepository::class);
         Container::getInstance()->set(FileRepository::class, $this->mockRepo);
 
         $this->handler = new FilePaginationAjax();
+    }
+
+    /**
+     * Helper to mock get_option for OptionsManager.
+     *
+     * @param array<string, mixed> $options Options to return.
+     */
+    private function mockOptions(array $options): void
+    {
+        Functions\when('get_option')->alias(function ($key, $default = null) use ($options) {
+            if ($key === 'sermonbrowser_options') {
+                return base64_encode(serialize($options));
+            }
+            return $default;
+        });
     }
 
     // =========================================================================
@@ -134,13 +153,7 @@ class FilePaginationAjaxTest extends TestCase
             ->once()
             ->andReturn(1);
 
-        Functions\when('sb_get_option')
-            ->alias(function ($key, $default = null) {
-                if ($key === 'filetypes') {
-                    return ['mp3' => ['name' => 'MP3 Audio']];
-                }
-                return $default;
-            });
+        $this->mockOptions(['filetypes' => ['mp3' => ['name' => 'MP3 Audio']]]);
 
         Functions\when('admin_url')->justReturn('http://example.com/wp-admin/');
 
@@ -187,7 +200,7 @@ class FilePaginationAjaxTest extends TestCase
             ->once()
             ->andReturn(1);
 
-        Functions\when('sb_get_option')->justReturn([]);
+        $this->mockOptions(['filetypes' => []]);
         Functions\when('admin_url')->alias(function ($path) {
             return 'http://example.com/wp-admin/' . $path;
         });
@@ -230,7 +243,7 @@ class FilePaginationAjaxTest extends TestCase
             ->once()
             ->andReturn(50);
 
-        Functions\when('sb_get_option')->justReturn([]);
+        $this->mockOptions(['filetypes' => []]);
 
         $this->expectJsonSuccessCallback(function ($data) {
             return $data['page'] === 3 && $data['total_pages'] === 5;
@@ -276,7 +289,7 @@ class FilePaginationAjaxTest extends TestCase
             ->once()
             ->andReturn(1);
 
-        Functions\when('sb_get_option')->justReturn(['mp3' => ['name' => 'MP3 Audio']]);
+        $this->mockOptions(['filetypes' => ['mp3' => ['name' => 'MP3 Audio']]]);
 
         $this->expectJsonSuccessCallback(function ($data) {
             return $data['items'][0]['id'] === 1
@@ -321,8 +334,8 @@ class FilePaginationAjaxTest extends TestCase
             ->once()
             ->andReturn(1);
 
-        Functions\when('sb_get_option')->justReturn([
-            'mp4' => ['name' => 'MPEG-4 Video'],
+        $this->mockOptions([
+            'filetypes' => ['mp4' => ['name' => 'MPEG-4 Video']],
         ]);
 
         $this->expectJsonSuccessCallback(function ($data) {
@@ -365,7 +378,7 @@ class FilePaginationAjaxTest extends TestCase
             ->once()
             ->andReturn(1);
 
-        Functions\when('sb_get_option')->justReturn([]);
+        $this->mockOptions(['filetypes' => []]);
 
         $this->expectJsonSuccessCallback(function ($data) {
             return $data['items'][0]['type_name'] === 'XYZ';
@@ -419,7 +432,7 @@ class FilePaginationAjaxTest extends TestCase
             ->with('sermon')
             ->andReturn(2);
 
-        Functions\when('sb_get_option')->justReturn([]);
+        $this->mockOptions(['filetypes' => []]);
 
         $this->expectJsonSuccessCallback(function ($data) {
             return count($data['items']) === 2
@@ -445,7 +458,7 @@ class FilePaginationAjaxTest extends TestCase
 
         $this->setupVerifyRequestSuccessWithStubs();
 
-        Functions\when('sb_get_option')->justReturn(10);
+        $this->mockOptions(['sermons_per_page' => 10]);
         Functions\when('__')->returnArg(1);
 
         Functions\expect('wp_send_json_error')
@@ -485,7 +498,7 @@ class FilePaginationAjaxTest extends TestCase
             ->with('audio')
             ->andReturn(12);
 
-        Functions\when('sb_get_option')->justReturn([]);
+        $this->mockOptions(['filetypes' => []]);
 
         $this->expectJsonSuccessCallback(function ($data) {
             return $data['page'] === 2
@@ -522,7 +535,7 @@ class FilePaginationAjaxTest extends TestCase
             ->once()
             ->andReturn(0);
 
-        Functions\when('sb_get_option')->justReturn([]);
+        $this->mockOptions(['filetypes' => []]);
 
         $this->expectJsonSuccessCallback(function ($data) {
             return $data['items'] === []
@@ -552,16 +565,10 @@ class FilePaginationAjaxTest extends TestCase
 
         $this->setupVerifyRequestSuccessWithStubs();
 
-        Functions\when('sb_get_option')
-            ->alias(function ($key, $default = null) {
-                if ($key === 'sermons_per_page') {
-                    return 25;
-                }
-                if ($key === 'filetypes') {
-                    return [];
-                }
-                return $default;
-            });
+        $this->mockOptions([
+            'sermons_per_page' => 25,
+            'filetypes' => [],
+        ]);
 
         $this->mockRepo->shouldReceive('findUnlinkedWithTitle')
             ->once()
@@ -602,7 +609,7 @@ class FilePaginationAjaxTest extends TestCase
             ->once()
             ->andReturn(15); // 15 total, 10 per page = has_next true
 
-        Functions\when('sb_get_option')->justReturn([]);
+        $this->mockOptions(['filetypes' => []]);
 
         $this->expectJsonSuccessCallback(function ($data) {
             return $data['has_next'] === true && $data['has_prev'] === false;
