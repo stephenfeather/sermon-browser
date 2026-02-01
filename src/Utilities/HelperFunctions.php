@@ -78,4 +78,86 @@ class HelperFunctions
 
         return is_super_admin();
     }
+
+    /**
+     * Convert php.ini mega- or giga-byte numbers into kilobytes.
+     *
+     * @param string $val Value like '15M' or '1G'.
+     * @return int Value in kilobytes.
+     */
+    public static function returnKbytes(string $val): int
+    {
+        $val = trim($val);
+        if ($val === '') {
+            return 0;
+        }
+
+        $last = strtolower($val[strlen($val) - 1]);
+        $num = (int) $val;
+
+        switch ($last) {
+            case 'g':
+                $num *= 1024;
+                // Fall through intentionally
+            case 'm':
+                $num *= 1024;
+        }
+
+        return $num;
+    }
+
+    /**
+     * Recursive mkdir function with chmod.
+     *
+     * @param string $pathname Directory path to create.
+     * @param int    $mode     Permission mode.
+     * @return bool True on success.
+     */
+    public static function mkdir(string $pathname, int $mode = 0755): bool
+    {
+        is_dir(dirname($pathname)) || self::mkdir(dirname($pathname), $mode);
+        @mkdir($pathname, $mode);
+        return @chmod($pathname, $mode);
+    }
+
+    /**
+     * Sanitize Windows paths to use forward slashes.
+     *
+     * @param string $path The path to sanitize.
+     * @return string Sanitized path.
+     */
+    public static function sanitisePath(string $path): string
+    {
+        $path = str_replace('\\', '/', $path);
+        $path = preg_replace('|/+|', '/', $path);
+        return $path;
+    }
+
+    /**
+     * Output a file in chunks (for large file downloads).
+     *
+     * @param string $filename Path to the file.
+     * @return bool True on success, false on failure.
+     */
+    public static function outputFile(string $filename): bool
+    {
+        $handle = fopen($filename, 'rb');
+        if ($handle === false) {
+            return false;
+        }
+
+        if (ob_get_level() === 0) {
+            ob_start();
+        }
+
+        while (!feof($handle)) {
+            set_time_limit((int) ini_get('max_execution_time'));
+            $buffer = fread($handle, 1048576); // 1MB chunks
+            echo $buffer;
+            ob_flush();
+            flush();
+        }
+
+        return fclose($handle);
+    }
 }

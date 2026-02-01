@@ -96,6 +96,9 @@ use SermonBrowser\Admin\AdminAssets;
 use SermonBrowser\Admin\AdminNotices;
 use SermonBrowser\Admin\DashboardWidget;
 use SermonBrowser\Admin\AdminBarMenu;
+use SermonBrowser\Config\OptionsManager;
+use SermonBrowser\Config\Defaults;
+use SermonBrowser\Frontend\PageResolver;
 
 /**
 * Initialisation
@@ -407,25 +410,14 @@ function sb_add_pages()
 }
 
 /**
-* Converts php.ini mega- or giga-byte numbers into kilobytes
-*
-* @param string $val
-* @return integer
-*/
+ * Converts php.ini mega- or giga-byte numbers into kilobytes.
+ *
+ * @param string $val Value like '15M' or '1G'.
+ * @return int Value in kilobytes.
+ */
 function sb_return_kbytes($val)
 {
-    $val = trim($val);
-    $last = strtolower($val[strlen($val) - 1]);
-    // Phase 1: Cast to int before multiplication to avoid PHP 8 warning.
-    $num = (int) $val;
-    switch ($last) {
-        case 'g':
-            $num *= 1024;
-            // Fall through intentionally.
-        case 'm':
-            $num *= 1024;
-    }
-    return $num;
+    return HelperFunctions::returnKbytes((string) $val);
 }
 
 /**
@@ -463,124 +455,44 @@ function sb_update_podcast_url()
 }
 
 /**
-* Returns occassionally requested default values
-*
-* Not defined as constants to save memory
-* @param string $default_type
-* @return mixed
-*/
+ * Get default values for SermonBrowser.
+ *
+ * @param string $default_type The type of default.
+ * @return mixed The default value.
+ */
 function sb_get_default($default_type)
 {
-    switch ($default_type) {
-        case 'sermon_path':
-            $upload_path = wp_upload_dir();
-            $upload_path = $upload_path['basedir'];
-            if (substr($upload_path, 0, strlen(ABSPATH)) == ABSPATH) {
-                $upload_path = substr($upload_path, strlen(ABSPATH));
-            }
-            return trailingslashit($upload_path) . 'sermons/';
-        case 'attachment_url':
-            $upload_dir = wp_upload_dir();
-            $upload_dir = $upload_dir['baseurl'];
-            return trailingslashit($upload_dir) . 'sermons/';
-        case 'bible_books':
-            return array(__('Genesis', 'sermon-browser'), __('Exodus', 'sermon-browser'), __('Leviticus', 'sermon-browser'), __('Numbers', 'sermon-browser'), __('Deuteronomy', 'sermon-browser'), __('Joshua', 'sermon-browser'), __('Judges', 'sermon-browser'), __('Ruth', 'sermon-browser'), __('1 Samuel', 'sermon-browser'), __('2 Samuel', 'sermon-browser'), __('1 Kings', 'sermon-browser'), __('2 Kings', 'sermon-browser'), __('1 Chronicles', 'sermon-browser'), __('2 Chronicles', 'sermon-browser'), __('Ezra', 'sermon-browser'), __('Nehemiah', 'sermon-browser'), __('Esther', 'sermon-browser'), __('Job', 'sermon-browser'), __('Psalm', 'sermon-browser'), __('Proverbs', 'sermon-browser'), __('Ecclesiastes', 'sermon-browser'), __('Song of Solomon', 'sermon-browser'), __('Isaiah', 'sermon-browser'), __('Jeremiah', 'sermon-browser'), __('Lamentations', 'sermon-browser'), __('Ezekiel', 'sermon-browser'), __('Daniel', 'sermon-browser'), __('Hosea', 'sermon-browser'), __('Joel', 'sermon-browser'), __('Amos', 'sermon-browser'), __('Obadiah', 'sermon-browser'), __('Jonah', 'sermon-browser'), __('Micah', 'sermon-browser'), __('Nahum', 'sermon-browser'), __('Habakkuk', 'sermon-browser'), __('Zephaniah', 'sermon-browser'), __('Haggai', 'sermon-browser'), __('Zechariah', 'sermon-browser'), __('Malachi', 'sermon-browser'), __('Matthew', 'sermon-browser'), __('Mark', 'sermon-browser'), __('Luke', 'sermon-browser'), __('John', 'sermon-browser'), __('Acts', 'sermon-browser'), __('Romans', 'sermon-browser'), __('1 Corinthians', 'sermon-browser'), __('2 Corinthians', 'sermon-browser'), __('Galatians', 'sermon-browser'), __('Ephesians', 'sermon-browser'), __('Philippians', 'sermon-browser'), __('Colossians', 'sermon-browser'), __('1 Thessalonians', 'sermon-browser'), __('2 Thessalonians', 'sermon-browser'), __('1 Timothy', 'sermon-browser'), __('2 Timothy', 'sermon-browser'), __('Titus', 'sermon-browser'), __('Philemon', 'sermon-browser'), __('Hebrews', 'sermon-browser'), __('James', 'sermon-browser'), __('1 Peter', 'sermon-browser'), __('2 Peter', 'sermon-browser'), __('1 John', 'sermon-browser'), __('2 John', 'sermon-browser'), __('3 John', 'sermon-browser'), __('Jude', 'sermon-browser'), __('Revelation', 'sermon-browser'));
-        case 'eng_bible_books':
-            return array('Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy', 'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel', '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalm', 'Proverbs', 'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos', 'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah', 'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter', '1 John', '2 John', '3 John', 'Jude', 'Revelation');
-    }
+    return Defaults::get($default_type);
 }
 
 /**
-* Returns true if sermons are displayed on the current page
-*
-* @return bool
-*/
+ * Returns true if sermons are displayed on the current page.
+ *
+ * @return bool
+ */
 function sb_display_front_end()
 {
-    $pageid = sb_get_page_id();
-    if ($pageid === 0) {
-        return false;
-    } else {
-        return true;
-    }
+    return PageResolver::displaysFrontEnd();
 }
 
 /**
-* Get the page_id of the main sermons page
-*
-* Uses WP_Query to find pages/posts containing the [sermon] or [sermons] shortcode.
-*
-* @return integer
-*/
+ * Get the page_id of the main sermons page.
+ *
+ * @return int
+ */
 function sb_get_page_id()
 {
-    // Try 1: Look for pages with [sermons] or [sermon] shortcode
-    $query = new WP_Query([
-        'post_type' => 'page',
-        'post_status' => ['publish', 'private'],
-        's' => '[sermon',
-        'orderby' => 'date',
-        'order' => 'ASC',
-        'posts_per_page' => 1,
-        'fields' => 'ids',
-    ]);
-
-    if ($query->have_posts()) {
-        // Verify it actually contains our shortcode (WP_Query 's' is fuzzy)
-        foreach ($query->posts as $post_id) {
-            $content = get_post_field('post_content', $post_id);
-            if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
-                return (int) $post_id;
-            }
-        }
-    }
-
-    // Try 2: Look in any post type
-    $query = new WP_Query([
-        'post_type' => 'any',
-        'post_status' => ['publish', 'private'],
-        's' => '[sermon',
-        'orderby' => 'date',
-        'order' => 'ASC',
-        'posts_per_page' => 10,
-        'fields' => 'ids',
-    ]);
-
-    if ($query->have_posts()) {
-        foreach ($query->posts as $post_id) {
-            $content = get_post_field('post_content', $post_id);
-            if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
-                return (int) $post_id;
-            }
-        }
-    }
-
-    return 0;
+    return PageResolver::getPageId();
 }
 
 /**
-* Get the URL of the main sermons page
-*
-* @return string
-*/
+ * Get the URL of the main sermons page.
+ *
+ * @return string
+ */
 function sb_display_url()
 {
-    global $sb_display_url;
-    if ($sb_display_url == '') {
-        $pageid = sb_get_page_id();
-        if ($pageid == 0) {
-            return '';
-        }
-        if (defined('SB_AJAX') && SB_AJAX) {
-            return site_url() . '/?page_id=' . $pageid; // Don't use permalinks in Ajax calls
-        } else {
-            $sb_display_url = get_permalink($pageid);
-            if ($sb_display_url == site_url() || $sb_display_url == '') { // Hack to force true permalink even if page used for front page.
-                $sb_display_url = site_url() . '/?page_id=' . $pageid;
-            }
-        }
-    }
-    return $sb_display_url;
+    return PageResolver::getDisplayUrl();
 }
 
 /**
@@ -601,20 +513,14 @@ function sb_footer_stats()
 }
 
 /**
-* Returns the correct string to join the sermonbrowser parameters to the existing URL
-*
-* @param boolean $return_entity
-* @return string (either '?', '&', or '&amp;')
-*/
+ * Returns the correct string to join the sermonbrowser parameters to the existing URL.
+ *
+ * @param bool $return_entity Whether to return HTML entity.
+ * @return string Either '?', '&', or '&amp;'.
+ */
 function sb_query_char($return_entity = true)
 {
-    if (strpos(sb_display_url(), '?') === false) {
-        return '?';
-    } elseif ($return_entity) {
-            return '&amp;';
-    } else {
-        return '&';
-    }
+    return PageResolver::getQueryChar($return_entity);
 }
 
 /**
@@ -830,94 +736,42 @@ function sb_widget_popular_wrapper($args)
 }
 
 /**
-* Optimised replacement for get_option
-*
-* Returns any of the sermonbrowser options from one row of the database
-* Large options (e.g. the template) are stored on additional rows by this function
-* @param string $type
-* @return mixed
-*/
+ * Get a SermonBrowser option value.
+ *
+ * Public API - kept for backwards compatibility.
+ *
+ * @param string $type Option key.
+ * @return mixed Option value.
+ */
 function sb_get_option($type)
 {
-    global $sermonbrowser_options;
-    $special_options = sb_special_option_names();
-    if (in_array($type, $special_options)) {
-        return stripslashes(base64_decode(get_option("sermonbrowser_{$type}")));
-    } else {
-        if (!$sermonbrowser_options) {
-            $options = get_option('sermonbrowser_options');
-            if ($options === false) {
-                return false;
-            }
-            $sermonbrowser_options = unserialize(base64_decode($options));
-            if ($sermonbrowser_options === false) {
-                wp_die('Failed to get SermonBrowser options ' . base64_decode(get_option('sermonbrowser_options')));
-            }
-        }
-        if (isset($sermonbrowser_options[$type])) {
-            return $sermonbrowser_options[$type];
-        } else {
-            return '';
-        }
-    }
+    return OptionsManager::get($type);
 }
 
 /**
-* Optimised replacement for update_option
-*
-* Stores all of sermonbrowser options on one row of the database
-* Large options (e.g. the template) are stored on additional rows by this function
-* @param string $type
-* @param mixed $val
-* @return bool
-*/
+ * Update a SermonBrowser option value.
+ *
+ * Public API - kept for backwards compatibility.
+ *
+ * @param string $type Option key.
+ * @param mixed  $val  Option value.
+ * @return bool True if updated.
+ */
 function sb_update_option($type, $val)
 {
-    global $sermonbrowser_options;
-    $special_options = sb_special_option_names();
-    if (in_array($type, $special_options)) {
-        return update_option("sermonbrowser_{$type}", base64_encode($val));
-    } else {
-        if (!$sermonbrowser_options) {
-            $options = get_option('sermonbrowser_options');
-            if ($options !== false) {
-                $sermonbrowser_options = unserialize(base64_decode($options));
-                if ($sermonbrowser_options === false) {
-                    wp_die('Failed to get SermonBrowser options ' . base64_decode(get_option('sermonbrowser_options')));
-                }
-            }
-        }
-        if (!isset($sermonbrowser_options[$type]) || $sermonbrowser_options[$type] !== $val) {
-            $sermonbrowser_options[$type] = $val;
-            return update_option('sermonbrowser_options', base64_encode(serialize($sermonbrowser_options)));
-        } else {
-            return false;
-        }
-    }
+    return OptionsManager::update($type, $val);
 }
 
 /**
-* Returns which options need to be stored in individual base64 format (i.e. potentially large strings)
-*
-* @return array
-*/
-function sb_special_option_names()
-{
-    return array ('single_template', 'search_template', 'css_style');
-}
-
-/**
-* Recursive mkdir function
-*
-* @param string $pathname
-* @param string $mode
-* return bool
-*/
+ * Recursive mkdir function with chmod.
+ *
+ * @param string $pathname Directory path.
+ * @param int    $mode     Permission mode.
+ * @return bool True on success.
+ */
 function sb_mkdir($pathname, $mode = 0755)
 {
-    is_dir(dirname($pathname)) || sb_mkdir(dirname($pathname), $mode);
-    @mkdir($pathname, $mode);
-    return @chmod($pathname, $mode);
+    return HelperFunctions::mkdir($pathname, $mode);
 }
 
 /**
@@ -980,97 +834,6 @@ function sb_get_sermons($filter, $order, $page = 1, $limit = 0, $hide_empty = fa
 }
 
 /**
-* Create SQL query for returning multiple sermons
-*
-* @deprecated 0.6.0 Use sb_get_sermons() which now uses Sermon::findForFrontendListing()
-* @param array $filter
-* @param string $order
-* @param integer $page
-* @param integer $limit
-* @return string SQL query
-*/
-function sb_create_multi_sermon_query($filter, $order, $page = 1, $limit = 0, $hide_empty = false)
-{
-    _deprecated_function(__FUNCTION__, '0.6.0', 'sb_get_sermons()');
-    global $wpdb;
-    $default_filter = array(
-        'title' => '',
-        'preacher' => 0,
-        'date' => '',
-        'enddate' => '',
-        'series' => 0,
-        'service' => 0,
-        'book' => '',
-        'tag' => '',
-        'id' => '',
-    );
-    $default_order = array(
-        'by' => 'm.datetime',
-        'dir' => 'desc',
-    );
-    $bs = '';
-    $filter = array_merge($default_filter, (array)$filter);
-    $order = array_merge($default_order, (array)$order);
-    if (strtolower($order['dir']) != 'desc' and strtolower($order['dir']) != 'asc') {
-        $order['dir'] = $default_order['dir'];
-    }
-    $valid_sortby_values = array( 'm.id', 'm.title', 'm.datetime', 'm.start', 'm.end', 'p.id', 'p.name', 's.id', 's.name', 'ss.id', 'ss.name');
-    if (!in_array($order['by'], $valid_sortby_values)) {
-        $order['by'] = $default_order['by'];
-    }
-    $page = (int) $page;
-    $cond = '1=1 ';
-    if ($filter['title'] != '') {
-        $cond .= "AND (m.title LIKE '%" . esc_sql($filter['title']) . "%' OR m.description LIKE '%" . esc_sql($filter['title']) . "%' OR t.name LIKE '%" . esc_sql($filter['title']) . "%') ";
-    }
-    // PHP 8 fix: Cast to int before comparing, since '' != 0 is TRUE in PHP 8 (string comparison)
-    if ((int)$filter['preacher'] !== 0) {
-        $cond .= 'AND m.preacher_id = ' . (int) $filter['preacher'] . ' ';
-    }
-    if ($filter['date'] != '') {
-        $cond .= 'AND m.datetime >= "' . esc_sql($filter['date']) . '" ';
-    }
-    if ($filter['enddate'] != '') {
-        $cond .= 'AND m.datetime <= "' . esc_sql($filter['enddate']) . '" ';
-    }
-    if ((int)$filter['series'] !== 0) {
-        $cond .= 'AND m.series_id = ' . (int) $filter['series'] . ' ';
-    }
-    if ((int)$filter['service'] !== 0) {
-        $cond .= 'AND m.service_id = ' . (int) $filter['service'] . ' ';
-    }
-    if ($filter['book'] != '') {
-        $cond .= 'AND bs.book_name = "' . esc_sql($filter['book']) . '" ';
-    } else {
-        $bs = "AND bs.order = 0 AND bs.type= 'start' ";
-    }
-    if ($filter['tag'] != '') {
-        $cond .= "AND t.name LIKE '%" . esc_sql($filter['tag']) . "%' ";
-    }
-    if ($filter['id'] != '') {
-        $cond .= "AND m.id LIKE '" . esc_sql($filter['id']) . "' ";
-    }
-    if ($hide_empty) {
-        $cond .= "AND stuff.name != '' ";
-    }
-    $offset = $limit * ($page - 1);
-    if ($order['by'] == 'b.id') {
-        $order['by'] = 'b.id ' . esc_sql($order['dir']) . ', bs.chapter ' . esc_sql($order['dir']) . ', bs.verse';
-    }
-    return "SELECT SQL_CALC_FOUND_ROWS DISTINCT m.id, m.title, m.description, m.datetime, m.time, m.start, m.end, p.id as pid, p.name as preacher, p.description as preacher_description, p.image, s.id as sid, s.name as service, ss.id as ssid, ss.name as series
-		FROM {$wpdb->prefix}sb_sermons as m
-		LEFT JOIN {$wpdb->prefix}sb_preachers as p ON m.preacher_id = p.id
-		LEFT JOIN {$wpdb->prefix}sb_services as s ON m.service_id = s.id
-		LEFT JOIN {$wpdb->prefix}sb_series as ss ON m.series_id = ss.id
-		LEFT JOIN {$wpdb->prefix}sb_books_sermons as bs ON bs.sermon_id = m.id {$bs}
-		LEFT JOIN {$wpdb->prefix}sb_books as b ON bs.book_name = b.name
-		LEFT JOIN {$wpdb->prefix}sb_sermons_tags as st ON st.sermon_id = m.id
-		LEFT JOIN {$wpdb->prefix}sb_tags as t ON t.id = st.tag_id
-		LEFT JOIN {$wpdb->prefix}sb_stuff as stuff ON stuff.sermon_id = m.id
-		WHERE {$cond} ORDER BY " . $order['by'] . " " . $order['dir'] . " LIMIT " . $offset . ", " . $limit;
-}
-
-/**
 * Returns the default time for a particular service
 *
 * @param integer $service (id in database)
@@ -1125,38 +888,25 @@ function sb_increase_download_count($stuff_name)
 }
 
 /**
-* Outputs a remote or local file
-*
-* @param string $filename
-* @return bool success or failure
-*/
+ * Output a file in chunks (for large file downloads).
+ *
+ * @param string $filename Path to the file.
+ * @return bool True on success.
+ */
 function sb_output_file($filename)
 {
-    $handle = fopen($filename, 'rb');
-    if ($handle === false) {
-        return false;
-    }
-    if (ob_get_level() == 0) {
-        ob_start();
-    }
-    while (!feof($handle)) {
-        set_time_limit(ini_get('max_execution_time'));
-        $buffer = fread($handle, 1048576);
-        echo $buffer;
-        ob_flush();
-        flush();
-    }
-    return fclose($handle);
+    return HelperFunctions::outputFile($filename);
 }
 
 /**
-* Sanitizes Windows paths
-*/
+ * Sanitize Windows paths to use forward slashes.
+ *
+ * @param string $path The path.
+ * @return string Sanitized path.
+ */
 function sb_sanitise_path($path)
 {
-    $path = str_replace('\\', '/', $path);
-    $path = preg_replace('|/+|', '/', $path);
-    return $path;
+    return HelperFunctions::sanitisePath($path);
 }
 
 /***************************************
