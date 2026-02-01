@@ -35,7 +35,7 @@ function sb_mp3_duration($media_name, $media_type)
         }
         // Duration not cached, analyze the file
         if (!class_exists('getID3')) {
-            require(ABSPATH . WPINC . '/ID3/getid3.php');
+            require ABSPATH . WPINC . '/ID3/getid3.php';
         }
         $getID3 = new getID3();
         $MediaFileInfo = $getID3->analyze(SB_ABSPATH . sb_get_option('upload_dir') . $media_name);
@@ -83,7 +83,7 @@ function sb_podcast_file_url($media_name, $media_type)
 // Returns correct MIME type
 function sb_mime_type($media_name)
 {
-    require(SB_INCLUDES_DIR . '/filetypes.php');
+    require SB_INCLUDES_DIR . '/filetypes.php';
     $extension = strtolower(substr($media_name, strrpos($media_name, '.') + 1));
     if (array_key_exists($extension, $filetypes)) {
         return ' type="' . $filetypes[$extension]['content-type'] . '"';

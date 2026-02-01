@@ -56,7 +56,7 @@ class SermonEditorPage
             wp_die(__("You do not have the correct permissions to edit or create sermons", 'sermon-browser'));
         }
 
-        include_once(SB_ABSPATH . '/wp-includes/kses.php');
+        include_once SB_ABSPATH . '/wp-includes/kses.php';
         sb_scan_dir();
         $translated_books = array_combine(sb_get_default('eng_bible_books'), sb_get_default('bible_books'));
 
@@ -431,7 +431,7 @@ class SermonEditorPage
         }
 
         if (!class_exists('getID3')) {
-            require(ABSPATH . WPINC . '/ID3/getid3.php');
+            require ABSPATH . WPINC . '/ID3/getid3.php';
         }
 
         $getID3 = new \getID3();

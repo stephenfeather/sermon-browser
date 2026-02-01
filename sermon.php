@@ -149,10 +149,10 @@ function sb_hijack()
     wp_timezone_override_offset();
 
     if (isset($_POST['sermon']) && $_POST['sermon'] == 1) {
-        require(SB_INCLUDES_DIR . '/ajax.php');
+        require SB_INCLUDES_DIR . '/ajax.php';
     }
     if (stripos($_SERVER['REQUEST_URI'], 'sb-style.css') !== false || isset($_GET['sb-style'])) {
-        require(SB_INCLUDES_DIR . '/style.php');
+        require SB_INCLUDES_DIR . '/style.php';
     }
 
     //Forces sermon download of local file
@@ -179,7 +179,7 @@ function sb_hijack()
     //Forces sermon download of external URL
     if (isset($_REQUEST['download']) and isset($_REQUEST['url'])) {
         $url = rawurldecode($_GET['url']);
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once ABSPATH . 'wp-admin/includes/file.php';
         $downloaded_file = download_url($url);
         if (is_wp_error($downloaded_file)) {
             wp_die(htmlentities(rawurldecode($_GET['url'])) . ' ' . __('not found', 'sermon-browser'), __('URL not found', 'sermon-browser'), array('response' => 404));
@@ -250,7 +250,7 @@ function sb_sermon_init()
 
     //Display the podcast if that's what's requested
     if (isset($_GET['podcast'])) {
-        require(SB_INCLUDES_DIR . '/podcast.php');
+        require SB_INCLUDES_DIR . '/podcast.php';
     }
 
     // Register custom CSS and javascript files
@@ -295,15 +295,15 @@ function sb_sermon_init()
             $db_version = sb_get_option('db_version');
         }
         if ($db_version && $db_version != SB_DATABASE_VERSION) {
-            require_once(SB_INCLUDES_DIR . '/upgrade.php');
+            require_once SB_INCLUDES_DIR . '/upgrade.php';
             sb_database_upgrade($db_version);
         } elseif (!$db_version) {
-            require(SB_INCLUDES_DIR . '/sb-install.php');
+            require SB_INCLUDES_DIR . '/sb-install.php';
             sb_install();
         }
         $sb_version = sb_get_option('code_version');
         if ($sb_version != SB_CURRENT_VERSION) {
-            require_once(SB_INCLUDES_DIR . '/upgrade.php');
+            require_once SB_INCLUDES_DIR . '/upgrade.php';
             sb_version_upgrade($sb_version, SB_CURRENT_VERSION);
         }
 
@@ -322,7 +322,7 @@ function sb_sermon_init()
 
     // Check to see what functions are required, and only load what is needed
     if (!is_admin()) {
-        require_once(SB_INCLUDES_DIR . '/frontend.php');
+        require_once SB_INCLUDES_DIR . '/frontend.php';
         add_action('wp_head', 'sb_add_headers', 0);
         add_action('wp_head', 'wp_print_styles', 9);
         add_action('admin_bar_menu', 'sb_admin_bar_menu', 45);
@@ -331,7 +331,7 @@ function sb_sermon_init()
             add_action('wp_footer', 'sb_footer_stats');
         }
     } else {
-        require(SB_INCLUDES_DIR . '/admin.php');
+        require SB_INCLUDES_DIR . '/admin.php';
         add_action('admin_menu', 'sb_add_pages');
         add_filter('dashboard_glance_items', 'sb_dashboard_glance');
         add_action('admin_enqueue_scripts', 'sb_add_admin_headers');
@@ -768,7 +768,7 @@ add_action('admin_init', 'sb_migrate_widget_settings');
 */
 function sb_widget_sermon_wrapper($args, $widget_args = 1)
 {
-    require_once(SB_INCLUDES_DIR . '/frontend.php');
+    require_once SB_INCLUDES_DIR . '/frontend.php';
     sb_widget_sermon($args, $widget_args);
 }
 
@@ -780,7 +780,7 @@ function sb_widget_sermon_wrapper($args, $widget_args = 1)
 */
 function sb_widget_tag_cloud_wrapper($args)
 {
-    require_once(SB_INCLUDES_DIR . '/frontend.php');
+    require_once SB_INCLUDES_DIR . '/frontend.php';
     sb_widget_tag_cloud($args);
 }
 
@@ -792,7 +792,7 @@ function sb_widget_tag_cloud_wrapper($args)
 */
 function sb_widget_popular_wrapper($args)
 {
-    require_once(SB_INCLUDES_DIR . '/frontend.php');
+    require_once SB_INCLUDES_DIR . '/frontend.php';
     sb_widget_popular($args);
 }
 

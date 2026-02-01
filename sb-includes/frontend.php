@@ -697,7 +697,7 @@ function sb_print_prev_page_link($limit = 0)
 // Print link to attached files
 function sb_print_url($url)
 {
-    require(SB_INCLUDES_DIR . '/filetypes.php');
+    require SB_INCLUDES_DIR . '/filetypes.php';
     $pathinfo = pathinfo($url);
     $ext = $pathinfo['extension'];
     if ((substr($url, 0, 7) == "http://") or (substr($url, 0, 8) == 'https://')) {

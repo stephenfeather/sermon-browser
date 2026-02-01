@@ -54,7 +54,7 @@ class UninstallPage
             wp_die(__("You do not have the correct permissions to Uninstall SermonBrowser", 'sermon-browser'));
         }
 
-        require(SB_INCLUDES_DIR . '/uninstall.php');
+        require SB_INCLUDES_DIR . '/uninstall.php';
     }
 
     /**

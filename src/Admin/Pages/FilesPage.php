@@ -194,7 +194,7 @@ class FilesPage
         // Check file type for multisite.
         if (IS_MU) {
             $file_allowed = false;
-            require_once(SB_ABSPATH . 'wp-includes/ms-functions.php');
+            require_once SB_ABSPATH . 'wp-includes/ms-functions.php';
             $allowed_extensions = explode(" ", get_site_option("upload_filetypes"));
             foreach ($allowed_extensions as $ext) {
                 if (substr(strtolower($filename), -(strlen($ext) + 1)) === "." . strtolower($ext)) {
