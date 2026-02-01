@@ -52,7 +52,7 @@ class AdminController
             'publish_posts',
             $this->getMainMenuFile(),
             [$this, 'renderSermonsPage'],
-            SB_PLUGIN_URL . '/sb-includes/sb-icon.png'
+            SB_PLUGIN_URL . '/assets/images/sb-icon.png'
         );
 
         // Sermons submenu (duplicate of main for cleaner display).

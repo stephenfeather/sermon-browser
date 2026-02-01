@@ -721,7 +721,7 @@ function sb_print_url($url)
             return;
         }
     }
-    $uicon = SB_PLUGIN_URL . '/sb-includes/icons/' . $uicon;
+    $uicon = SB_PLUGIN_URL . '/assets/images/icons/' . $uicon;
     if (!isset($filetypes[$ext]['name'])) {
         $filetypes[$ext]['name'] = sprintf(__('%s file', 'sermon-browser'), addslashes($ext));
     } else {

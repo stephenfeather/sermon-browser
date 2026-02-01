@@ -196,7 +196,7 @@ class SeriesServicesPage
         <div class="wrap">
             <?php if ($type === 'Series') : ?>
                 <a href="http://www.sermonbrowser.com/">
-                    <img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png"
+                    <img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png"
                          width="191" height="35" style="margin: 1em 2em; float: right;"/>
                 </a>
             <?php endif; ?>

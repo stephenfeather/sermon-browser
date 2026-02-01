@@ -410,7 +410,7 @@ class FilesPage
         </script>
         <a name="top"></a>
         <div class="wrap">
-            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/sb-includes/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
             <h2><?php _e('Upload Files', 'sermon-browser') ?></h2>
             <?php if (!sb_import_options_set()) {
                 echo '<p class="plugin-update">';

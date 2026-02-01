@@ -361,7 +361,7 @@ table.podcast {
 
 .podcastcustom {
 	float:right;
-	background: #fce4ff url(**SB_PATH**/sb-includes/icons/podcast_custom_background.png) repeat-x;
+	background: #fce4ff url(**SB_PATH**/assets/images/icons/podcast_custom_background.png) repeat-x;
 	padding: 0.5em;
 	font-size: 1em;
 	-moz-border-radius: 7px;

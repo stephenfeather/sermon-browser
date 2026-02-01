@@ -348,7 +348,7 @@ function sb_sermon_init()
 */
 function sb_add_pages()
 {
-    add_menu_page(__('Sermons', 'sermon-browser'), __('Sermons', 'sermon-browser'), 'publish_posts', __FILE__, 'sb_manage_sermons', SB_PLUGIN_URL . '/sb-includes/sb-icon.png');
+    add_menu_page(__('Sermons', 'sermon-browser'), __('Sermons', 'sermon-browser'), 'publish_posts', __FILE__, 'sb_manage_sermons', SB_PLUGIN_URL . '/assets/images/sb-icon.png');
     add_submenu_page(__FILE__, __('Sermons', 'sermon-browser'), __('Sermons', 'sermon-browser'), 'publish_posts', __FILE__, 'sb_manage_sermons');
     if (isset($_REQUEST['page']) && $_REQUEST['page'] == 'sermon-browser/new_sermon.php' && isset($_REQUEST['mid'])) {
         add_submenu_page(__FILE__, __('Edit Sermon', 'sermon-browser'), __('Edit Sermon', 'sermon-browser'), 'publish_posts', 'sermon-browser/new_sermon.php', 'sb_new_sermon');

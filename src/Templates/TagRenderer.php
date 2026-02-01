@@ -398,7 +398,7 @@ class TagRenderer
      */
     public function renderPodcastIcon(mixed $data, string $context): string
     {
-        $iconUrl = SB_PLUGIN_URL . '/sb-includes/icons/podcast.png';
+        $iconUrl = SB_PLUGIN_URL . '/assets/images/icons/podcast.png';
         return '<img alt="Subscribe to full podcast" title="Subscribe to full podcast" '
             . 'class="podcasticon" src="' . esc_url($iconUrl) . '"/>';
     }
@@ -412,7 +412,7 @@ class TagRenderer
      */
     public function renderPodcastIconForSearch(mixed $data, string $context): string
     {
-        $iconUrl = SB_PLUGIN_URL . '/sb-includes/icons/podcast_custom.png';
+        $iconUrl = SB_PLUGIN_URL . '/assets/images/icons/podcast_custom.png';
         return '<img alt="Subscribe to custom podcast" title="Subscribe to custom podcast" '
             . 'class="podcasticon" src="' . esc_url($iconUrl) . '"/>';
     }
