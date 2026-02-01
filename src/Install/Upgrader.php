@@ -90,12 +90,17 @@ class Upgrader
      *
      * Adds options that were added since the last database update.
      *
-     * @param string $oldVersion The previous version.
+     * @param string $oldVersion The previous version (reserved for future version-specific upgrades).
      * @param string $newVersion The new version.
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public static function versionUpgrade(string $oldVersion, string $newVersion): void
     {
+        // $oldVersion reserved for future version-specific upgrade logic
+        unset($oldVersion);
+
         sb_update_option('code_version', $newVersion);
 
         if (sb_get_option('filter_type') === '') {
