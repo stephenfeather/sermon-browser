@@ -65,6 +65,7 @@ use SermonBrowser\Podcast\PodcastHelper;
 use SermonBrowser\Install\Upgrader;
 use SermonBrowser\Install\Installer;
 use SermonBrowser\Install\DefaultTemplates;
+use SermonBrowser\Http\RequestInterceptor;
 // Frontend classes
 use SermonBrowser\Frontend\Widgets\PopularWidget;
 use SermonBrowser\Frontend\Widgets\SermonWidget;
@@ -182,99 +183,7 @@ add_action('admin_notices', function () {
 */
 function sb_hijack()
 {
-
-    global $filetypes;
-
-    wp_timezone_override_offset();
-
-    if (isset($_POST['sermon']) && $_POST['sermon'] == 1) {
-        LegacyAjaxHandler::handle();
-    }
-    if (stripos($_SERVER['REQUEST_URI'], 'sb-style.css') !== false || isset($_GET['sb-style'])) {
-        StyleOutput::output();
-    }
-
-    //Forces sermon download of local file
-    if (isset($_GET['download']) and isset($_GET['file_name'])) {
-        $requested_name = rawurldecode($_GET['file_name']);
-        $file = File::findOneBy('name', $requested_name);
-        $file_name = $file?->name;
-        if (!is_null($file_name)) {
-            header("Content-Type: application/octet-stream");
-            header('Content-Disposition: attachment; filename="' . $file_name . '"');
-            sb_increase_download_count($file_name);
-            $file_name = SB_ABSPATH . sb_get_option('upload_dir') . $file_name;
-            $filesize = filesize($file_name);
-            if ($filesize != 0) {
-                header("Content-Length: " . filesize($file_name));
-            }
-            sb_output_file($file_name);
-            die();
-        } else {
-            wp_die(htmlentities(rawurldecode($_GET['file_name'])) . ' ' . __('not found', 'sermon-browser'), __('File not found', 'sermon-browser'), array('response' => 404));
-        }
-    }
-
-    //Forces sermon download of external URL
-    if (isset($_REQUEST['download']) and isset($_REQUEST['url'])) {
-        $url = rawurldecode($_GET['url']);
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        $downloaded_file = download_url($url);
-        if (is_wp_error($downloaded_file)) {
-            wp_die(htmlentities(rawurldecode($_GET['url'])) . ' ' . __('not found', 'sermon-browser'), __('URL not found', 'sermon-browser'), array('response' => 404));
-        }
-        header('Content-Type: ' . mime_content_type($downloaded_file));
-        header('Content-Disposition: attachment; filename="' . basename($url) . '"');
-        header('Content-Length: ' . filesize($downloaded_file));
-        sb_increase_download_count($url);
-        sb_output_file($downloaded_file);
-        unset($downloaded_file);
-        die();
-    }
-
-    //Returns local file (doesn't force download)
-    if (isset($_GET['show']) and isset($_GET['file_name'])) {
-        global $filetypes;
-        $requested_name = rawurldecode($_GET['file_name']);
-        $file = File::findOneBy('name', $requested_name);
-        $file_name = $file?->name;
-        if (!is_null($file_name)) {
-            $url = sb_get_option('upload_url') . $file_name;
-            sb_increase_download_count($file_name);
-            header("Location: " . $url);
-            die();
-        } else {
-            wp_die(htmlentities(rawurldecode($_GET['file_name'])) . ' ' . __('not found', 'sermon-browser'), __('File not found', 'sermon-browser'), array('response' => 404));
-        }
-    }
-
-    //Returns contents of external URL(doesn't force download)
-    if (isset($_REQUEST['show']) and isset($_REQUEST['url'])) {
-        $requested_url = rawurldecode($_GET['url']);
-        // Validate URL exists in database as a registered external file
-        $file = File::findOneBy('name', $requested_url);
-        if ($file !== null && $file->type === 'url') {
-            sb_increase_download_count($requested_url);
-            // Use wp_redirect for proper redirect handling
-            // URL is validated: must exist in database as registered external file
-            $safe_url = esc_url_raw($file->name);
-            if (wp_redirect($safe_url, 302, 'Sermon Browser')) {
-                exit;
-            }
-            // Fallback if redirect fails
-            wp_die(
-                esc_html__('Unable to redirect to external URL.', 'sermon-browser'),
-                esc_html__('Redirect failed', 'sermon-browser'),
-                array('response' => 500)
-            );
-        } else {
-            wp_die(
-                esc_html__('Invalid or unregistered URL.', 'sermon-browser'),
-                esc_html__('URL not found', 'sermon-browser'),
-                array('response' => 404)
-            );
-        }
-    }
+    RequestInterceptor::intercept();
 }
 
 /**
