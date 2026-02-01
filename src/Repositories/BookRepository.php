@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Repositories;
 
+use SermonBrowser\Constants;
+
 /**
  * Class BookRepository
  *
@@ -24,7 +26,7 @@ class BookRepository extends AbstractRepository
     /**
      * {@inheritDoc}
      */
-    protected string $tableSuffix = 'sb_books';
+    protected string $tableSuffix = Constants::TABLE_BOOKS;
 
     /**
      * {@inheritDoc}
@@ -40,7 +42,7 @@ class BookRepository extends AbstractRepository
      */
     public function getBooksSermonTableName(): string
     {
-        return $this->db->prefix . 'sb_books_sermons';
+        return $this->db->prefix . Constants::TABLE_BOOKS_SERMONS;
     }
 
     /**

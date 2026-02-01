@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Ajax;
 
+use SermonBrowser\Constants;
+
 /**
  * Class AjaxHandler
  *
@@ -40,7 +42,7 @@ abstract class AjaxHandler
      *
      * @var string
      */
-    protected string $capability = 'edit_posts';
+    protected string $capability = Constants::CAP_MANAGE_SERMONS;
 
     /**
      * Register the AJAX actions with WordPress.

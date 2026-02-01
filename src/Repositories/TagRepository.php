@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Repositories;
 
+use SermonBrowser\Constants;
+
 /**
  * Class TagRepository
  *
@@ -24,7 +26,7 @@ class TagRepository extends AbstractRepository
     /**
      * {@inheritDoc}
      */
-    protected string $tableSuffix = 'sb_tags';
+    protected string $tableSuffix = Constants::TABLE_TAGS;
 
     /**
      * {@inheritDoc}
@@ -40,7 +42,7 @@ class TagRepository extends AbstractRepository
      */
     protected function getPivotTableName(): string
     {
-        return $this->db->prefix . 'sb_sermons_tags';
+        return $this->db->prefix . Constants::TABLE_SERMONS_TAGS;
     }
 
     /**

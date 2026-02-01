@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\REST;
 
+use SermonBrowser\Constants;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Response;
@@ -31,7 +32,7 @@ abstract class RestController extends WP_REST_Controller
      *
      * @var string
      */
-    protected string $namespace = 'sermon-browser/v1';
+    protected string $namespace = Constants::REST_NAMESPACE;
 
     /**
      * Check if the current user has admin permissions.
@@ -54,7 +55,7 @@ abstract class RestController extends WP_REST_Controller
      */
     protected function check_edit_permission(): bool
     {
-        return current_user_can('edit_posts');
+        return current_user_can(Constants::CAP_MANAGE_SERMONS);
     }
 
     /**

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Repositories;
 
+use SermonBrowser\Constants;
+
 /**
  * Class SeriesRepository
  *
@@ -23,7 +25,7 @@ class SeriesRepository extends AbstractRepository
     /**
      * {@inheritDoc}
      */
-    protected string $tableSuffix = 'sb_series';
+    protected string $tableSuffix = Constants::TABLE_SERIES;
 
     /**
      * {@inheritDoc}

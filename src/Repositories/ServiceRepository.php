@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Repositories;
 
+use SermonBrowser\Constants;
+
 /**
  * Class ServiceRepository
  *
@@ -23,7 +25,7 @@ class ServiceRepository extends AbstractRepository
     /**
      * {@inheritDoc}
      */
-    protected string $tableSuffix = 'sb_services';
+    protected string $tableSuffix = Constants::TABLE_SERVICES;
 
     /**
      * {@inheritDoc}
