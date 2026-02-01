@@ -1,7 +1,7 @@
 # Sermon Browser Comprehensive Refactor Plan
 
 **Generated:** 2026-01-29
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-01-31
 **Plugin Version:** 0.5.1-dev
 **Target WordPress:** 6.0+
 **Target PHP:** 8.0+
@@ -14,10 +14,11 @@
 | Phase 2: Split Monoliths | ✅ COMPLETE | Admin pages extracted + wired |
 | Phase 3: JS Modernization | ✅ COMPLETE | Legacy JS removed (673 lines) |
 | Phase 4: REST API | ✅ COMPLETE | 167 tests, all endpoints |
-| Phase 5: Gutenberg Blocks | ⏳ NOT STARTED | - |
+| Phase 5: Gutenberg Blocks | ⏳ READY | All prerequisites complete |
 | Phase 6: Remove eval() | ✅ COMPLETE | Security fix, 108 new tests |
+| Phase 7: Empty sb-includes/ | ✅ COMPLETE | Directory deleted, all code in src/ |
 
-**Tests:** 356 passing (Repository + AJAX + REST + Templates)
+**Tests:** 430 passing (Repository + AJAX + REST + Templates + Utilities)
 
 ## Workflow Requirements
 
@@ -58,10 +59,10 @@ src/
 ```
 
 **Legacy code uses raw $wpdb queries in:**
-- `sermon.php` - 32 direct `$wpdb->` calls
-- `sb-includes/admin.php` - 80+ direct `$wpdb->` calls
-- `sb-includes/frontend.php` - 15+ direct `$wpdb->` calls
-- `sb-includes/ajax.php` - AJAX handlers with raw queries
+- `sermon.php` - 13 direct `$wpdb->` calls (debug + deprecated only)
+- `sb-includes/admin.php` - Uses Facades (legacy wrappers remain)
+- `sb-includes/frontend.php` - Uses Facades
+- `sb-includes/ajax.php` - Uses Facades via AjaxRegistry
 
 **Composer autoload configured (VERIFIED):**
 ```json
@@ -1085,19 +1086,77 @@ wp sermon rebuild-stats
 
 ---
 
+## Phase 7: Empty sb-includes/ ✅ COMPLETE
+
+### Goal
+Migrate all code from `sb-includes/` to PSR-4 classes under `src/`, then delete the directory entirely.
+
+### Completed (2026-02-01)
+
+**sb-includes/ directory deleted.** All code now in PSR-4 classes:
+
+| Original File | New Location |
+|---------------|--------------|
+| `admin.php` | Wrappers in sermon.php → `src/Admin/Pages/*` |
+| `ajax.php` | `src/Ajax/LegacyAjaxHandler.php` |
+| `frontend.php` | Wrappers in sermon.php → `src/Frontend/*` |
+| `widget.php` | `src/Widgets/*` |
+| `podcast.php` | `src/Podcast/*` |
+| `sb-install.php` | `src/Install/Installer.php`, `src/Install/DefaultTemplates.php` |
+| `upgrade.php` | `src/Install/Upgrader.php` |
+| `filetypes.php` | `src/Config/FileTypes.php` |
+| `functions-testable.php` | `src/Utilities/HelperFunctions.php` |
+| `style.php` | `src/Frontend/StyleOutput.php` |
+| `uninstall.php` | `src/Install/Uninstaller.php` |
+
+### Key Changes
+- sermon.php no longer requires any sb-includes/ files
+- `SB_INCLUDES_DIR` constant removed
+- 80+ wrapper functions added to sermon.php for compatibility
+- composer.json updated to remove sb-includes/ from autoload
+
+---
+
+## SonarQube Status (2026-02-01)
+
+**Project:** stephenfeather_sermon-browser
+
+### Issue Summary
+
+| Category | Count |
+|----------|-------|
+| **Total Issues** | 1,489 |
+| Code Smells | 226 |
+| Bugs | 26 |
+| Vulnerabilities | 7 |
+| Security Hotspots | 0 |
+
+### Issues by Severity
+
+| Severity | Count |
+|----------|-------|
+| Blocker | 4 |
+| Critical | 59 |
+| Major | 147 |
+| Minor | 49 |
+| Info | 0 |
+| **Total Violations** | 259 |
+
+---
+
 ## Next Steps
 
 ### Immediate Priority
 
-1. **Frontend Modularization** - Convert `frontend.php` to use Facades:
-   - `sb_get_single_sermon()` → Sermon facade
-   - `sb_widget_popular()` → Sermon/Series/Preacher facades
-   - `sb_print_filters()` → Repository queries via facades
-   - `sb_print_tag_clouds()` → Tag facade
+1. **Address Blocker/Critical issues** - 4 blockers + 59 critical issues
+2. **Security fixes** - 7 vulnerabilities to address
 
-### Remaining Phase
+### Ready to Start
 
-2. **Phase 5** - Gutenberg blocks (requires `@wordpress/scripts` build pipeline)
+3. **Phase 5: Gutenberg Blocks** - The only remaining phase
+   - Requires `@wordpress/scripts` build pipeline
+   - Create block equivalents for shortcodes
+   - See Phase 5 section for full scope
 
 ### Completed Cleanup
 
@@ -1106,6 +1165,11 @@ wp sermon rebuild-stats
   - Added template cache clearing on save/upgrade
   - Cleaned up `sb_special_option_names()`
 
+- ✅ **sermon.php $wpdb cleanup** (20→13 references)
+  - Removed unused `global $wpdb` from `sb_sermon_init()`, `sb_display_front_end()`, `sb_display_url()`
+  - Converted `sb_get_page_id()` from raw SQL to WordPress `WP_Query` API
+  - Remaining 13 refs are in `sb_footer_stats()` (debug) and deprecated `sb_create_multi_sermon_query()`
+
 ---
 
-*Last updated: 2026-01-31 (dictionary.php cleanup complete)*
+*Last updated: 2026-02-01 (SonarQube status updated: 1,489 issues, 259 violations)*

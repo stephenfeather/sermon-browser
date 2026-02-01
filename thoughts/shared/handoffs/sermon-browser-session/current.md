@@ -9,13 +9,16 @@ status: active
 
 ## Ledger
 <!-- This section is extracted by SessionStart hook for quick resume -->
-**Updated:** 2026-01-30T19:00:00Z
+**Updated:** 2026-01-31T18:00:00Z
 **Goal:** Update Sermon Browser plugin for modern WordPress compatibility
 **Branch:** develop (main = release only)
 **Test:** `docker-compose up -d` then http://localhost:8080
 
 ### Now
-[→] **Phase 2 RECOVERY NEEDED** - Work was lost in PR #8 merge, cherry-pick 7e2e7c4 and resolve conflicts
+[✓] **sermon.php $wpdb cleanup COMPLETE** - 20→13 references (debug + deprecated only remain)
+- Handoff: `2026-01-31_18-00_sermon-php-wpdb-cleanup.yaml`
+- Converted sb_get_page_id() to WP_Query API
+- 396 tests passing, 1037 assertions
 
 ### Active Handoffs
 - **Phase 2 Worktree:** `feature/phase2-admin-split` branch
@@ -49,7 +52,7 @@ status: active
   - Endpoints: /sermons, /preachers, /series, /services, /files, /tags, /search
   - 167 new tests (240 total, 650 assertions)
 - [ ] **Phase 5:** Gutenberg Blocks (triggers remaining Phase 3 work)
-- [ ] **Phase 6:** Remove eval() Templates
+- [x] **Phase 6:** Remove eval() Templates
 
 ### v0.5.0 Modernization (COMPLETE)
 ### This Session
@@ -151,10 +154,27 @@ All Phase 1 and Phase 2 deprecations have been fixed.
 - **SonarQube** running against the repository
 - Run local analysis: `composer sonar` (includes coverage reports)
 - Requires: `SONAR_TOKEN` environment variable
-- Issue exports:
-  - `sonarqube_base_issues.csv` - Issues from old codebase (baseline, 872 issues)
-  - `sonarqube_issues.csv` - Issues found since Jan 1, 2026 (new/introduced)
-  - `sonarqube_js_issues.csv` - JavaScript issues extracted (141 issues, 2 files)
+
+**Current SonarQube Status (2026-02-01):**
+| Category | Count |
+|----------|-------|
+| Total Issues | 1,489 |
+| Code Smells | 226 |
+| Bugs | 26 |
+| Vulnerabilities | 7 |
+| Security Hotspots | 0 |
+
+| Severity | Count |
+|----------|-------|
+| Blocker | 4 |
+| Critical | 59 |
+| Major | 147 |
+| Minor | 49 |
+| Total Violations | 259 |
+
+**Historical exports:**
+- `sonarqube_base_issues.csv` - Issues from old codebase (baseline)
+- `sonarqube_js_issues.csv` - JavaScript issues (now RESOLVED - files deleted)
 
 ### Workflow State
 pattern: phased-modernization
