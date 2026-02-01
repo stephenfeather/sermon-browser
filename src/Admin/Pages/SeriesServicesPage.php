@@ -192,8 +192,7 @@ class SeriesServicesPage
     {
         $i = 0;
         ?>
-        <a name="manage-<?php echo esc_attr($type); ?>"></a>
-        <div class="wrap">
+        <div class="wrap" id="manage-<?php echo esc_attr($type); ?>">
             <?php if ($type === 'Series') : ?>
                 <a href="http://www.sermonbrowser.com/">
                     <img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png"

@@ -97,6 +97,8 @@ class RestApiRegistryTest extends TestCase
 
         $registry = RestApiRegistry::getInstance();
         $registry->init();
+        // Brain/Monkey expectations are verified in tearDown
+        $this->addToAssertionCount(1);
     }
 
     /**

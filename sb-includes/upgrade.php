@@ -42,7 +42,7 @@ function sb_upgrade_options()
 }
 
 // Runs the version upgrade procedures (add options added since last db update)
-function sb_version_upgrade($old_version, $new_version)
+function sb_version_upgrade($_old_version, $new_version)
 {
     sb_update_option('code_version', $new_version);
     if (sb_get_option('filter_type') == '') {
@@ -74,17 +74,20 @@ function sb_database_upgrade($old_version)
                   $wpdb->query("ALTER TABLE {$table_name} ADD description TEXT NOT NULL, ADD image VARCHAR(255) NOT NULL");
             }
             update_option('sb_sermon_db_version', '1.1');
+            // no break - intentional fall-through for cascading upgrades
         case '1.1':
             add_option('sb_sermon_style', base64_encode($defaultStyle));
             if (!is_dir(SB_ABSPATH . $sermonUploadDir . 'images') && sb_mkdir(SB_ABSPATH . $sermonUploadDir . 'images')) {
                 @chmod(SB_ABSPATH . $sermonUploadDir . 'images', 0755);
             }
             update_option('sb_sermon_db_version', '1.2');
+            // no break - intentional fall-through for cascading upgrades
         case '1.2':
             $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_stuff ADD count INT(10) NOT NULL");
             $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_books_sermons ADD INDEX (sermon_id)");
             $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_sermons_tags ADD INDEX (sermon_id)");
             update_option('sb_sermon_db_version', '1.3');
+            // no break - intentional fall-through for cascading upgrades
         case '1.3':
             $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_series ADD page_id INT(10) NOT NULL");
             $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_sermons ADD page_id INT(10) NOT NULL");
@@ -92,6 +95,7 @@ function sb_database_upgrade($old_version)
             add_option('sb_sermons_per_page', '10');
             add_option('sb_sermon_style_date_modified', strtotime('now'));
             update_option('sb_sermon_db_version', '1.4');
+            // no break - intentional fall-through for cascading upgrades
         case '1.4':
             //Remove duplicate indexes added by a previous bug
             $extra_indexes = $wpdb->get_results("SELECT index_name, table_name FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = '" . DB_NAME . "' AND index_name LIKE 'sermon_id_%'");
@@ -119,6 +123,7 @@ function sb_database_upgrade($old_version)
             $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_tags CHANGE name name VARCHAR(255)");
             $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_tags ADD UNIQUE (name)");
             update_option('sb_sermon_db_version', '1.5');
+            // no break - intentional fall-through for cascading upgrades
         case '1.5':
             sb_upgrade_options();
             $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_stuff ADD duration VARCHAR (6) NOT NULL");
@@ -148,6 +153,7 @@ function sb_database_upgrade($old_version)
             sb_update_option('import_filename', 'none');
             sb_update_option('hide_no_attachments', false);
             sb_update_option('db_version', '1.6');
+            // no break - intentional fall-through for cascading upgrades
         case '1.6':
             sb_update_option('mp3_shortcode', '[audio mp3="%SERMONURL%"]');
             sb_update_option('db_version', '1.7');

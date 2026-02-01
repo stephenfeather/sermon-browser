@@ -56,6 +56,8 @@ class PreacherAjaxTest extends TestCase
             ->with([$this->handler, 'delete']);
 
         $this->handler->register();
+        // Brain/Monkey expectations are verified in tearDown
+        $this->addToAssertionCount(1);
     }
 
     /**

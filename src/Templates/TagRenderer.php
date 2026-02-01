@@ -139,7 +139,7 @@ class TagRenderer
      * @param string $context The context ('search' or 'single').
      * @return string The rendered HTML.
      */
-    public function renderSermonDescription(?object $sermon, string $context): string
+    public function renderSermonDescription(?object $sermon, string $_context): string
     {
         if ($sermon === null || empty($sermon->description)) {
             return '';
@@ -160,7 +160,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderPreacherLink(?object $sermon, string $context): string
+    public function renderPreacherLink(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -179,7 +179,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderPreacherDescription(?object $sermon, string $context): string
+    public function renderPreacherDescription(?object $sermon, string $_context): string
     {
         if ($sermon === null || empty($sermon->preacher_description)) {
             return '';
@@ -202,7 +202,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderPreacherImage(?object $sermon, string $context): string
+    public function renderPreacherImage(?object $sermon, string $_context): string
     {
         if ($sermon === null || empty($sermon->image)) {
             return '';
@@ -227,7 +227,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderSeriesLink(?object $sermon, string $context): string
+    public function renderSeriesLink(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -246,7 +246,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderServiceLink(?object $sermon, string $context): string
+    public function renderServiceLink(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -269,7 +269,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The formatted date.
      */
-    public function renderDate(?object $sermon, string $context): string
+    public function renderDate(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -285,7 +285,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The formatted passage reference.
      */
-    public function renderFirstPassage(?object $sermon, string $context): string
+    public function renderFirstPassage(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -314,7 +314,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderNextPage(mixed $data, string $context): string
+    public function renderNextPage(mixed $_data, string $_context): string
     {
         ob_start();
         sb_print_next_page_link();
@@ -328,7 +328,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderPreviousPage(mixed $data, string $context): string
+    public function renderPreviousPage(mixed $_data, string $_context): string
     {
         ob_start();
         sb_print_prev_page_link();
@@ -346,7 +346,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The podcast URL.
      */
-    public function renderPodcast(mixed $data, string $context): string
+    public function renderPodcast(mixed $_data, string $_context): string
     {
         return sb_get_option('podcast_url');
     }
@@ -358,7 +358,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The custom podcast URL.
      */
-    public function renderPodcastForSearch(mixed $data, string $context): string
+    public function renderPodcastForSearch(mixed $_data, string $_context): string
     {
         return sb_podcast_url();
     }
@@ -370,7 +370,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The iTunes podcast URL.
      */
-    public function renderItunesPodcast(mixed $data, string $context): string
+    public function renderItunesPodcast(mixed $_data, string $_context): string
     {
         $url = sb_get_option('podcast_url');
         return str_replace('http://', 'itpc://', $url);
@@ -383,7 +383,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The iTunes custom podcast URL.
      */
-    public function renderItunesPodcastForSearch(mixed $data, string $context): string
+    public function renderItunesPodcastForSearch(mixed $_data, string $_context): string
     {
         $url = sb_podcast_url();
         return str_replace('http://', 'itpc://', $url);
@@ -396,7 +396,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderPodcastIcon(mixed $data, string $context): string
+    public function renderPodcastIcon(mixed $_data, string $_context): string
     {
         $iconUrl = SB_PLUGIN_URL . '/assets/images/icons/podcast.png';
         return '<img alt="Subscribe to full podcast" title="Subscribe to full podcast" '
@@ -410,7 +410,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderPodcastIconForSearch(mixed $data, string $context): string
+    public function renderPodcastIconForSearch(mixed $_data, string $_context): string
     {
         $iconUrl = SB_PLUGIN_URL . '/assets/images/icons/podcast_custom.png';
         return '<img alt="Subscribe to custom podcast" title="Subscribe to custom podcast" '
@@ -428,7 +428,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderCreditLink(mixed $data, string $context): string
+    public function renderCreditLink(mixed $_data, string $_context): string
     {
         return '<div id="poweredbysermonbrowser">Powered by Sermon Browser</div>';
     }
@@ -466,7 +466,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderTags(array|object $tagsOrSermon, string $context): string
+    public function renderTags(array|object $tagsOrSermon, string $_context): string
     {
         $tags = is_array($tagsOrSermon) ? $tagsOrSermon : [];
 
@@ -495,7 +495,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderNextSermon(?object $sermon, string $context): string
+    public function renderNextSermon(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -513,7 +513,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderPrevSermon(?object $sermon, string $context): string
+    public function renderPrevSermon(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -531,7 +531,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderSamedaySermon(?object $sermon, string $context): string
+    public function renderSamedaySermon(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -583,7 +583,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderEsvText(?object $sermon, string $context): string
+    public function renderEsvText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'esv');
     }
@@ -595,7 +595,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderKjvText(?object $sermon, string $context): string
+    public function renderKjvText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'kjv');
     }
@@ -607,7 +607,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderAsvText(?object $sermon, string $context): string
+    public function renderAsvText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'asv');
     }
@@ -619,7 +619,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderNetText(?object $sermon, string $context): string
+    public function renderNetText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'net');
     }
@@ -631,7 +631,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderYltText(?object $sermon, string $context): string
+    public function renderYltText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'ylt');
     }
@@ -643,7 +643,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderWebText(?object $sermon, string $context): string
+    public function renderWebText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'web');
     }
@@ -655,7 +655,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderAkjvText(?object $sermon, string $context): string
+    public function renderAkjvText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'akjv');
     }
@@ -667,7 +667,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderHnvText(?object $sermon, string $context): string
+    public function renderHnvText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'hnv');
     }
@@ -679,7 +679,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderLbrvText(?object $sermon, string $context): string
+    public function renderLbrvText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'rv1909');
     }
@@ -691,7 +691,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderCornilescuText(?object $sermon, string $context): string
+    public function renderCornilescuText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'cornilescu');
     }
@@ -703,7 +703,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderSynodalText(?object $sermon, string $context): string
+    public function renderSynodalText(?object $sermon, string $_context): string
     {
         return $this->renderBibleText($sermon, 'synodal');
     }
@@ -715,7 +715,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderBiblePassage(?object $sermon, string $context): string
+    public function renderBiblePassage(?object $sermon, string $_context): string
     {
         if ($sermon === null) {
             return '';
@@ -748,7 +748,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The marker string.
      */
-    public function renderSermonsLoopStart(mixed $data, string $context): string
+    public function renderSermonsLoopStart(mixed $_data, string $_context): string
     {
         return '{{SERMONS_LOOP_START}}';
     }
@@ -760,7 +760,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The marker string.
      */
-    public function renderSermonsLoopEnd(mixed $data, string $context): string
+    public function renderSermonsLoopEnd(mixed $_data, string $_context): string
     {
         return '{{SERMONS_LOOP_END}}';
     }
@@ -772,7 +772,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The marker string.
      */
-    public function renderFilesLoopStart(mixed $data, string $context): string
+    public function renderFilesLoopStart(mixed $_data, string $_context): string
     {
         return '{{FILES_LOOP_START}}';
     }
@@ -784,7 +784,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The marker string.
      */
-    public function renderFilesLoopEnd(mixed $data, string $context): string
+    public function renderFilesLoopEnd(mixed $_data, string $_context): string
     {
         return '{{FILES_LOOP_END}}';
     }
@@ -796,7 +796,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The marker string.
      */
-    public function renderEmbedLoopStart(mixed $data, string $context): string
+    public function renderEmbedLoopStart(mixed $_data, string $_context): string
     {
         return '{{EMBED_LOOP_START}}';
     }
@@ -808,7 +808,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The marker string.
      */
-    public function renderEmbedLoopEnd(mixed $data, string $context): string
+    public function renderEmbedLoopEnd(mixed $_data, string $_context): string
     {
         return '{{EMBED_LOOP_END}}';
     }
@@ -820,7 +820,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The marker string.
      */
-    public function renderPassagesLoopStart(mixed $data, string $context): string
+    public function renderPassagesLoopStart(mixed $_data, string $_context): string
     {
         return '{{PASSAGES_LOOP_START}}';
     }
@@ -832,7 +832,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The marker string.
      */
-    public function renderPassagesLoopEnd(mixed $data, string $context): string
+    public function renderPassagesLoopEnd(mixed $_data, string $_context): string
     {
         return '{{PASSAGES_LOOP_END}}';
     }
@@ -848,7 +848,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderFiltersForm(array|null $atts, string $context): string
+    public function renderFiltersForm(array|null $atts, string $_context): string
     {
         if ($atts === null) {
             $atts = [];
@@ -866,7 +866,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderMostPopular(mixed $data, string $context): string
+    public function renderMostPopular(mixed $_data, string $_context): string
     {
         ob_start();
         sb_print_most_popular();
@@ -880,7 +880,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderTagCloud(mixed $data, string $context): string
+    public function renderTagCloud(mixed $_data, string $_context): string
     {
         ob_start();
         sb_print_tag_clouds();
@@ -894,7 +894,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The count as string.
      */
-    public function renderSermonsCount(mixed $count, string $context): string
+    public function renderSermonsCount(mixed $count, string $_context): string
     {
         return (string) $count;
     }
@@ -910,7 +910,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderFile(mixed $mediaName, string $context): string
+    public function renderFile(mixed $mediaName, string $_context): string
     {
         if (empty($mediaName)) {
             return '';
@@ -928,7 +928,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderFileWithDownload(mixed $mediaName, string $context): string
+    public function renderFileWithDownload(mixed $mediaName, string $_context): string
     {
         if (empty($mediaName)) {
             return '';
@@ -946,7 +946,7 @@ class TagRenderer
      * @param string $context The context.
      * @return string The rendered HTML.
      */
-    public function renderEmbed(mixed $mediaName, string $context): string
+    public function renderEmbed(mixed $mediaName, string $_context): string
     {
         if (empty($mediaName)) {
             return '';

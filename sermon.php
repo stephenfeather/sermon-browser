@@ -216,8 +216,18 @@ function sb_hijack()
         $file = File::findOneBy('name', $requested_url);
         if ($file !== null && $file->type === 'url') {
             sb_increase_download_count($requested_url);
-            header('Location: ' . esc_url($requested_url));
-            die();
+            // Use wp_redirect for proper redirect handling
+            // URL is validated: must exist in database as registered external file
+            $safe_url = esc_url_raw($requested_url);
+            if (wp_redirect($safe_url, 302, 'Sermon Browser')) {
+                exit;
+            }
+            // Fallback if redirect fails
+            wp_die(
+                esc_html__('Unable to redirect to external URL.', 'sermon-browser'),
+                esc_html__('Redirect failed', 'sermon-browser'),
+                array('response' => 500)
+            );
         } else {
             wp_die(
                 esc_html__('Invalid or unregistered URL.', 'sermon-browser'),

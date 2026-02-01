@@ -46,6 +46,8 @@ class SermonPaginationAjaxTest extends TestCase
             ->with([$this->handler, 'list']);
 
         $this->handler->register();
+        // Brain/Monkey expectations are verified in tearDown
+        $this->addToAssertionCount(1);
     }
 
     /**

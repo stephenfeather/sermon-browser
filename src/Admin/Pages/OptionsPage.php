@@ -313,7 +313,7 @@ class OptionsPage
      */
     private function displayError(string $message): string
     {
-        return '<tr><td align="right" style="color:#AA0000; font-weight:bold">' .
+        return '<tr><td style="text-align:right;color:#AA0000; font-weight:bold">' .
             __('Error', 'sermon-browser') . ':</td>' .
             '<td style="color: #AA0000">' . $message . '</td></tr>';
     }
@@ -326,7 +326,7 @@ class OptionsPage
      */
     private function displayWarning(string $message): string
     {
-        return '<tr><td align="right" style="color:#FFDC00; font-weight:bold">' .
+        return '<tr><td style="text-align:right;color:#FFDC00; font-weight:bold">' .
             __('Warning', 'sermon-browser') . ':</td>' .
             '<td style="color: #FF8C00">' . $message . '</td></tr>';
     }
@@ -396,7 +396,7 @@ class OptionsPage
         if (!IS_MU || sb_is_super_admin()) {
             ?>
             <tr>
-                <td align="right" style="vertical-align:middle">
+                <td style="text-align:right;vertical-align:middle">
                     <?php _e('Upload folder', 'sermon-browser') ?>:
                 </td>
                 <td>
@@ -423,7 +423,7 @@ class OptionsPage
     {
         ?>
         <tr>
-            <td align="right" style="vertical-align:middle">
+            <td style="text-align:right;vertical-align:middle">
                 <?php _e('Public podcast feed', 'sermon-browser') ?>:
             </td>
             <td>
@@ -433,7 +433,7 @@ class OptionsPage
             </td>
         </tr>
         <tr>
-            <td align="right"><?php _e('Private podcast feed', 'sermon-browser') ?>:</td>
+            <td style="text-align:right"><?php _e('Private podcast feed', 'sermon-browser') ?>:</td>
             <td>
                 <?php
                 if (sb_display_url() === '') {
@@ -457,7 +457,7 @@ class OptionsPage
     {
         ?>
         <tr>
-            <td align="right" style="vertical-align:middle">
+            <td style="text-align:right;vertical-align:middle">
                 <?php _e('MP3 shortcode', 'sermon-browser') ?>:
                 <br/><?php _e('Default: ', 'sermon-browser') ?>[audio mp3=&quot;%SERMONURL%&quot;]
             </td>
@@ -485,7 +485,7 @@ class OptionsPage
         }
         ?>
         <tr>
-            <td align="right" style="vertical-align:middle">
+            <td style="text-align:right;vertical-align:middle">
                 <?php _e('ESV API Key (required to display the ESV text)', 'sermon-browser') ?>:
                 <br/>
                 <?php
@@ -513,7 +513,7 @@ class OptionsPage
     {
         ?>
         <tr>
-            <td align="right" style="vertical-align:middle">
+            <td style="text-align:right;vertical-align:middle">
                 <?php _e('Sermons per page', 'sermon-browser') ?>:
             </td>
             <td>
@@ -538,7 +538,7 @@ class OptionsPage
         ];
         ?>
         <tr>
-            <td align="right" style="vertical-align:top" rowspan="2">
+            <td style="text-align:right;vertical-align:top" rowspan="2">
                 <?php _e('Filter type', 'sermon-browser') ?>:
             </td>
             <td>
@@ -570,7 +570,7 @@ class OptionsPage
     {
         ?>
         <tr>
-            <td align="right"><?php _e('Hide sermons without attachments?', 'sermon-browser') ?></td>
+            <td style="text-align:right"><?php _e('Hide sermons without attachments?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="hide_no_attachments"
                     <?php echo sb_get_option('hide_no_attachments') ? 'checked="checked"' : ''; ?>
@@ -743,7 +743,7 @@ class OptionsPage
     {
         ?>
         <tr>
-            <td align="right"><?php _e('Add files prompt to top of Add Sermon page?', 'sermon-browser') ?></td>
+            <td style="text-align:right"><?php _e('Add files prompt to top of Add Sermon page?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_prompt"
                     <?php echo sb_get_option('import_prompt') ? 'checked="checked"' : ''; ?>
@@ -751,7 +751,7 @@ class OptionsPage
             </td>
         </tr>
         <tr>
-            <td align="right"><?php _e('Use title tag for sermon title?', 'sermon-browser') ?></td>
+            <td style="text-align:right"><?php _e('Use title tag for sermon title?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_title"
                     <?php echo sb_get_option('import_title') ? 'checked="checked"' : ''; ?>
@@ -759,7 +759,7 @@ class OptionsPage
             </td>
         </tr>
         <tr>
-            <td align="right"><?php _e('Use artist tag for preacher?', 'sermon-browser') ?></td>
+            <td style="text-align:right"><?php _e('Use artist tag for preacher?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_artist"
                     <?php echo sb_get_option('import_artist') ? 'checked="checked"' : ''; ?>
@@ -767,7 +767,7 @@ class OptionsPage
             </td>
         </tr>
         <tr>
-            <td align="right"><?php _e('Use album tag for series?', 'sermon-browser') ?></td>
+            <td style="text-align:right"><?php _e('Use album tag for series?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_album"
                     <?php echo sb_get_option('import_album') ? 'checked="checked"' : ''; ?>
@@ -775,7 +775,7 @@ class OptionsPage
             </td>
         </tr>
         <tr>
-            <td align="right"><?php _e('Use comments tag for sermon description?', 'sermon-browser') ?></td>
+            <td style="text-align:right"><?php _e('Use comments tag for sermon description?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_comments"
                     <?php echo sb_get_option('import_comments') ? 'checked="checked"' : ''; ?>
@@ -783,7 +783,7 @@ class OptionsPage
             </td>
         </tr>
         <tr>
-            <td align="right" style="vertical-align: middle">
+            <td style="text-align:right;vertical-align: middle">
                 <?php _e('Attempt to extract date from filename', 'sermon-browser') ?>
             </td>
             <td style="vertical-align: middle">

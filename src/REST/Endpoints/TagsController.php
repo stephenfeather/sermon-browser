@@ -118,7 +118,7 @@ class TagsController extends RestController
      * @param WP_REST_Request $request The request object.
      * @return bool Always true for public access.
      */
-    public function get_sermons_by_tag_permissions_check($request): bool
+    public function get_sermons_by_tag_permissions_check($_request): bool
     {
         return true;
     }

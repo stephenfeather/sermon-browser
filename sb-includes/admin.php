@@ -365,7 +365,7 @@ function sb_print_import_options_message($long = false)
 function sb_print_upload_form()
 {
     ?>
-    <table width="100%" cellspacing="2" cellpadding="5" class="widefat">
+    <table style="width:100%; border-spacing:2px" class="widefat">
         <form method="post" enctype="multipart/form-data" action ="<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>" >
         <thead>
         <tr>
@@ -378,12 +378,12 @@ function sb_print_upload_form()
         </thead>
         <tbody>
         <tr>
-            <th nowrap style="width:20em" valign="top" scope="row"><?php _e('File to upload', 'sermon-browser') ?>: </th>
+            <th style="width:20em; white-space:nowrap; vertical-align:top" scope="row"><?php _e('File to upload', 'sermon-browser') ?>: </th>
     <?php
     $checkSermonUpload = sb_checkSermonUploadable();
     if ($checkSermonUpload == 'writeable') {
         ?>
-            <td width ="40"><input type="file" size="40" value="" name="upload" /></td>
+            <td style="width:40px"><input type="file" size="40" value="" name="upload" /></td>
             <td class="submit"><input type="submit" name="save" value="<?php _e('Upload', 'sermon-browser') ?> &raquo;" /></td>
         <?php
     } elseif (IS_MU) {
@@ -399,7 +399,7 @@ function sb_print_upload_form()
         </tr>
     <?php if (sb_import_options_set()) { ?>
         <tr>
-            <th nowrap valign="top" scope="row"><?php _e('URL to import', 'sermon-browser') ?>: </th>
+            <th style="white-space:nowrap; vertical-align:top" scope="row"><?php _e('URL to import', 'sermon-browser') ?>: </th>
             <td>
                 <input type="text" size="40" value="" name="url"/><br/>
                 <span style="line-height: 29px"><input type="radio" name="import_type" value="remote" checked="checked" /><?php _e('Link to remote file', 'sermon-browser') ?> <input type="radio" name="import_type" value="download" /><?php _e('Copy remote file to server', 'sermon-browser') ?></span>
@@ -412,7 +412,7 @@ function sb_print_upload_form()
         <form method="get" action="<?php echo admin_url('admin.php?page=sermon-browser/new_sermon.php');?>">
         <input type="hidden" name="page" value="sermon-browser/new_sermon.php" />
         <tr>
-            <th nowrap valign="top" scope="row"><?php _e('Choose existing file', 'sermon-browser') ?>: </th>
+            <th style="white-space:nowrap; vertical-align:top" scope="row"><?php _e('Choose existing file', 'sermon-browser') ?>: </th>
             <td>
                 <select name="getid3">
                     <?php

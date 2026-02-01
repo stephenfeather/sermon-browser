@@ -67,6 +67,8 @@ class AjaxRegistryTest extends TestCase
 
         $registry = AjaxRegistry::getInstance();
         $registry->register();
+        // Brain/Monkey expectations are verified in tearDown
+        $this->addToAssertionCount(1);
     }
 
     /**

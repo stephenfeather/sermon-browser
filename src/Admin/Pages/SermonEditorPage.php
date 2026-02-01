@@ -649,7 +649,7 @@ class SermonEditorPage
      * @param bool $error Whether an error occurred.
      * @return void
      */
-    private function renderForm(array $formData, array $id3_tags, array $translated_books, bool $error): void
+    private function renderForm(array $formData, array $id3_tags, array $translated_books, bool $_error): void
     {
         // Extract form data for template.
         extract($formData);

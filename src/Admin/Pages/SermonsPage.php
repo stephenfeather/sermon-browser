@@ -138,7 +138,7 @@ class SermonsPage
      * @param int $cnt Total sermon count.
      * @return void
      */
-    private function renderScript(int $cnt): void
+    private function renderScript(int $_cnt): void
     {
         ?>
     <script>

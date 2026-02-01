@@ -86,7 +86,7 @@ class TagParser
      * @param string $context The context.
      * @return string The template with loop tags converted to markers.
      */
-    private function convertLoopTagsToMarkers(string $template, string $context): string
+    private function convertLoopTagsToMarkers(string $template, string $_context): string
     {
         $loopTags = [
             'sermons_loop' => self::SERMONS_LOOP_START,

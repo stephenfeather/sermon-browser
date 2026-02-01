@@ -183,7 +183,7 @@ class FilesController extends RestController
      * @param WP_REST_Request $request The request object.
      * @return bool Always true for public access.
      */
-    public function get_sermon_files_permissions_check($request): bool
+    public function get_sermon_files_permissions_check($_request): bool
     {
         return true;
     }
@@ -196,7 +196,7 @@ class FilesController extends RestController
      * @param WP_REST_Request $request The request object.
      * @return bool|WP_Error True if allowed, WP_Error otherwise.
      */
-    public function attach_file_permissions_check($request): bool|WP_Error
+    public function attach_file_permissions_check($_request): bool|WP_Error
     {
         if (!$this->check_edit_permission()) {
             return $this->prepare_error_response(

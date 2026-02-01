@@ -408,8 +408,7 @@ class FilesPage
                 });
             }
         </script>
-        <a name="top"></a>
-        <div class="wrap">
+        <div class="wrap" id="top">
             <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
             <h2><?php _e('Upload Files', 'sermon-browser') ?></h2>
             <?php if (!sb_import_options_set()) {
@@ -426,10 +425,10 @@ class FilesPage
             <table class="widefat">
                 <thead>
                     <tr>
-                        <th width="10%" scope="col"><div style="text-align:center"><?php _e('ID', 'sermon-browser') ?></div></th>
-                        <th width="50%" scope="col"><div style="text-align:center"><?php _e('File name', 'sermon-browser') ?></div></th>
-                        <th width="20%" scope="col"><div style="text-align:center"><?php _e('File type', 'sermon-browser') ?></div></th>
-                        <th width="20%" scope="col"><div style="text-align:center"><?php _e('Actions', 'sermon-browser') ?></div></th>
+                        <th style="width:10%" scope="col"><div style="text-align:center"><?php _e('ID', 'sermon-browser') ?></div></th>
+                        <th style="width:50%" scope="col"><div style="text-align:center"><?php _e('File name', 'sermon-browser') ?></div></th>
+                        <th style="width:20%" scope="col"><div style="text-align:center"><?php _e('File type', 'sermon-browser') ?></div></th>
+                        <th style="width:20%" scope="col"><div style="text-align:center"><?php _e('Actions', 'sermon-browser') ?></div></th>
                     </tr>
                 </thead>
                 <tbody id="the-list-u">
@@ -454,8 +453,7 @@ class FilesPage
                 <div class="alignright" id="uright"></div>
             </div>
         </div>
-        <a name="linked"></a>
-        <div class="wrap">
+        <div class="wrap" id="linked">
             <h2><?php _e('Linked files', 'sermon-browser') ?></h2>
             <br style="clear:both">
             <table class="widefat">
@@ -498,8 +496,7 @@ class FilesPage
                 <div class="alignright" id="right"></div>
             </div>
         </div>
-        <a name="search"></a>
-        <div class="wrap">
+        <div class="wrap" id="search">
             <h2><?php _e('Search for files', 'sermon-browser') ?></h2>
             <form id="searchform" name="searchform">
                 <p>

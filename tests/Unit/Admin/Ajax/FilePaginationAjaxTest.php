@@ -54,6 +54,8 @@ class FilePaginationAjaxTest extends TestCase
             ->with([$this->handler, 'search']);
 
         $this->handler->register();
+        // Brain/Monkey expectations are verified in tearDown
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -72,6 +74,8 @@ class FilePaginationAjaxTest extends TestCase
             ->once();
 
         $this->handler->register();
+        // Brain/Monkey expectations are verified in tearDown
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -90,6 +94,8 @@ class FilePaginationAjaxTest extends TestCase
             ->with([$this->handler, 'search']);
 
         $this->handler->register();
+        // Brain/Monkey expectations are verified in tearDown
+        $this->addToAssertionCount(1);
     }
 
     /**

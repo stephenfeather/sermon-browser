@@ -5,7 +5,7 @@
  * @deprecated Use sb_display_sermons() or the sermon browser widget instead
  * @param array $options
  */
-function display_sermons($options = array())
+function display_sermons($_options = array())
 {
     echo "This function is now deprecated. Use sb_display_sermons or the sermon browser widget, instead.";
 }

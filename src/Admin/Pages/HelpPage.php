@@ -173,7 +173,7 @@ class HelpPage
         <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
         <h2 style=>Help support Christian ministry in Japan</h2>
         <div style="width:533px; float:left">
-            <iframe src="http://player.vimeo.com/video/19995544?title=0&amp;byline=0&amp;portrait=0" width="533" height="300" frameborder="0"></iframe>
+            <iframe src="http://player.vimeo.com/video/19995544?title=0&amp;byline=0&amp;portrait=0" width="533" height="300" style="border:none"></iframe>
         </div>
         <div style="margin-left:553px;">
             <p>Since April 2011, all gifts donated to Sermon Browser have been given to support the work of <a href="https://www.bethel-clydach.co.uk/about/mission-partners/nathanael-and-anna-ayling/">Nathanael and Anna Ayling</a> in Japan.

@@ -95,19 +95,19 @@ class TemplatesPage
         <br/>
         <table border="0" class="widefat">
             <tr>
-                <td align="right"><?php _e('Search results page', 'sermon-browser'); ?>: </td>
+                <td style="text-align:right"><?php _e('Search results page', 'sermon-browser'); ?>: </td>
                 <td>
                     <?php sb_build_textarea('multi', sb_get_option('search_template')); ?>
                 </td>
             </tr>
             <tr>
-                <td align="right"><?php _e('Sermon page', 'sermon-browser'); ?>: </td>
+                <td style="text-align:right"><?php _e('Sermon page', 'sermon-browser'); ?>: </td>
                 <td>
                     <?php sb_build_textarea('single', sb_get_option('single_template')); ?>
                 </td>
             </tr>
             <tr>
-                <td align="right"><?php _e('Style', 'sermon-browser'); ?>: </td>
+                <td style="text-align:right"><?php _e('Style', 'sermon-browser'); ?>: </td>
                 <td>
                     <?php sb_build_textarea('style', sb_get_option('css_style')); ?>
                 </td>
