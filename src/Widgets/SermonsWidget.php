@@ -17,6 +17,8 @@ use SermonBrowser\Facades\Service;
  * Modern WP_Widget class for displaying a list of recent sermons
  * in WordPress sidebars and widget areas.
  *
+ * @extends WP_Widget<array{title?: string, limit?: int, preacher?: int, service?: int, series?: int, show_preacher?: bool, show_book?: bool, show_date?: bool}>
+ *
  * @since 0.46.0
  */
 class SermonsWidget extends WP_Widget

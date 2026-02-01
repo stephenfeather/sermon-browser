@@ -13,6 +13,8 @@ use WP_Widget;
  * Modern WP_Widget class for displaying a cloud of sermon tags
  * in WordPress sidebars and widget areas.
  *
+ * @extends WP_Widget<array{title?: string}>
+ *
  * @since 0.46.0
  */
 class TagCloudWidget extends WP_Widget
