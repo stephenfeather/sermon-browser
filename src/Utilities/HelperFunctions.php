@@ -27,7 +27,7 @@ class HelperFunctions
         $result = '';
 
         for ($i = 0; $i < $length; $i++) {
-            $result .= chr(rand(97, 122)); // a-z
+            $result .= chr(random_int(97, 122)); // a-z
         }
 
         return $result;
