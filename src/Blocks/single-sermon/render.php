@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server-side rendering of the sermon-browser/single-sermon block.
  *
@@ -88,49 +89,49 @@ try {
         <article class="sb-single-sermon__content">
             <h2 class="sb-single-sermon__title"><?php echo esc_html($sermon->title); ?></h2>
 
-            <?php if ($show_date && !empty($sermon->datetime)): ?>
+            <?php if ($show_date && !empty($sermon->datetime)) : ?>
                 <p class="sb-single-sermon__date">
                     <?php echo esc_html(wp_date(get_option('date_format'), strtotime($sermon->datetime))); ?>
                 </p>
             <?php endif; ?>
 
-            <?php if ($show_preacher && !empty($sermon->preacher)): ?>
+            <?php if ($show_preacher && !empty($sermon->preacher)) : ?>
                 <p class="sb-single-sermon__preacher">
                     <?php echo esc_html($sermon->preacher); ?>
                 </p>
             <?php endif; ?>
 
-            <?php if ($show_series && !empty($sermon->series)): ?>
+            <?php if ($show_series && !empty($sermon->series)) : ?>
                 <p class="sb-single-sermon__series">
                     <?php esc_html_e('Series:', 'sermon-browser'); ?>
                     <?php echo esc_html($sermon->series); ?>
                 </p>
             <?php endif; ?>
 
-            <?php if ($show_passage && !empty($sermon->start)): ?>
+            <?php if ($show_passage && !empty($sermon->start)) : ?>
                 <p class="sb-single-sermon__passage">
                     <?php echo esc_html(sb_print_passage($sermon, true)); ?>
                 </p>
             <?php endif; ?>
 
-            <?php if ($show_description && !empty($sermon->description)): ?>
+            <?php if ($show_description && !empty($sermon->description)) : ?>
                 <div class="sb-single-sermon__description">
                     <?php echo wp_kses_post($sermon->description); ?>
                 </div>
             <?php endif; ?>
 
-            <?php if ($show_media && !empty($files)): ?>
+            <?php if ($show_media && !empty($files)) : ?>
                 <div class="sb-single-sermon__media">
-                    <?php foreach ($files as $file): ?>
+                    <?php foreach ($files as $file) : ?>
                         <?php
                         $file_url = sb_get_option('upload_url') . $file;
                         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                         ?>
-                        <?php if (in_array($ext, ['mp3', 'wav', 'ogg', 'm4a'])): ?>
+                        <?php if (in_array($ext, ['mp3', 'wav', 'ogg', 'm4a'])) : ?>
                             <audio controls class="sb-single-sermon__audio">
                                 <source src="<?php echo esc_url($file_url); ?>" type="audio/<?php echo esc_attr($ext === 'm4a' ? 'mp4' : $ext); ?>">
                             </audio>
-                        <?php else: ?>
+                        <?php else : ?>
                             <a href="<?php echo esc_url($file_url); ?>" class="sb-single-sermon__file">
                                 <?php echo esc_html($file); ?>
                             </a>
@@ -139,9 +140,9 @@ try {
                 </div>
             <?php endif; ?>
 
-            <?php if ($show_tags && !empty($tags)): ?>
+            <?php if ($show_tags && !empty($tags)) : ?>
                 <div class="sb-single-sermon__tags">
-                    <?php foreach ($tags as $tag): ?>
+                    <?php foreach ($tags as $tag) : ?>
                         <a href="<?php echo esc_url(sb_get_tag_link($tag)); ?>" class="sb-single-sermon__tag">
                             <?php echo esc_html($tag); ?>
                         </a>

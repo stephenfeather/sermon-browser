@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Server-side rendering of the sermon-browser/sermon-list block.
  *
@@ -67,7 +68,7 @@ $wrapper_attributes = get_block_wrapper_attributes([
 
 ?>
 <div <?php echo $wrapper_attributes; ?>>
-    <?php if ($show_filters && $filter_type !== 'none'): ?>
+    <?php if ($show_filters && $filter_type !== 'none') : ?>
         <div class="sb-sermon-list__filters">
             <form method="get" class="sb-sermon-list__filter-form">
                 <?php
@@ -77,13 +78,13 @@ $wrapper_attributes = get_block_wrapper_attributes([
                 }
                 ?>
 
-                <?php if ($filter_type === 'dropdown'): ?>
+                <?php if ($filter_type === 'dropdown') : ?>
                     <select name="preacher" class="sb-sermon-list__filter-select">
                         <option value=""><?php esc_html_e('All Preachers', 'sermon-browser'); ?></option>
                         <?php
                         $preachers = \SermonBrowser\Facades\Preacher::findAll();
-                        foreach ($preachers as $preacher):
-                        ?>
+                        foreach ($preachers as $preacher) :
+                            ?>
                             <option value="<?php echo esc_attr($preacher->id); ?>" <?php selected($filter['preacher'], $preacher->id); ?>>
                                 <?php echo esc_html($preacher->name); ?>
                             </option>
@@ -94,8 +95,8 @@ $wrapper_attributes = get_block_wrapper_attributes([
                         <option value=""><?php esc_html_e('All Series', 'sermon-browser'); ?></option>
                         <?php
                         $all_series = \SermonBrowser\Facades\Series::findAll();
-                        foreach ($all_series as $s):
-                        ?>
+                        foreach ($all_series as $s) :
+                            ?>
                             <option value="<?php echo esc_attr($s->id); ?>" <?php selected($filter['series'], $s->id); ?>>
                                 <?php echo esc_html($s->name); ?>
                             </option>
@@ -106,8 +107,8 @@ $wrapper_attributes = get_block_wrapper_attributes([
                         <option value=""><?php esc_html_e('All Services', 'sermon-browser'); ?></option>
                         <?php
                         $services = \SermonBrowser\Facades\Service::findAll();
-                        foreach ($services as $service):
-                        ?>
+                        foreach ($services as $service) :
+                            ?>
                             <option value="<?php echo esc_attr($service->id); ?>" <?php selected($filter['service'], $service->id); ?>>
                                 <?php echo esc_html($service->name); ?>
                             </option>
@@ -122,11 +123,11 @@ $wrapper_attributes = get_block_wrapper_attributes([
         </div>
     <?php endif; ?>
 
-    <?php if (empty($sermons)): ?>
+    <?php if (empty($sermons)) : ?>
         <p class="sb-sermon-list__no-results">
             <?php esc_html_e('No sermons found.', 'sermon-browser'); ?>
         </p>
-    <?php else: ?>
+    <?php else : ?>
         <div class="sb-sermon-list__results">
             <p class="sb-sermon-list__count">
                 <?php
@@ -139,7 +140,7 @@ $wrapper_attributes = get_block_wrapper_attributes([
             </p>
 
             <ul class="sb-sermon-list__items">
-                <?php foreach ($sermons as $sermon): ?>
+                <?php foreach ($sermons as $sermon) : ?>
                     <li class="sb-sermon-list__item">
                         <article class="sb-sermon-list__sermon">
                             <h3 class="sb-sermon-list__sermon-title">
@@ -149,26 +150,26 @@ $wrapper_attributes = get_block_wrapper_attributes([
                             </h3>
 
                             <div class="sb-sermon-list__sermon-meta">
-                                <?php if (!empty($sermon->datetime)): ?>
+                                <?php if (!empty($sermon->datetime)) : ?>
                                     <span class="sb-sermon-list__sermon-date">
                                         <?php echo esc_html(wp_date(get_option('date_format'), strtotime($sermon->datetime))); ?>
                                     </span>
                                 <?php endif; ?>
 
-                                <?php if (!empty($sermon->preacher)): ?>
+                                <?php if (!empty($sermon->preacher)) : ?>
                                     <span class="sb-sermon-list__sermon-preacher">
                                         <?php echo esc_html($sermon->preacher); ?>
                                     </span>
                                 <?php endif; ?>
 
-                                <?php if (!empty($sermon->series)): ?>
+                                <?php if (!empty($sermon->series)) : ?>
                                     <span class="sb-sermon-list__sermon-series">
                                         <?php echo esc_html($sermon->series); ?>
                                     </span>
                                 <?php endif; ?>
                             </div>
 
-                            <?php if (!empty($sermon->description)): ?>
+                            <?php if (!empty($sermon->description)) : ?>
                                 <div class="sb-sermon-list__sermon-excerpt">
                                     <?php echo esc_html(wp_trim_words($sermon->description, 30)); ?>
                                 </div>
@@ -179,14 +180,14 @@ $wrapper_attributes = get_block_wrapper_attributes([
             </ul>
         </div>
 
-        <?php if ($show_pagination && $record_count > $limit): ?>
+        <?php if ($show_pagination && $record_count > $limit) : ?>
             <nav class="sb-sermon-list__pagination">
                 <?php
                 $total_pages = (int) ceil($record_count / $limit);
                 $base_url = remove_query_arg('pagenum');
 
                 // Previous link.
-                if ($page > 1): ?>
+                if ($page > 1) : ?>
                     <a href="<?php echo esc_url(add_query_arg('pagenum', $page - 1, $base_url)); ?>" class="sb-sermon-list__pagination-prev">
                         &laquo; <?php esc_html_e('Previous', 'sermon-browser'); ?>
                     </a>
@@ -204,7 +205,7 @@ $wrapper_attributes = get_block_wrapper_attributes([
                 </span>
 
                 <?php // Next link.
-                if ($page < $total_pages): ?>
+                if ($page < $total_pages) : ?>
                     <a href="<?php echo esc_url(add_query_arg('pagenum', $page + 1, $base_url)); ?>" class="sb-sermon-list__pagination-next">
                         <?php esc_html_e('Next', 'sermon-browser'); ?> &raquo;
                     </a>

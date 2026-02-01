@@ -19,6 +19,7 @@
     <exclude-pattern>*/.claude/*</exclude-pattern>
     <exclude-pattern>*/bin/*</exclude-pattern>
     <exclude-pattern>*/plans/*</exclude-pattern>
+    <exclude-pattern>*/build/*</exclude-pattern>
 
     <!-- Show progress -->
     <arg value="ps"/>
