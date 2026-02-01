@@ -237,9 +237,9 @@ function sb_sermon_init()
 {
     global $defaultMultiForm, $defaultSingleForm, $defaultStyle;
     if (IS_MU) {
-            load_plugin_textdomain('sermon-browser', '', 'sb-includes');
+        load_plugin_textdomain('sermon-browser', '', 'languages');
     } else {
-            load_plugin_textdomain('sermon-browser', '', 'sermon-browser/sb-includes');
+        load_plugin_textdomain('sermon-browser', '', 'sermon-browser/languages');
     }
 
     // Phase 1: Use get_locale() instead of deprecated WPLANG constant.
