@@ -127,6 +127,14 @@ class OptionsPage
 
         $dir = rtrim(str_replace("\\", "/", sanitize_text_field(stripslashes($_POST['dir']))), "/") . "/";
 
+        // Validate directory path to prevent path traversal attacks.
+        if (!$this->isValidUploadDirectory($dir)) {
+            echo '<div id="message" class="updated fade"><p><b>' .
+                esc_html__('Invalid upload directory path. Directory cannot contain ".." or start with "/".', 'sermon-browser') .
+                '</b></p></div>';
+            return;
+        }
+
         // Save options.
         sb_update_option('podcast_url', esc_url($_POST['podcast']));
 
@@ -168,12 +176,38 @@ class OptionsPage
     private function createUploadDirectories(string $dir): void
     {
         if (!is_dir(SB_ABSPATH . $dir) && sb_mkdir(SB_ABSPATH . $dir)) {
-            @chmod(SB_ABSPATH . $dir, 0777);
+            @chmod(SB_ABSPATH . $dir, 0755);
         }
 
         if (!is_dir(SB_ABSPATH . $dir . 'images') && sb_mkdir(SB_ABSPATH . $dir . 'images')) {
-            @chmod(SB_ABSPATH . $dir . 'images', 0777);
+            @chmod(SB_ABSPATH . $dir . 'images', 0755);
         }
+    }
+
+    /**
+     * Validate upload directory path to prevent path traversal attacks.
+     *
+     * @param string $dir Directory path to validate.
+     * @return bool True if valid, false otherwise.
+     */
+    private function isValidUploadDirectory(string $dir): bool
+    {
+        // Reject paths with directory traversal sequences.
+        if (strpos($dir, '..') !== false) {
+            return false;
+        }
+
+        // Reject absolute paths (starting with /).
+        if (strpos($dir, '/') === 0) {
+            return false;
+        }
+
+        // Reject paths with null bytes.
+        if (strpos($dir, "\0") !== false) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

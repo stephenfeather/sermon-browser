@@ -66,7 +66,7 @@ function sb_database_upgrade($old_version)
             $oldSermonPath = dirname(__FILE__) . "/files/";
             $files = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}sb_stuff WHERE type = 'file' ORDER BY name ASC");
             foreach ((array)$files as $file) {
-                @chmod(SB_ABSPATH . $oldSermonPath . $file->name, 0777);
+                @chmod(SB_ABSPATH . $oldSermonPath . $file->name, 0644);
                 @rename(SB_ABSPATH . $oldSermonPath . $file->name, SB_ABSPATH . $sermonUploadDir . $file->name);
             }
             $table_name = $wpdb->prefix . "sb_preachers";
@@ -77,7 +77,7 @@ function sb_database_upgrade($old_version)
         case '1.1':
             add_option('sb_sermon_style', base64_encode($defaultStyle));
             if (!is_dir(SB_ABSPATH . $sermonUploadDir . 'images') && sb_mkdir(SB_ABSPATH . $sermonUploadDir . 'images')) {
-                @chmod(SB_ABSPATH . $sermonUploadDir . 'images', 0777);
+                @chmod(SB_ABSPATH . $sermonUploadDir . 'images', 0755);
             }
             update_option('sb_sermon_db_version', '1.2');
         case '1.2':

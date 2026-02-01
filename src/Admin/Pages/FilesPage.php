@@ -88,20 +88,32 @@ class FilesPage
     {
         $url = esc_url($_POST['url']);
 
-        if (!ini_get('allow_url_fopen')) {
+        // Validate URL scheme to prevent SSRF attacks.
+        $parsed_url = wp_parse_url($url);
+        if (!isset($parsed_url['scheme']) || !in_array($parsed_url['scheme'], ['http', 'https'], true)) {
             echo '<div id="message" class="updated fade"><p><b>' .
-                __('Your host does not allow remote downloading of files.', 'sermon-browser') .
+                esc_html__('Invalid URL scheme. Only HTTP and HTTPS are allowed.', 'sermon-browser') .
                 '</b></div>';
             return;
         }
 
-        $headers = array_change_key_case(get_headers($url, 1), CASE_LOWER);
-        $matches = [];
-        $matched = preg_match('#HTTP/\d+\.\d+ (\d+)#', $headers[0], $matches);
+        // Use WordPress HTTP API for safe remote requests (protects against SSRF).
+        $response = wp_safe_remote_head($url, [
+            'timeout' => 10,
+            'redirection' => 5,
+        ]);
 
-        if (!$matched || $matches[1] !== '200') {
+        if (is_wp_error($response)) {
             echo '<div id="message" class="updated fade"><p><b>' .
-                __('Invalid URL.', 'sermon-browser') . '</b></div>';
+                esc_html__('Could not fetch URL: ', 'sermon-browser') . esc_html($response->get_error_message()) .
+                '</b></div>';
+            return;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code !== 200) {
+            echo '<div id="message" class="updated fade"><p><b>' .
+                esc_html__('Invalid URL.', 'sermon-browser') . '</b></div>';
             return;
         }
 
@@ -206,7 +218,7 @@ class FilesPage
 
         if (File::existsByName($filename)) {
             echo '<div id="message" class="updated fade"><p><b>' .
-                __($filename . ' already exists.', 'sermon-browser') .
+                esc_html($filename) . ' ' . esc_html__('already exists.', 'sermon-browser') .
                 '</b></div>';
             return;
         }

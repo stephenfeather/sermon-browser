@@ -211,10 +211,20 @@ function sb_hijack()
 
     //Returns contents of external URL(doesn't force download)
     if (isset($_REQUEST['show']) and isset($_REQUEST['url'])) {
-        $url = rawurldecode($_GET['url']);
-        sb_increase_download_count($url);
-        header('Location: ' . $url);
-        die();
+        $requested_url = rawurldecode($_GET['url']);
+        // Validate URL exists in database as a registered external file
+        $file = File::findOneBy('name', $requested_url);
+        if ($file !== null && $file->type === 'url') {
+            sb_increase_download_count($requested_url);
+            header('Location: ' . esc_url($requested_url));
+            die();
+        } else {
+            wp_die(
+                esc_html__('Invalid or unregistered URL.', 'sermon-browser'),
+                esc_html__('URL not found', 'sermon-browser'),
+                array('response' => 404)
+            );
+        }
     }
 }
 
@@ -870,7 +880,7 @@ function sb_special_option_names()
 * @param string $mode
 * return bool
 */
-function sb_mkdir($pathname, $mode = 0777)
+function sb_mkdir($pathname, $mode = 0755)
 {
     is_dir(dirname($pathname)) || sb_mkdir(dirname($pathname), $mode);
     @mkdir($pathname, $mode);

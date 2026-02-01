@@ -382,7 +382,7 @@ class SermonEditorPage
             ]);
             return false;
         } else {
-            echo '<div id="message" class="updated fade"><p><b>' . $filename . __(' already exists.', 'sermon-browser') . '</b></div>';
+            echo '<div id="message" class="updated fade"><p><b>' . esc_html($filename) . ' ' . esc_html__('already exists.', 'sermon-browser') . '</b></div>';
             return true;
         }
     }
