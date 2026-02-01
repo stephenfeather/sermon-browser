@@ -35,9 +35,13 @@ use stdClass;
  * callback signatures, even when specific implementations don't use them.
  * The underscore prefix indicates intentionally unused parameters.
  *
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
- * @SuppressWarnings(PHPMD.TooManyMethods)
- * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ * @phpstan-type SermonObject object{id: int, title: string, description: string|null, start: array<mixed>|string|null, end: array<mixed>|string|null, preacher: string|null, preacher_description: string|null, image: string|null, series: string|null, service: string|null, pid: int|null, sid: int|null, ssid: int|null}
+ * @phpstan-type PreacherObject object{id: int, name: string, description?: string, image?: string}
+ * @phpstan-type FileObject object{id: int, name: string, type?: string}
+ *
+ * @SuppressWarnings("PHPMD.UnusedFormalParameter")
+ * @SuppressWarnings("PHPMD.TooManyMethods")
+ * @SuppressWarnings("PHPMD.TooManyPublicMethods")
  */
 class TagRenderer
 {
@@ -125,7 +129,7 @@ class TagRenderer
      * In search context, returns a link to the sermon.
      * In single context, returns just the title text.
      *
-     * @param object|null $sermon The sermon object.
+     * @param SermonObject|null $sermon The sermon object.
      * @param string $context The context ('search' or 'single').
      * @return string The rendered HTML.
      */
@@ -151,8 +155,8 @@ class TagRenderer
      *
      * Returns the description with WordPress auto-paragraph formatting.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context ('search' or 'single').
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context ('search' or 'single') - unused.
      * @return string The rendered HTML.
      */
     public function renderSermonDescription(?object $sermon, string $_context): string
@@ -172,8 +176,8 @@ class TagRenderer
     /**
      * Render the preacher link tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderPreacherLink(?object $sermon, string $_context): string
@@ -191,8 +195,8 @@ class TagRenderer
     /**
      * Render the preacher description tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderPreacherDescription(?object $sermon, string $_context): string
@@ -214,8 +218,8 @@ class TagRenderer
     /**
      * Render the preacher image tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderPreacherImage(?object $sermon, string $_context): string
@@ -239,8 +243,8 @@ class TagRenderer
     /**
      * Render the series link tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderSeriesLink(?object $sermon, string $_context): string
@@ -258,8 +262,8 @@ class TagRenderer
     /**
      * Render the service link tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderServiceLink(?object $sermon, string $_context): string
@@ -281,8 +285,8 @@ class TagRenderer
     /**
      * Render the date tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The formatted date.
      */
     public function renderDate(?object $sermon, string $_context): string
@@ -297,8 +301,8 @@ class TagRenderer
     /**
      * Render the first passage tag (used in search results).
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The formatted passage reference.
      */
     public function renderFirstPassage(?object $sermon, string $_context): string
@@ -326,8 +330,8 @@ class TagRenderer
      *
      * Note: This function outputs directly, so we capture with ob_start.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderNextPage(mixed $_data, string $_context): string
@@ -340,8 +344,8 @@ class TagRenderer
     /**
      * Render the previous page link tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderPreviousPage(mixed $_data, string $_context): string
@@ -358,8 +362,8 @@ class TagRenderer
     /**
      * Render the podcast URL tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The podcast URL.
      */
     public function renderPodcast(mixed $_data, string $_context): string
@@ -370,8 +374,8 @@ class TagRenderer
     /**
      * Render the podcast for search URL tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The custom podcast URL.
      */
     public function renderPodcastForSearch(mixed $_data, string $_context): string
@@ -382,8 +386,8 @@ class TagRenderer
     /**
      * Render the iTunes podcast URL tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The iTunes podcast URL.
      */
     public function renderItunesPodcast(mixed $_data, string $_context): string
@@ -395,8 +399,8 @@ class TagRenderer
     /**
      * Render the iTunes podcast for search URL tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The iTunes custom podcast URL.
      */
     public function renderItunesPodcastForSearch(mixed $_data, string $_context): string
@@ -408,8 +412,8 @@ class TagRenderer
     /**
      * Render the podcast icon tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderPodcastIcon(mixed $_data, string $_context): string
@@ -422,8 +426,8 @@ class TagRenderer
     /**
      * Render the podcast icon for search tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderPodcastIconForSearch(mixed $_data, string $_context): string
@@ -440,8 +444,8 @@ class TagRenderer
     /**
      * Render the credit link tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderCreditLink(mixed $_data, string $_context): string
@@ -454,7 +458,7 @@ class TagRenderer
      *
      * Note: This function outputs directly, so we capture with ob_start.
      *
-     * @param object|null $sermon The sermon object.
+     * @param SermonObject|null $sermon The sermon object.
      * @param string $context The context.
      * @return string The rendered HTML.
      */
@@ -479,7 +483,7 @@ class TagRenderer
      * Render the tags tag.
      *
      * @param array<string>|object $tagsOrSermon The tags array or sermon object.
-     * @param string $context The context.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderTags(array|object $tagsOrSermon, string $_context): string
@@ -507,8 +511,8 @@ class TagRenderer
     /**
      * Render the next sermon link tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderNextSermon(?object $sermon, string $_context): string
@@ -525,8 +529,8 @@ class TagRenderer
     /**
      * Render the previous sermon link tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderPrevSermon(?object $sermon, string $_context): string
@@ -543,8 +547,8 @@ class TagRenderer
     /**
      * Render the same day sermon link tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderSamedaySermon(?object $sermon, string $_context): string
@@ -565,7 +569,7 @@ class TagRenderer
     /**
      * Render bible text for a given translation.
      *
-     * @param object|null $sermon The sermon object.
+     * @param SermonObject|null $sermon The sermon object.
      * @param string $version The bible version code.
      * @return string The rendered HTML.
      */
@@ -595,8 +599,8 @@ class TagRenderer
     /**
      * Render ESV bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderEsvText(?object $sermon, string $_context): string
@@ -607,8 +611,8 @@ class TagRenderer
     /**
      * Render KJV bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderKjvText(?object $sermon, string $_context): string
@@ -619,8 +623,8 @@ class TagRenderer
     /**
      * Render ASV bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderAsvText(?object $sermon, string $_context): string
@@ -631,8 +635,8 @@ class TagRenderer
     /**
      * Render NET bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderNetText(?object $sermon, string $_context): string
@@ -643,8 +647,8 @@ class TagRenderer
     /**
      * Render YLT bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderYltText(?object $sermon, string $_context): string
@@ -655,8 +659,8 @@ class TagRenderer
     /**
      * Render WEB bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderWebText(?object $sermon, string $_context): string
@@ -667,8 +671,8 @@ class TagRenderer
     /**
      * Render AKJV bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderAkjvText(?object $sermon, string $_context): string
@@ -679,8 +683,8 @@ class TagRenderer
     /**
      * Render HNV bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderHnvText(?object $sermon, string $_context): string
@@ -691,8 +695,8 @@ class TagRenderer
     /**
      * Render LBRV (RV1909) bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderLbrvText(?object $sermon, string $_context): string
@@ -703,8 +707,8 @@ class TagRenderer
     /**
      * Render Cornilescu bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderCornilescuText(?object $sermon, string $_context): string
@@ -715,8 +719,8 @@ class TagRenderer
     /**
      * Render Synodal bible text.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderSynodalText(?object $sermon, string $_context): string
@@ -727,8 +731,8 @@ class TagRenderer
     /**
      * Render bible passage tag.
      *
-     * @param object|null $sermon The sermon object.
-     * @param string $context The context.
+     * @param SermonObject|null $sermon The sermon object.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderBiblePassage(?object $sermon, string $_context): string
@@ -760,8 +764,8 @@ class TagRenderer
     /**
      * Render sermons loop start marker.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The marker string.
      */
     public function renderSermonsLoopStart(mixed $_data, string $_context): string
@@ -772,8 +776,8 @@ class TagRenderer
     /**
      * Render sermons loop end marker.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The marker string.
      */
     public function renderSermonsLoopEnd(mixed $_data, string $_context): string
@@ -784,8 +788,8 @@ class TagRenderer
     /**
      * Render files loop start marker.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The marker string.
      */
     public function renderFilesLoopStart(mixed $_data, string $_context): string
@@ -796,8 +800,8 @@ class TagRenderer
     /**
      * Render files loop end marker.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The marker string.
      */
     public function renderFilesLoopEnd(mixed $_data, string $_context): string
@@ -808,8 +812,8 @@ class TagRenderer
     /**
      * Render embed loop start marker.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The marker string.
      */
     public function renderEmbedLoopStart(mixed $_data, string $_context): string
@@ -820,8 +824,8 @@ class TagRenderer
     /**
      * Render embed loop end marker.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The marker string.
      */
     public function renderEmbedLoopEnd(mixed $_data, string $_context): string
@@ -832,8 +836,8 @@ class TagRenderer
     /**
      * Render passages loop start marker.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The marker string.
      */
     public function renderPassagesLoopStart(mixed $_data, string $_context): string
@@ -844,8 +848,8 @@ class TagRenderer
     /**
      * Render passages loop end marker.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The marker string.
      */
     public function renderPassagesLoopEnd(mixed $_data, string $_context): string
@@ -861,7 +865,7 @@ class TagRenderer
      * Render the filters form tag.
      *
      * @param array<string, mixed>|null $atts Filter attributes.
-     * @param string $context The context.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderFiltersForm(array|null $atts, string $_context): string
@@ -878,8 +882,8 @@ class TagRenderer
     /**
      * Render the most popular tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderMostPopular(mixed $_data, string $_context): string
@@ -892,8 +896,8 @@ class TagRenderer
     /**
      * Render the tag cloud tag.
      *
-     * @param mixed $data Not used for this tag.
-     * @param string $context The context.
+     * @param mixed $_data Not used for this tag.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderTagCloud(mixed $_data, string $_context): string
@@ -907,7 +911,7 @@ class TagRenderer
      * Render the sermons count tag.
      *
      * @param int|mixed $count The sermon count.
-     * @param string $context The context.
+     * @param string $_context The context (unused).
      * @return string The count as string.
      */
     public function renderSermonsCount(mixed $count, string $_context): string
@@ -923,7 +927,7 @@ class TagRenderer
      * Render the file tag.
      *
      * @param string|mixed $mediaName The media file name.
-     * @param string $context The context.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderFile(mixed $mediaName, string $_context): string
@@ -941,7 +945,7 @@ class TagRenderer
      * Render the file with download tag.
      *
      * @param string|mixed $mediaName The media file name.
-     * @param string $context The context.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderFileWithDownload(mixed $mediaName, string $_context): string
@@ -959,7 +963,7 @@ class TagRenderer
      * Render the embed tag.
      *
      * @param string|mixed $mediaName The base64-encoded embed code.
-     * @param string $context The context.
+     * @param string $_context The context (unused).
      * @return string The rendered HTML.
      */
     public function renderEmbed(mixed $mediaName, string $_context): string

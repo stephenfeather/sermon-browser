@@ -133,8 +133,7 @@ class HelperFunctions
     public static function sanitisePath(string $path): string
     {
         $path = str_replace('\\', '/', $path);
-        $path = preg_replace('|/+|', '/', $path);
-        return $path;
+        return preg_replace('|/+|', '/', $path) ?? $path;
     }
 
     /**
