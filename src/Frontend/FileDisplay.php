@@ -202,7 +202,7 @@ final class FileDisplay
         }
 
         // Include filetypes.php which defines these variables
-        require SB_INCLUDES_DIR . '/filetypes.php';
+        require_once SB_INCLUDES_DIR . '/filetypes.php';
 
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Variables from included file
         self::$filetypes = $filetypes ?? [];

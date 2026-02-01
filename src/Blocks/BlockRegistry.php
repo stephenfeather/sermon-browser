@@ -46,6 +46,13 @@ class BlockRegistry
     private const FRONTEND_STYLE_HANDLE = 'sermon-browser-blocks-style';
 
     /**
+     * Cached asset data from index.asset.php.
+     *
+     * @var array{dependencies: array<string>, version: string}|null
+     */
+    private ?array $cachedAsset = null;
+
+    /**
      * Private constructor for singleton pattern.
      */
     private function __construct()
@@ -119,10 +126,7 @@ class BlockRegistry
         }
 
         // Load asset dependencies from generated file.
-        $asset_file = $build_path . '/index.asset.php';
-        $asset = file_exists($asset_file)
-            ? require $asset_file
-            : ['dependencies' => [], 'version' => SB_CURRENT_VERSION];
+        $asset = $this->getAssetData();
 
         wp_enqueue_script(
             self::EDITOR_SCRIPT_HANDLE,
@@ -159,18 +163,41 @@ class BlockRegistry
         $build_url = SB_PLUGIN_URL . '/build/blocks';
 
         if (file_exists($build_path . '/style-index.css')) {
-            $asset_file = $build_path . '/index.asset.php';
-            $version = file_exists($asset_file)
-                ? (require $asset_file)['version']
-                : SB_CURRENT_VERSION;
+            $asset = $this->getAssetData();
 
             wp_enqueue_style(
                 self::FRONTEND_STYLE_HANDLE,
                 $build_url . '/style-index.css',
                 [],
-                $version
+                $asset['version']
             );
         }
+    }
+
+    /**
+     * Get asset data from index.asset.php, using cache to avoid multiple requires.
+     *
+     * @return array{dependencies: array<string>, version: string}
+     */
+    private function getAssetData(): array
+    {
+        if ($this->cachedAsset !== null) {
+            return $this->cachedAsset;
+        }
+
+        $build_path = SB_PLUGIN_DIR . '/sermon-browser/build/blocks';
+        $asset_file = $build_path . '/index.asset.php';
+
+        $this->cachedAsset = file_exists($asset_file)
+            ? require_once $asset_file
+            : ['dependencies' => [], 'version' => SB_CURRENT_VERSION];
+
+        // Handle case where require_once returns true on subsequent calls
+        if ($this->cachedAsset === true) {
+            $this->cachedAsset = ['dependencies' => [], 'version' => SB_CURRENT_VERSION];
+        }
+
+        return $this->cachedAsset;
     }
 
     /**

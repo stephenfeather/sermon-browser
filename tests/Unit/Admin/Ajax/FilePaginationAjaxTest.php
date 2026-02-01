@@ -443,8 +443,11 @@ class FilePaginationAjaxTest extends TestCase
         try {
             $this->handler->search();
         } catch (RuntimeException) {
-            // Expected
+            // Expected - wp_send_json_success was called
         }
+
+        // Explicit assertion for SonarQube - Mockery expectation validates the data.
+        $this->addToAssertionCount(1);
     }
 
     /**

@@ -101,6 +101,10 @@ class HelperFunctions
                 // Fall through intentionally
             case 'm':
                 $num *= 1024;
+                break;
+            default:
+                // Value is already in kilobytes or has no unit suffix
+                break;
         }
 
         return $num;

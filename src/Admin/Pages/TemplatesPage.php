@@ -60,7 +60,7 @@ class TemplatesPage
         $style = wp_kses_post($_POST['style']);
 
         if (isset($_POST['resetdefault'])) {
-            require SB_INCLUDES_DIR . '/sb-install.php';
+            require_once SB_INCLUDES_DIR . '/sb-install.php';
             $multi = sb_default_multi_template();
             $single = sb_default_single_template();
             $style = sb_default_css();

@@ -414,7 +414,7 @@ function sb_footer_stats()
 {
     global $wpdb;
     echo '<!-- ';
-    echo($wpdb->num_queries . ' queries. ' . timer_stop() . ' seconds.');
+    echo $wpdb->num_queries . ' queries. ' . timer_stop() . ' seconds.';
     echo chr(13);
     print_r($wpdb->queries);
     echo chr(13);
