@@ -682,117 +682,10 @@ class SermonEditorPage
         $books = $formData['books'];
         $mid = isset($_GET['mid']) ? (int) $_GET['mid'] : null;
 
-        // Include the template.
-        // For now, we output the HTML directly. In a future refactor,
-        // this could be moved to a separate template file.
+        // Render form components.
+        $this->renderFormHelperScripts($timeArr);
+        sb_do_alerts();
         ?>
-        <script type="text/javascript">
-            var timeArr = new Array();
-            <?php echo $timeArr ?>
-            function createNewPreacher(s) {
-                if (jQuery('#preacher')[0].value != 'newPreacher') return;
-                var p = prompt("<?php _e("New preacher's name?", 'sermon-browser')?>", "<?php _e("Preacher's name", 'sermon-browser')?>");
-                if (p != null) {
-                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {pname: p, sermon: 1}, function(r) {
-                        if (r) {
-                            jQuery('#preacher option:first').before('<option value="' + r + '">' + p + '</option>');
-                            jQuery("#preacher option[value='" + r + "']").prop('selected', true);
-                        };
-                    });
-                }
-            }
-            function createNewService(s) {
-                if (jQuery('#service')[0].value != 'newService') {
-                    if (!jQuery('#override')[0].checked) {
-                        jQuery('#time').val(timeArr[jQuery('#service')[0].value]).prop('disabled', true);
-                    }
-                    return;
-                }
-                var s = 'lol';
-                while ((s.indexOf('@') == -1) || (s.match(/(.*?)@(.*)/)[2].match(/[0-9]{1,2}:[0-9]{1,2}/) == null)) {
-                    s = prompt("<?php _e("New service's name @ default time?", 'sermon-browser')?>", "<?php _e("Service's name @ 18:00", 'sermon-browser')?>");
-                    if (s == null) { break; }
-                }
-                if (s != null) {
-                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {sname: s, sermon: 1}, function(r) {
-                        if (r) {
-                            jQuery('#service option:first').before('<option value="' + r + '">' + s.match(/(.*?)@/)[1] + '</option>');
-                            jQuery("#service option[value='" + r + "']").prop('selected', true);
-                            jQuery('#time').val(s.match(/(.*?)@\s*(.*)/)[2]);
-                        };
-                    });
-                }
-            }
-            function createNewSeries(s) {
-                if (jQuery('#series')[0].value != 'newSeries') return;
-                var ss = prompt("<?php _e("New series' name?", 'sermon-browser')?>", "<?php _e("Series' name", 'sermon-browser')?>");
-                if (ss != null) {
-                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {ssname: ss, sermon: 1}, function(r) {
-                        if (r) {
-                            jQuery('#series option:first').before('<option value="' + r + '">' + ss + '</option>');
-                            jQuery("#series option[value='" + r + "']").prop('selected', true);
-                        };
-                    });
-                }
-            }
-            function addPassage() {
-                var p = jQuery('#passage').clone();
-                p.attr('id', 'passage' + gpid);
-                jQuery('tr:first td:first', p).prepend('[<a href="javascript:removePassage(' + gpid++ + ')">x</a>] ');
-                jQuery("select", p).attr('value', '');
-                jQuery("input", p).attr('value', '');
-                jQuery('.passage:last').after(p);
-            }
-            function removePassage(id) {
-                jQuery('#passage' + id).remove();
-            }
-            function syncBook(s) {
-                var slc = jQuery(s)[0].value;
-                jQuery('.passage').each(function(i) {
-                    if (this == jQuery(s).parents('.passage')[0]) {
-                        jQuery('.end').each(function(j) {
-                            if (i == j) {
-                                jQuery("option[value='" + slc + "']", this).prop('selected', true);
-                            }
-                        });
-                    }
-                });
-            }
-
-            function addFile() {
-                var f = jQuery('#choosefile').clone();
-                f.attr('id', 'choose' + gfid);
-                jQuery(".choosefile", f).attr('name', 'choose' + gfid);
-                jQuery("td", f).css('display', 'none');
-                jQuery("td:first", f).css('display', '');
-                jQuery('th', f).prepend('[<a href="javascript:removeFile(' + gfid++ + ')">x</a>] ');
-                jQuery("option[value='0']", f).prop('selected', true);
-                jQuery("input", f).val('');
-                jQuery('.choose:last').after(f);
-
-            }
-            function removeFile(id) {
-                jQuery('#choose' + id).remove();
-            }
-            function doOverride(id) {
-                var chk = jQuery('#override')[0].checked;
-                if (chk) {
-                    jQuery('#time').removeClass('gray').prop('disabled', false);
-                } else {
-                    jQuery('#time').addClass('gray').val(timeArr[jQuery('#service')[0].value]).prop('disabled', true);
-                }
-            }
-            var gfid = 0;
-            var gpid = 0;
-
-            function chooseType(id, type){
-                jQuery("#"+id + " td").css("display", "none");
-                jQuery("#"+id + " ."+type).css("display", "");
-                jQuery("#"+id + " td input").val('');
-                jQuery("#"+id + " td select").val('0');
-            }
-        </script>
-        <?php sb_do_alerts(); ?>
         <div class="wrap">
             <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
             <h2><?php echo isset($_GET['mid']) ? __('Edit Sermon', 'sermon-browser') : __('Add Sermon', 'sermon-browser'); ?></h2>
@@ -1002,6 +895,142 @@ class SermonEditorPage
             <?php wp_nonce_field('sermon_browser_save', 'sermon_browser_save_nonce'); ?>
             </form>
         </div>
+        <?php
+        $this->renderFormInitScripts($curSermon, $mid, $startArr, $endArr);
+    }
+
+    /**
+     * Render the JavaScript helper functions for the form.
+     *
+     * @param string $timeArr JavaScript array initialization code for service times.
+     * @return void
+     */
+    private function renderFormHelperScripts(string $timeArr): void
+    {
+        ?>
+        <script type="text/javascript">
+            var timeArr = new Array();
+            <?php echo $timeArr ?>
+            function createNewPreacher(s) {
+                if (jQuery('#preacher')[0].value != 'newPreacher') return;
+                var p = prompt("<?php _e("New preacher's name?", 'sermon-browser')?>", "<?php _e("Preacher's name", 'sermon-browser')?>");
+                if (p != null) {
+                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {pname: p, sermon: 1}, function(r) {
+                        if (r) {
+                            jQuery('#preacher option:first').before('<option value="' + r + '">' + p + '</option>');
+                            jQuery("#preacher option[value='" + r + "']").prop('selected', true);
+                        };
+                    });
+                }
+            }
+            function createNewService(s) {
+                if (jQuery('#service')[0].value != 'newService') {
+                    if (!jQuery('#override')[0].checked) {
+                        jQuery('#time').val(timeArr[jQuery('#service')[0].value]).prop('disabled', true);
+                    }
+                    return;
+                }
+                var s = 'lol';
+                while ((s.indexOf('@') == -1) || (s.match(/(.*?)@(.*)/)[2].match(/[0-9]{1,2}:[0-9]{1,2}/) == null)) {
+                    s = prompt("<?php _e("New service's name @ default time?", 'sermon-browser')?>", "<?php _e("Service's name @ 18:00", 'sermon-browser')?>");
+                    if (s == null) { break; }
+                }
+                if (s != null) {
+                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {sname: s, sermon: 1}, function(r) {
+                        if (r) {
+                            jQuery('#service option:first').before('<option value="' + r + '">' + s.match(/(.*?)@/)[1] + '</option>');
+                            jQuery("#service option[value='" + r + "']").prop('selected', true);
+                            jQuery('#time').val(s.match(/(.*?)@\s*(.*)/)[2]);
+                        };
+                    });
+                }
+            }
+            function createNewSeries(s) {
+                if (jQuery('#series')[0].value != 'newSeries') return;
+                var ss = prompt("<?php _e("New series' name?", 'sermon-browser')?>", "<?php _e("Series' name", 'sermon-browser')?>");
+                if (ss != null) {
+                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {ssname: ss, sermon: 1}, function(r) {
+                        if (r) {
+                            jQuery('#series option:first').before('<option value="' + r + '">' + ss + '</option>');
+                            jQuery("#series option[value='" + r + "']").prop('selected', true);
+                        };
+                    });
+                }
+            }
+            function addPassage() {
+                var p = jQuery('#passage').clone();
+                p.attr('id', 'passage' + gpid);
+                jQuery('tr:first td:first', p).prepend('[<a href="javascript:removePassage(' + gpid++ + ')">x</a>] ');
+                jQuery("select", p).attr('value', '');
+                jQuery("input", p).attr('value', '');
+                jQuery('.passage:last').after(p);
+            }
+            function removePassage(id) {
+                jQuery('#passage' + id).remove();
+            }
+            function syncBook(s) {
+                var slc = jQuery(s)[0].value;
+                jQuery('.passage').each(function(i) {
+                    if (this == jQuery(s).parents('.passage')[0]) {
+                        jQuery('.end').each(function(j) {
+                            if (i == j) {
+                                jQuery("option[value='" + slc + "']", this).prop('selected', true);
+                            }
+                        });
+                    }
+                });
+            }
+
+            function addFile() {
+                var f = jQuery('#choosefile').clone();
+                f.attr('id', 'choose' + gfid);
+                jQuery(".choosefile", f).attr('name', 'choose' + gfid);
+                jQuery("td", f).css('display', 'none');
+                jQuery("td:first", f).css('display', '');
+                jQuery('th', f).prepend('[<a href="javascript:removeFile(' + gfid++ + ')">x</a>] ');
+                jQuery("option[value='0']", f).prop('selected', true);
+                jQuery("input", f).val('');
+                jQuery('.choose:last').after(f);
+
+            }
+            function removeFile(id) {
+                jQuery('#choose' + id).remove();
+            }
+            function doOverride(id) {
+                var chk = jQuery('#override')[0].checked;
+                if (chk) {
+                    jQuery('#time').removeClass('gray').prop('disabled', false);
+                } else {
+                    jQuery('#time').addClass('gray').val(timeArr[jQuery('#service')[0].value]).prop('disabled', true);
+                }
+            }
+            var gfid = 0;
+            var gpid = 0;
+
+            function chooseType(id, type){
+                jQuery("#"+id + " td").css("display", "none");
+                jQuery("#"+id + " ."+type).css("display", "");
+                jQuery("#"+id + " td input").val('');
+                jQuery("#"+id + " td select").val('0');
+            }
+        </script>
+        <?php
+    }
+
+    /**
+     * Render the form initialization JavaScript.
+     *
+     * Handles datepicker setup and populating existing sermon data.
+     *
+     * @param object|null $curSermon Current sermon being edited.
+     * @param int|null $mid Sermon ID being edited.
+     * @param array $startArr Bible passage start data.
+     * @param array $endArr Bible passage end data.
+     * @return void
+     */
+    private function renderFormInitScripts(?object $curSermon, ?int $mid, array $startArr, array $endArr): void
+    {
+        ?>
         <script type="text/javascript">
             jQuery.datePicker.setDateFormat('ymd','-');
             jQuery('#date').datePicker({startDate:'01/01/1970'});
@@ -1009,6 +1038,23 @@ class SermonEditorPage
                 jQuery('#time').val(timeArr[jQuery('*[selected]', jQuery("select[name='service']")).attr('value')]);
             <?php endif ?>
             <?php if ($mid !== null || (isset($_GET['getid3']))) : ?>
+                <?php $this->renderExistingDataInit($mid); ?>
+                <?php $this->renderPassageDataInit($startArr, $endArr); ?>
+                <?php $this->renderFileAndPassageSelectors(); ?>
+            <?php endif ?>
+        </script>
+        <?php
+    }
+
+    /**
+     * Render JavaScript to initialize existing file data.
+     *
+     * @param int|null $mid Sermon ID being edited.
+     * @return void
+     */
+    private function renderExistingDataInit(?int $mid): void
+    {
+        ?>
                 stuff = new Array();
                 type = new Array();
                 start1 = new Array();
@@ -1026,7 +1072,7 @@ class SermonEditorPage
                 } else {
                     $assocFiles = $assocURLs = $assocCode = [];
                 }
-                    $r = false;
+                $r = false;
                 if (isset($_GET['getid3'])) {
                     $file_data = File::find((int) $_GET['getid3']);
                     if ($file_data !== null) {
@@ -1041,43 +1087,63 @@ class SermonEditorPage
                 }
                 ?>
 
-                <?php for ($lolz = 0; $lolz < count($assocFiles); $lolz++) : ?>
+                <?php for ($i = 0; $i < count($assocFiles); $i++) : ?>
                     <?php $r = true ?>
                     addFile();
-                    stuff.push(<?php echo $assocFiles[$lolz]->id ?>);
+                    stuff.push(<?php echo $assocFiles[$i]->id ?>);
                     type.push('file');
                 <?php endfor ?>
 
-                <?php for ($lolz = 0; $lolz < count($assocURLs); $lolz++) : ?>
+                <?php for ($i = 0; $i < count($assocURLs); $i++) : ?>
                     <?php $r = true ?>
                     addFile();
-                    stuff.push('<?php echo $assocURLs[$lolz]->name ?>');
+                    stuff.push('<?php echo $assocURLs[$i]->name ?>');
                     type.push('url');
                 <?php endfor ?>
 
-                <?php for ($lolz = 0; $lolz < count($assocCode); $lolz++) : ?>
+                <?php for ($i = 0; $i < count($assocCode); $i++) : ?>
                     <?php $r = true ?>
                     addFile();
-                    stuff.push('<?php echo $assocCode[$lolz]->name ?>');
+                    stuff.push('<?php echo $assocCode[$i]->name ?>');
                     type.push('code');
                 <?php endfor ?>
 
                 <?php if ($r) : ?>
                 jQuery('.choose:last').remove();
                 <?php endif ?>
+        <?php
+    }
 
-                <?php for ($lolz = 0; $lolz < count($startArr); $lolz++) : ?>
-                    <?php if ($lolz != 0) : ?>
+    /**
+     * Render JavaScript to initialize Bible passage data.
+     *
+     * @param array $startArr Bible passage start data.
+     * @param array $endArr Bible passage end data.
+     * @return void
+     */
+    private function renderPassageDataInit(array $startArr, array $endArr): void
+    {
+        for ($i = 0; $i < count($startArr); $i++) :
+            if ($i != 0) : ?>
                         addPassage();
-                    <?php endif ?>
-                    start1.push("<?php echo $startArr[$lolz]['book'] ?>");
-                    start2.push("<?php echo $startArr[$lolz]['chapter'] ?>");
-                    start3.push("<?php echo $startArr[$lolz]['verse'] ?>");
-                    end1.push("<?php echo $endArr[$lolz]['book'] ?>");
-                    end2.push("<?php echo $endArr[$lolz]['chapter'] ?>");
-                    end3.push("<?php echo $endArr[$lolz]['verse'] ?>");
-                <?php endfor ?>
+            <?php endif ?>
+                    start1.push("<?php echo $startArr[$i]['book'] ?>");
+                    start2.push("<?php echo $startArr[$i]['chapter'] ?>");
+                    start3.push("<?php echo $startArr[$i]['verse'] ?>");
+                    end1.push("<?php echo $endArr[$i]['book'] ?>");
+                    end2.push("<?php echo $endArr[$i]['chapter'] ?>");
+                    end3.push("<?php echo $endArr[$i]['verse'] ?>");
+        <?php endfor;
+    }
 
+    /**
+     * Render JavaScript selectors to populate file and passage UI.
+     *
+     * @return void
+     */
+    private function renderFileAndPassageSelectors(): void
+    {
+        ?>
                 jQuery('.choose').each(function(i) {
                     switch (type[i]) {
                         case 'file':
@@ -1123,8 +1189,6 @@ class SermonEditorPage
                 jQuery('.end3').each(function(i) {
                     jQuery(this).val(end3[i]);
                 });
-            <?php endif ?>
-        </script>
         <?php
     }
 }
