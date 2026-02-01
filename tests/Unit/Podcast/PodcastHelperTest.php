@@ -12,13 +12,42 @@ namespace SermonBrowser\Tests\Unit\Podcast;
 
 use SermonBrowser\Tests\TestCase;
 use SermonBrowser\Podcast\PodcastHelper;
+use SermonBrowser\Repositories\FileRepository;
+use SermonBrowser\Services\Container;
 use Brain\Monkey\Functions;
+use Mockery;
 
 /**
  * Test PodcastHelper functionality.
  */
 class PodcastHelperTest extends TestCase
 {
+    /**
+     * Mock file repository.
+     *
+     * @var \Mockery\MockInterface&FileRepository
+     */
+    private $mockFileRepo;
+
+    /**
+     * Set up the test.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Reset container and set up mock repository
+        Container::reset();
+        $this->mockFileRepo = Mockery::mock(FileRepository::class);
+        Container::getInstance()->set(FileRepository::class, $this->mockFileRepo);
+
+        // Reset the static filetypes cache
+        $reflection = new \ReflectionClass(PodcastHelper::class);
+        $property = $reflection->getProperty('filetypes');
+        $property->setAccessible(true);
+        $property->setValue(null, null);
+    }
+
     // =========================================================================
     // formatIsoDate tests
     // =========================================================================
@@ -211,6 +240,9 @@ class PodcastHelperTest extends TestCase
         $this->assertMatchesRegularExpression('/^length="\d+"$/', $result);
     }
 
+    // Note: getMediaSize for URLs (lines 63-70) requires mocking native PHP functions
+    // (ini_get, get_headers) which needs patchwork.json configuration. Skipped for now.
+
     // =========================================================================
     // getMp3Duration tests
     // =========================================================================
@@ -243,6 +275,36 @@ class PodcastHelperTest extends TestCase
         $result = PodcastHelper::getMp3Duration('file.wav', 'Files');
 
         $this->assertSame('', $result);
+    }
+
+    /**
+     * Test getMp3Duration returns cached duration when available.
+     */
+    public function testGetMp3DurationReturnsCachedDuration(): void
+    {
+        $this->mockFileRepo->shouldReceive('getFileDuration')
+            ->once()
+            ->with('sermon.mp3')
+            ->andReturn('01:23:45');
+
+        $result = PodcastHelper::getMp3Duration('sermon.mp3', 'Files');
+
+        $this->assertSame('01:23:45', $result);
+    }
+
+    /**
+     * Test getMp3Duration with uppercase MP3 extension.
+     */
+    public function testGetMp3DurationWithUppercaseExtension(): void
+    {
+        $this->mockFileRepo->shouldReceive('getFileDuration')
+            ->once()
+            ->with('sermon.MP3')
+            ->andReturn('00:30:00');
+
+        $result = PodcastHelper::getMp3Duration('sermon.MP3', 'Files');
+
+        $this->assertSame('00:30:00', $result);
     }
 
     // =========================================================================
@@ -342,9 +404,132 @@ class PodcastHelperTest extends TestCase
     }
 
     // =========================================================================
-    // getMimeType tests - skipped as they require filetypes.php which is
-    // part of the legacy sb-includes directory
+    // getMimeType tests
     // =========================================================================
+
+    /**
+     * Test getMimeType returns type attribute for known extension.
+     */
+    public function testGetMimeTypeReturnsTypeForKnownExtension(): void
+    {
+        // Set filetypes via reflection
+        $reflection = new \ReflectionClass(PodcastHelper::class);
+        $property = $reflection->getProperty('filetypes');
+        $property->setAccessible(true);
+        $property->setValue(null, [
+            'mp3' => ['content-type' => 'audio/mpeg'],
+            'mp4' => ['content-type' => 'video/mp4'],
+        ]);
+
+        $result = PodcastHelper::getMimeType('sermon.mp3');
+
+        $this->assertSame(' type="audio/mpeg"', $result);
+    }
+
+    /**
+     * Test getMimeType returns empty for unknown extension.
+     */
+    public function testGetMimeTypeReturnsEmptyForUnknownExtension(): void
+    {
+        // Set filetypes via reflection
+        $reflection = new \ReflectionClass(PodcastHelper::class);
+        $property = $reflection->getProperty('filetypes');
+        $property->setAccessible(true);
+        $property->setValue(null, [
+            'mp3' => ['content-type' => 'audio/mpeg'],
+        ]);
+
+        $result = PodcastHelper::getMimeType('document.pdf');
+
+        $this->assertSame('', $result);
+    }
+
+    /**
+     * Test getMimeType handles uppercase extension.
+     */
+    public function testGetMimeTypeHandlesUppercaseExtension(): void
+    {
+        // Set filetypes via reflection
+        $reflection = new \ReflectionClass(PodcastHelper::class);
+        $property = $reflection->getProperty('filetypes');
+        $property->setAccessible(true);
+        $property->setValue(null, [
+            'mp3' => ['content-type' => 'audio/mpeg'],
+        ]);
+
+        $result = PodcastHelper::getMimeType('sermon.MP3');
+
+        $this->assertSame(' type="audio/mpeg"', $result);
+    }
+
+    /**
+     * Test getMimeType with video extension.
+     */
+    public function testGetMimeTypeForVideo(): void
+    {
+        // Set filetypes via reflection
+        $reflection = new \ReflectionClass(PodcastHelper::class);
+        $property = $reflection->getProperty('filetypes');
+        $property->setAccessible(true);
+        $property->setValue(null, [
+            'mp4' => ['content-type' => 'video/mp4'],
+            'm4v' => ['content-type' => 'video/x-m4v'],
+        ]);
+
+        $result = PodcastHelper::getMimeType('video.mp4');
+
+        $this->assertSame(' type="video/mp4"', $result);
+    }
+
+    /**
+     * Test getMimeType with file having multiple dots.
+     */
+    public function testGetMimeTypeWithMultipleDots(): void
+    {
+        // Set filetypes via reflection
+        $reflection = new \ReflectionClass(PodcastHelper::class);
+        $property = $reflection->getProperty('filetypes');
+        $property->setAccessible(true);
+        $property->setValue(null, [
+            'mp3' => ['content-type' => 'audio/mpeg'],
+        ]);
+
+        $result = PodcastHelper::getMimeType('sermon.2024.01.15.mp3');
+
+        $this->assertSame(' type="audio/mpeg"', $result);
+    }
+
+    // =========================================================================
+    // getFileUrl edge cases
+    // =========================================================================
+
+    /**
+     * Test getFileUrl with no user agent defaults to stats enabled.
+     */
+    public function testGetFileUrlWithNoUserAgentDefaultsToStats(): void
+    {
+        unset($_SERVER['HTTP_USER_AGENT']);
+
+        Functions\when('sb_display_url')->justReturn('http://example.com/sermons');
+        Functions\when('sb_query_char')->justReturn('?');
+
+        $result = PodcastHelper::getFileUrl('https://cdn.example.com/sermon.mp3', 'URLs');
+
+        $this->assertStringContainsString('show&amp;url=', $result);
+    }
+
+    /**
+     * Test getFileUrl encodes special characters in URL.
+     */
+    public function testGetFileUrlEncodesSpecialCharacters(): void
+    {
+        $_SERVER['HTTP_USER_AGENT'] = 'iTunes/12.0';
+
+        $result = PodcastHelper::getFileUrl('https://cdn.example.com/Tom & Jerry.mp3', 'URLs');
+
+        // Ampersand should be XML encoded
+        $this->assertStringContainsString('&amp;', $result);
+    }
 
     /**
      * Clean up after tests.
