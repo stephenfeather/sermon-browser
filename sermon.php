@@ -26,27 +26,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-The structure of this plugin is as follows:
-===========================================
-MAIN FILES
-----------
-sermon.php     - This file. Contains common functions and initialisation routines.
-admin.php      - Functions required in the admin pages.
-frontend.php   - Functions required in the frontend (non-admin) pages.
+Architecture (PSR-4)
+====================
+sermon.php          - Entry point. Bootstraps autoloader, defines constants, registers hooks.
+src/                - All PHP classes organized by namespace (SermonBrowser\*)
+  Admin/            - Admin pages, assets, notices, dashboard widgets
+  Ajax/             - AJAX handlers (AjaxRegistry, LegacyAjaxHandler)
+  Config/           - Constants, FileTypes configuration
+  Facades/          - Static facades for repositories (Sermon, Preacher, Series, etc.)
+  Frontend/         - Frontend rendering, widgets, URL building, pagination
+  Install/          - Installer, Upgrader, Uninstaller, DefaultTemplates
+  Podcast/          - Podcast feed generation (PodcastFeed, PodcastHelper)
+  Repositories/     - Database access layer (AbstractRepository + entity repositories)
+  Templates/        - Template engine (TemplateEngine, TagParser, TagRenderer)
+  Utilities/        - Helper functions, Container
+  Widgets/          - WordPress widgets (SermonsWidget, TagCloudWidget, PopularWidget)
 
-OTHER FILES
------------
-ajax.php       - Handles AJAX returns.
-dictionary.php - Translates the template tags into php code. Used only when saving a template.
-filetypes.php  - User-editable file, which returns the correct mime-type for common file-extensions.
-podcast.php    - Handles the podcast feed
-sb-install.php - Used only when installing the plugin for the first time
-style.php      - Outputs the custom stylesheet
-uninstall.php  - Removes the plugin and its databases tables and rows
-upgrade.php    - Runs only when upgrading from earlier versions of SermonBrowser
-
-If you want to follow the logic of the code, start with sb_sermon_init, and trace the Wordpress actions and filters.
-The frontend output is inserted by sb_shortcode
+Entry points:
+- sb_sermon_init()  - Main initialization, registers actions/filters
+- sb_hijack()       - Early request interception (downloads, AJAX, CSS)
+- sb_shortcode()    - Frontend shortcode output
 
 */
 
@@ -255,7 +254,7 @@ function sb_hijack()
             sb_increase_download_count($requested_url);
             // Use wp_redirect for proper redirect handling
             // URL is validated: must exist in database as registered external file
-            $safe_url = esc_url_raw($requested_url);
+            $safe_url = esc_url_raw($file->name);
             if (wp_redirect($safe_url, 302, 'Sermon Browser')) {
                 exit;
             }
