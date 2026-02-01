@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Podcast;
 
+use SermonBrowser\Constants;
 use SermonBrowser\Facades\File;
 
 /**
@@ -40,12 +41,12 @@ final class PodcastHelper
     public static function formatIsoDate($sermon): string
     {
         if (is_object($sermon)) {
-            return date('D, d M Y H:i:s O', strtotime($sermon->datetime));
+            return date(Constants::RFC822_DATE, strtotime($sermon->datetime));
         }
         if (is_int($sermon)) {
-            return date('D, d M Y H:i:s O', $sermon);
+            return date(Constants::RFC822_DATE, $sermon);
         }
-        return date('D, d M Y H:i:s O', strtotime($sermon));
+        return date(Constants::RFC822_DATE, strtotime($sermon));
     }
 
     /**

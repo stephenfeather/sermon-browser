@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Constants;
 use SermonBrowser\Facades\File;
 
 /**
@@ -426,8 +427,8 @@ class FilesPage
                 <thead>
                     <tr>
                         <th style="width:10%" scope="col"><div style="text-align:center"><?php _e('ID', 'sermon-browser') ?></div></th>
-                        <th style="width:50%" scope="col"><div style="text-align:center"><?php _e('File name', 'sermon-browser') ?></div></th>
-                        <th style="width:20%" scope="col"><div style="text-align:center"><?php _e('File type', 'sermon-browser') ?></div></th>
+                        <th style="width:50%" scope="col"><div style="text-align:center"><?php _e(Constants::LABEL_FILE_NAME, 'sermon-browser') ?></div></th>
+                        <th style="width:20%" scope="col"><div style="text-align:center"><?php _e(Constants::LABEL_FILE_TYPE, 'sermon-browser') ?></div></th>
                         <th style="width:20%" scope="col"><div style="text-align:center"><?php _e('Actions', 'sermon-browser') ?></div></th>
                     </tr>
                 </thead>
@@ -460,8 +461,8 @@ class FilesPage
                 <thead>
                     <tr>
                         <th scope="col"><div style="text-align:center"><?php _e('ID', 'sermon-browser') ?></div></th>
-                        <th scope="col"><div style="text-align:center"><?php _e('File name', 'sermon-browser') ?></div></th>
-                        <th scope="col"><div style="text-align:center"><?php _e('File type', 'sermon-browser') ?></div></th>
+                        <th scope="col"><div style="text-align:center"><?php _e(Constants::LABEL_FILE_NAME, 'sermon-browser') ?></div></th>
+                        <th scope="col"><div style="text-align:center"><?php _e(Constants::LABEL_FILE_TYPE, 'sermon-browser') ?></div></th>
                         <th scope="col"><div style="text-align:center"><?php _e('Sermon', 'sermon-browser') ?></div></th>
                         <th scope="col"><div style="text-align:center"><?php _e('Actions', 'sermon-browser') ?></div></th>
                     </tr>
@@ -508,8 +509,8 @@ class FilesPage
                 <thead>
                     <tr>
                         <th scope="col"><div style="text-align:center"><?php _e('ID', 'sermon-browser') ?></div></th>
-                        <th scope="col"><div style="text-align:center"><?php _e('File name', 'sermon-browser') ?></div></th>
-                        <th scope="col"><div style="text-align:center"><?php _e('File type', 'sermon-browser') ?></div></th>
+                        <th scope="col"><div style="text-align:center"><?php _e(Constants::LABEL_FILE_NAME, 'sermon-browser') ?></div></th>
+                        <th scope="col"><div style="text-align:center"><?php _e(Constants::LABEL_FILE_TYPE, 'sermon-browser') ?></div></th>
                         <th scope="col"><div style="text-align:center"><?php _e('Sermon', 'sermon-browser') ?></div></th>
                         <th scope="col"><div style="text-align:center"><?php _e('Actions', 'sermon-browser') ?></div></th>
                     </tr>

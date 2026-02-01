@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Install;
 
+use SermonBrowser\Constants;
+
 /**
  * Handles upgrade procedures for Sermon Browser.
  *
@@ -313,11 +315,11 @@ class Upgrader
 
             foreach ($sermonDates as $sermonDate) {
                 if ($sermonDate->override) {
-                    $newTime = strtotime($sermonDate->time) - strtotime('00:00')
+                    $newTime = strtotime($sermonDate->time) - strtotime(Constants::DEFAULT_TIME)
                         + strtotime($sermonDate->datetime);
                 } else {
-                    $newTime = strtotime($serviceTime[$sermonDate->service_id] ?? '00:00')
-                        - strtotime('00:00') + strtotime($sermonDate->datetime);
+                    $newTime = strtotime($serviceTime[$sermonDate->service_id] ?? Constants::DEFAULT_TIME)
+                        - strtotime(Constants::DEFAULT_TIME) + strtotime($sermonDate->datetime);
                 }
 
                 $formattedDate = date("Y-m-d H:i:s", $newTime);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend\Widgets;
 
+use SermonBrowser\Constants;
 use SermonBrowser\Facades\File;
 
 /**
@@ -60,7 +61,7 @@ final class PopularWidget
                             jQuery("#popular_preachers_trigger' . $suffix . '").removeAttr("style");
                             jQuery.setSbCookie("sermons");
                             jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-                                jQuery("#sb_popular_wrapper' . $suffix . '").html("';
+                                jQuery("#sb_popular_wrapper' . $suffix . ' . Constants::JS_HTML_SUFFIX . ';
                 $jscript .= addslashes($output['sermons']) . '").fadeIn("slow");
                             });
                             return false;
@@ -86,7 +87,7 @@ final class PopularWidget
                         jQuery("#popular_preachers_trigger' . $suffix . '").removeAttr("style");
                         jQuery.setSbCookie("series");
                         jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-                            jQuery("#sb_popular_wrapper' . $suffix . '").html("';
+                            jQuery("#sb_popular_wrapper' . $suffix . ' . Constants::JS_HTML_SUFFIX . ';
             $jscript .= addslashes($output['series'] ?? '') . '").fadeIn("slow");
                         });
                         return false;
@@ -110,7 +111,7 @@ final class PopularWidget
                             jQuery("#popular_sermons_trigger' . $suffix . '").removeAttr("style");
                             jQuery.setSbCookie("preachers");
                             jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-                                jQuery("#sb_popular_wrapper' . $suffix . '").html("';
+                                jQuery("#sb_popular_wrapper' . $suffix . ' . Constants::JS_HTML_SUFFIX . ';
                 $jscript .= addslashes($output['preachers']) . '").fadeIn("slow");
                             });
                             return false;
@@ -120,18 +121,18 @@ final class PopularWidget
 
         // Cookie-based state restoration
         $jscript .= 'if (jQuery.getSbCookie() == "preachers") { ';
-        $jscript .= 'jQuery("#popular_preachers_trigger' . $suffix . '").attr("style", "font-weight:bold"); ';
-        $jscript .= 'jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['preachers'] ?? '');
+        $jscript .= 'jQuery("#popular_preachers_trigger' . $suffix . ' . Constants::JS_BOLD_STYLE . ';
+        $jscript .= ' . Constants::JS_POPULAR_WRAPPER . ' . $suffix . ' . Constants::JS_HTML_SUFFIX . ' . addslashes($output['preachers'] ?? '');
         $jscript .= '")};';
 
         $jscript .= 'if (jQuery.getSbCookie() == "series") { ';
-        $jscript .= 'jQuery("#popular_series_trigger' . $suffix . '").attr("style", "font-weight:bold"); ';
-        $jscript .= 'jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['series'] ?? '');
+        $jscript .= 'jQuery("#popular_series_trigger' . $suffix . ' . Constants::JS_BOLD_STYLE . ';
+        $jscript .= ' . Constants::JS_POPULAR_WRAPPER . ' . $suffix . ' . Constants::JS_HTML_SUFFIX . ' . addslashes($output['series'] ?? '');
         $jscript .= '")};';
 
         $jscript .= 'if (jQuery.getSbCookie() == "sermons") { ';
-        $jscript .= 'jQuery("#popular_sermons_trigger' . $suffix . '").attr("style", "font-weight:bold"); ';
-        $jscript .= 'jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['sermons'] ?? '');
+        $jscript .= 'jQuery("#popular_sermons_trigger' . $suffix . ' . Constants::JS_BOLD_STYLE . ';
+        $jscript .= ' . Constants::JS_POPULAR_WRAPPER . ' . $suffix . ' . Constants::JS_HTML_SUFFIX . ' . addslashes($output['sermons'] ?? '');
         $jscript .= '")};';
 
         echo '<p>' . implode(' | ', $trigger) . '</p>';

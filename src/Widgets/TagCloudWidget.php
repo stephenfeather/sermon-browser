@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Widgets;
 
+use SermonBrowser\Constants;
 use WP_Widget;
 
 /**
@@ -25,7 +26,7 @@ class TagCloudWidget extends WP_Widget
     {
         parent::__construct(
             'sb_tag_cloud',
-            __('Sermon Browser Tags', 'sermon-browser'),
+            __(Constants::WIDGET_TAG_CLOUD_TITLE, 'sermon-browser'),
             [
                 'classname' => 'sb-tag-cloud-widget',
                 'description' => __('Display a cloud of sermon tags.', 'sermon-browser'),
@@ -50,7 +51,7 @@ class TagCloudWidget extends WP_Widget
         $beforeTitle = $args['before_title'] ?? '';
         $afterTitle = $args['after_title'] ?? '';
 
-        $title = !empty($instance['title']) ? $instance['title'] : __('Sermon Browser Tags', 'sermon-browser');
+        $title = !empty($instance['title']) ? $instance['title'] : __(Constants::WIDGET_TAG_CLOUD_TITLE, 'sermon-browser');
         $title = apply_filters('widget_title', $title, $instance, $this->id_base);
 
         echo $beforeWidget;
@@ -75,7 +76,7 @@ class TagCloudWidget extends WP_Widget
      */
     public function form($instance): void
     {
-        $title = $instance['title'] ?? __('Sermon Browser Tags', 'sermon-browser');
+        $title = $instance['title'] ?? __(Constants::WIDGET_TAG_CLOUD_TITLE, 'sermon-browser');
         ?>
         <p>
             <label for="<?php echo esc_attr($this->get_field_id('title')); ?>">

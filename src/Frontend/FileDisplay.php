@@ -54,7 +54,7 @@ final class FileDisplay
         $ext = $pathinfo['extension'] ?? '';
 
         // Build the display URL based on file type
-        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+        if (str_starts_with($url, Constants::HTTP) || str_starts_with($url, Constants::HTTPS)) {
             $displayUrl = sb_display_url() . sb_query_char(false) . 'show&url=' . rawurlencode($url);
         } elseif (strtolower($ext) === 'mp3') {
             $displayUrl = sb_display_url() . sb_query_char(false) . 'show&file_name=' . rawurlencode($url);
@@ -111,7 +111,7 @@ final class FileDisplay
         self::printUrl($url);
 
         if (strtolower(substr($url, -4)) === '.mp3') {
-            if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            if (str_starts_with($url, Constants::HTTP) || str_starts_with($url, Constants::HTTPS)) {
                 $param = 'url';
             } else {
                 $param = 'file_name';

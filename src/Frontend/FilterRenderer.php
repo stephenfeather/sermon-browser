@@ -550,7 +550,7 @@ class FilterRenderer
                         <tr>
                             <td class="fieldname"><?php esc_html_e('Preacher', 'sermon-browser'); ?></td>
                             <td class="field"><select name="preacher" id="preacher">
-                                    <option value="0" <?php echo (!isset($_REQUEST['preacher']) || $_REQUEST['preacher'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
+                                    <option value="0" <?php echo (!isset($_REQUEST['preacher']) || $_REQUEST['preacher'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
                                     <?php foreach ($preachers as $preacher) : ?>
                                     <option value="<?php echo (int) $preacher->id; ?>" <?php echo isset($_REQUEST['preacher']) && $_REQUEST['preacher'] == $preacher->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($preacher->name) . ' (' . $preacher->count . ')'); ?></option>
                                     <?php endforeach; ?>
@@ -558,7 +558,7 @@ class FilterRenderer
                             </td>
                             <td class="fieldname rightcolumn"><?php esc_html_e('Services', 'sermon-browser'); ?></td>
                             <td class="field"><select name="service" id="service">
-                                    <option value="0" <?php echo (!isset($_REQUEST['service']) || $_REQUEST['service'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
+                                    <option value="0" <?php echo (!isset($_REQUEST['service']) || $_REQUEST['service'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
                                     <?php foreach ($services as $service) : ?>
                                     <option value="<?php echo (int) $service->id; ?>" <?php echo isset($_REQUEST['service']) && $_REQUEST['service'] == $service->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($service->name) . ' (' . $service->count . ')'); ?></option>
                                     <?php endforeach; ?>
@@ -568,7 +568,7 @@ class FilterRenderer
                         <tr>
                             <td class="fieldname"><?php esc_html_e('Book', 'sermon-browser'); ?></td>
                             <td class="field"><select name="book">
-                                    <option value=""><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
+                                    <option value=""><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
                                     <?php foreach ($bookCount as $book) : ?>
                                     <option value="<?php echo esc_attr($book->name); ?>" <?php echo isset($_REQUEST['book']) && $_REQUEST['book'] === $book->name ? Constants::SELECTED : ''; ?>><?php echo esc_html(($translatedBooks[stripslashes($book->name)] ?? stripslashes($book->name)) . ' (' . $book->count . ')'); ?></option>
                                     <?php endforeach; ?>
@@ -576,7 +576,7 @@ class FilterRenderer
                             </td>
                             <td class="fieldname rightcolumn"><?php esc_html_e('Series', 'sermon-browser'); ?></td>
                             <td class="field"><select name="series" id="series">
-                                    <option value="0" <?php echo (!isset($_REQUEST['series']) || $_REQUEST['series'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
+                                    <option value="0" <?php echo (!isset($_REQUEST['series']) || $_REQUEST['series'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
                                     <?php foreach ($series as $item) : ?>
                                     <option value="<?php echo (int) $item->id; ?>" <?php echo isset($_REQUEST['series']) && $_REQUEST['series'] == $item->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($item->name) . ' (' . $item->count . ')'); ?></option>
                                     <?php endforeach; ?>

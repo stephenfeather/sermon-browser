@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Widgets;
 
+use SermonBrowser\Constants;
 use WP_Widget;
 use SermonBrowser\Facades\Preacher;
 use SermonBrowser\Facades\Series;
@@ -196,7 +197,7 @@ class SermonsWidget extends WP_Widget
                     id="<?php echo esc_attr($this->get_field_id('preacher')); ?>"
                     name="<?php echo esc_attr($this->get_field_name('preacher')); ?>">
                 <option value="0" <?php selected($preacher, 0); ?>>
-                    <?php esc_html_e('[All]', 'sermon-browser'); ?>
+                    <?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?>
                 </option>
                 <?php foreach ((array) $dpreachers as $p) : ?>
                     <option value="<?php echo esc_attr((string) $p->id); ?>" <?php selected($preacher, $p->id); ?>>
@@ -213,7 +214,7 @@ class SermonsWidget extends WP_Widget
                     id="<?php echo esc_attr($this->get_field_id('service')); ?>"
                     name="<?php echo esc_attr($this->get_field_name('service')); ?>">
                 <option value="0" <?php selected($service, 0); ?>>
-                    <?php esc_html_e('[All]', 'sermon-browser'); ?>
+                    <?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?>
                 </option>
                 <?php foreach ((array) $dservices as $s) : ?>
                     <option value="<?php echo esc_attr((string) $s->id); ?>" <?php selected($service, $s->id); ?>>
@@ -230,7 +231,7 @@ class SermonsWidget extends WP_Widget
                     id="<?php echo esc_attr($this->get_field_id('series')); ?>"
                     name="<?php echo esc_attr($this->get_field_name('series')); ?>">
                 <option value="0" <?php selected($series, 0); ?>>
-                    <?php esc_html_e('[All]', 'sermon-browser'); ?>
+                    <?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?>
                 </option>
                 <?php foreach ((array) $dseries as $se) : ?>
                     <option value="<?php echo esc_attr((string) $se->id); ?>" <?php selected($series, $se->id); ?>>
