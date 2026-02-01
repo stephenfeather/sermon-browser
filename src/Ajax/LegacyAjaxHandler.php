@@ -163,30 +163,41 @@ class LegacyAjaxHandler
         $oname = isset($_POST['oname']) ? sanitize_file_name($_POST['oname']) : '';
 
         if (isset($_POST['del'])) {
-            $filePath = SB_ABSPATH . sb_get_option('upload_dir') . $fname;
-            if (!file_exists($filePath) || unlink($filePath)) {
-                File::delete($fid);
-                echo 'deleted';
-                die();
-            }
-            echo 'failed';
+            self::handleFileDelete($fid, $fname);
+            return;
+        }
+
+        self::handleFileRename($fid, $fname, $oname);
+    }
+
+    /**
+     * Handle file deletion.
+     *
+     * @param int    $fid   File ID.
+     * @param string $fname File name.
+     */
+    private static function handleFileDelete(int $fid, string $fname): void
+    {
+        $filePath = SB_ABSPATH . sb_get_option('upload_dir') . $fname;
+        if (!file_exists($filePath) || unlink($filePath)) {
+            File::delete($fid);
+            echo 'deleted';
             die();
         }
+        echo 'failed';
+        die();
+    }
 
-        // Rename operation
-        if (IS_MU) {
-            $file_allowed = false;
-            $allowed_extensions = explode(" ", get_site_option("upload_filetypes"));
-            foreach ($allowed_extensions as $ext) {
-                if (substr(strtolower($fname), -(strlen($ext) + 1)) == "." . strtolower($ext)) {
-                    $file_allowed = true;
-                }
-            }
-        } else {
-            $file_allowed = true;
-        }
-
-        if (!$file_allowed) {
+    /**
+     * Handle file rename operation.
+     *
+     * @param int    $fid   File ID.
+     * @param string $fname New file name.
+     * @param string $oname Original file name.
+     */
+    private static function handleFileRename(int $fid, string $fname, string $oname): void
+    {
+        if (!self::isFileExtensionAllowed($fname)) {
             echo 'forbidden';
             die();
         }
@@ -204,6 +215,28 @@ class LegacyAjaxHandler
 
         echo 'failed';
         die();
+    }
+
+    /**
+     * Check if file extension is allowed for multisite uploads.
+     *
+     * @param string $fname File name to check.
+     * @return bool True if allowed.
+     */
+    private static function isFileExtensionAllowed(string $fname): bool
+    {
+        if (!IS_MU) {
+            return true;
+        }
+
+        $allowed_extensions = explode(" ", get_site_option("upload_filetypes"));
+        foreach ($allowed_extensions as $ext) {
+            if (substr(strtolower($fname), -(strlen($ext) + 1)) === "." . strtolower($ext)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -266,58 +299,103 @@ class LegacyAjaxHandler
      */
     private static function handleFilePagination(): void
     {
-        global $filetypes;
+        $files = self::fetchFilesForPagination();
+        $isUnlinked = isset($_POST['fetchU']);
 
-        if (isset($_POST['fetchU'])) {
-            $st = (int) $_POST['fetchU'] - 1;
-            $abc = File::findUnlinkedWithTitle(sb_get_option('sermons_per_page'), $st);
-        } elseif (isset($_POST['fetchL'])) {
-            $st = (int) $_POST['fetchL'] - 1;
-            $abc = File::findLinkedWithTitle(sb_get_option('sermons_per_page'), $st);
-        } else {
-            $s = sanitize_text_field($_POST['search']);
-            $abc = File::searchByName($s);
+        if (count($files) === 0) {
+            echo '<tr><td>' . __('No results', 'sermon-browser') . '</td></tr>';
+            die();
         }
 
         $i = 0;
-
-        if (count($abc) >= 1) :
-            foreach ($abc as $file) :
-                ++$i;
-                $prefix = (int)($_POST['fetchU'] ?? 0) ? '' : 's';
-                ?>
-                <tr class="file <?php echo ($i % 2 == 0) ? 'alternate' : '' ?>" id="<?php echo $prefix ?>file<?php echo $file->id ?>">
-                    <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
-                    <td id="<?php echo $prefix ?><?php echo $file->id ?>"><?php echo substr($file->name, 0, strrpos($file->name, '.')) ?></td>
-                    <td style="text-align:center"><?php echo isset($filetypes[substr($file->name, strrpos($file->name, '.') + 1)]['name']) ? $filetypes[substr($file->name, strrpos($file->name, '.') + 1)]['name'] : strtoupper(substr($file->name, strrpos($file->name, '.') + 1)) ?></td>
-                    <?php if (!isset($_POST['fetchU'])) : ?>
-                        <td><?php echo stripslashes($file->title) ?></td>
-                    <?php endif; ?>
-                    <td style="text-align:center">
-                        <script type="text/javascript" language="javascript">
-                        function deletelinked_<?php echo $file->id;?>(filename, filesermon) {
-                            if (confirm('Do you really want to delete '+filename+'?')) {
-                                if (filesermon != '') {
-                                    return confirm('This file is linked to the sermon called ['+filesermon+']. Are you sure you want to delete it?');
-                                }
-                                return true;
-                            }
-                            return false;
-                        }
-                        </script>
-                        <?php if (isset($_POST['fetchU'])) : ?>
-                            <a id="" href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
-                        <?php endif; ?>
-                        <a id="link<?php echo $file->id ?>" href="javascript:rename(<?php echo $file->id ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></a> | <a onclick="return deletelinked_<?php echo $file->id;?>('<?php echo str_replace("'", '', $file->name) ?>', '<?php echo str_replace("'", '', $file->title) ?>');" href="javascript:kill(<?php echo $file->id ?>, '<?php echo $file->name ?>');"><?php _e('Delete', 'sermon-browser') ?></a>
-                    </td>
-                </tr>
-            <?php endforeach ?>
-        <?php else : ?>
-            <tr>
-                <td><?php _e('No results', 'sermon-browser') ?></td>
-            </tr>
-        <?php endif;
+        foreach ($files as $file) {
+            ++$i;
+            self::renderFileRow($file, $i, $isUnlinked);
+        }
 
         die();
+    }
+
+    /**
+     * Fetch files for pagination based on POST parameters.
+     *
+     * @return array<object> Array of file objects.
+     */
+    private static function fetchFilesForPagination(): array
+    {
+        $sermonsPerPage = sb_get_option('sermons_per_page');
+
+        if (isset($_POST['fetchU'])) {
+            $st = (int) $_POST['fetchU'] - 1;
+            return File::findUnlinkedWithTitle($sermonsPerPage, $st);
+        }
+
+        if (isset($_POST['fetchL'])) {
+            $st = (int) $_POST['fetchL'] - 1;
+            return File::findLinkedWithTitle($sermonsPerPage, $st);
+        }
+
+        $s = sanitize_text_field($_POST['search']);
+        return File::searchByName($s);
+    }
+
+    /**
+     * Render a single file row in the pagination table.
+     *
+     * @param object $file      The file object.
+     * @param int    $rowNum    Row number for alternating styles.
+     * @param bool   $isUnlinked Whether this is an unlinked files listing.
+     */
+    private static function renderFileRow(object $file, int $rowNum, bool $isUnlinked): void
+    {
+        global $filetypes;
+
+        $prefix = $isUnlinked ? '' : 's';
+        $altClass = ($rowNum % 2 === 0) ? 'alternate' : '';
+        $fileExt = substr($file->name, strrpos($file->name, '.') + 1);
+        $fileBasename = substr($file->name, 0, strrpos($file->name, '.'));
+        $fileTypeName = $filetypes[$fileExt]['name'] ?? strtoupper($fileExt);
+        ?>
+        <tr class="file <?php echo $altClass ?>" id="<?php echo $prefix ?>file<?php echo $file->id ?>">
+            <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
+            <td id="<?php echo $prefix ?><?php echo $file->id ?>"><?php echo $fileBasename ?></td>
+            <td style="text-align:center"><?php echo $fileTypeName ?></td>
+            <?php if (!$isUnlinked) : ?>
+                <td><?php echo stripslashes($file->title) ?></td>
+            <?php endif; ?>
+            <td style="text-align:center">
+                <?php self::renderFileRowActions($file, $isUnlinked); ?>
+            </td>
+        </tr>
+        <?php
+    }
+
+    /**
+     * Render action links for a file row.
+     *
+     * @param object $file       The file object.
+     * @param bool   $isUnlinked Whether this is an unlinked files listing.
+     */
+    private static function renderFileRowActions(object $file, bool $isUnlinked): void
+    {
+        $safeName = str_replace("'", '', $file->name);
+        $safeTitle = str_replace("'", '', $file->title);
+        ?>
+        <script type="text/javascript" language="javascript">
+        function deletelinked_<?php echo $file->id;?>(filename, filesermon) {
+            if (confirm('Do you really want to delete '+filename+'?')) {
+                if (filesermon != '') {
+                    return confirm('This file is linked to the sermon called ['+filesermon+']. Are you sure you want to delete it?');
+                }
+                return true;
+            }
+            return false;
+        }
+        </script>
+        <?php if ($isUnlinked) : ?>
+            <a id="" href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
+        <?php endif; ?>
+        <a id="link<?php echo $file->id ?>" href="javascript:rename(<?php echo $file->id ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></a> | <a onclick="return deletelinked_<?php echo $file->id;?>('<?php echo $safeName ?>', '<?php echo $safeTitle ?>');" href="javascript:kill(<?php echo $file->id ?>, '<?php echo $file->name ?>');"><?php _e('Delete', 'sermon-browser') ?></a>
+        <?php
     }
 }

@@ -241,41 +241,8 @@ class Upgrader
      */
     private static function upgradeFrom14(\wpdb $wpdb): void
     {
-        // Remove duplicate indexes added by a previous bug
-        $extraIndexes = $wpdb->get_results(
-            "SELECT index_name, table_name FROM INFORMATION_SCHEMA.STATISTICS " .
-            "WHERE table_schema = '" . DB_NAME . "' AND index_name LIKE 'sermon_id_%'"
-        );
-
-        if (is_array($extraIndexes)) {
-            foreach ($extraIndexes as $extraIndex) {
-                $wpdb->query("ALTER TABLE {$extraIndex->table_name} DROP INDEX {$extraIndex->index_name}");
-            }
-        }
-
-        // Remove duplicate tags added by a previous bug
-        $uniqueTags = $wpdb->get_results("SELECT DISTINCT name FROM {$wpdb->prefix}sb_tags");
-
-        if (is_array($uniqueTags)) {
-            foreach ($uniqueTags as $tag) {
-                $tagIds = $wpdb->get_results(
-                    "SELECT id FROM {$wpdb->prefix}sb_tags WHERE name='{$tag->name}'"
-                );
-
-                if (is_array($tagIds)) {
-                    foreach ($tagIds as $tagId) {
-                        $wpdb->query(
-                            "UPDATE {$wpdb->prefix}sb_sermons_tags " .
-                            "SET tag_id='{$tagIds[0]->id}' WHERE tag_id='{$tagId->id}'"
-                        );
-
-                        if ($tagIds[0]->id !== $tagId->id) {
-                            $wpdb->query("DELETE FROM {$wpdb->prefix}sb_tags WHERE id='{$tagId->id}'");
-                        }
-                    }
-                }
-            }
-        }
+        self::removeDuplicateIndexes($wpdb);
+        self::removeDuplicateTags($wpdb);
 
         sb_delete_unused_tags();
 
@@ -283,6 +250,75 @@ class Upgrader
         $wpdb->query("ALTER TABLE {$wpdb->prefix}sb_tags ADD UNIQUE (name)");
 
         update_option('sb_sermon_db_version', '1.5');
+    }
+
+    /**
+     * Remove duplicate indexes added by a previous bug.
+     *
+     * @param \wpdb $wpdb WordPress database instance.
+     */
+    private static function removeDuplicateIndexes(\wpdb $wpdb): void
+    {
+        $extraIndexes = $wpdb->get_results(
+            "SELECT index_name, table_name FROM INFORMATION_SCHEMA.STATISTICS " .
+            "WHERE table_schema = '" . DB_NAME . "' AND index_name LIKE 'sermon_id_%'"
+        );
+
+        if (!is_array($extraIndexes)) {
+            return;
+        }
+
+        foreach ($extraIndexes as $extraIndex) {
+            $wpdb->query("ALTER TABLE {$extraIndex->table_name} DROP INDEX {$extraIndex->index_name}");
+        }
+    }
+
+    /**
+     * Remove duplicate tags added by a previous bug.
+     *
+     * @param \wpdb $wpdb WordPress database instance.
+     */
+    private static function removeDuplicateTags(\wpdb $wpdb): void
+    {
+        $uniqueTags = $wpdb->get_results("SELECT DISTINCT name FROM {$wpdb->prefix}sb_tags");
+
+        if (!is_array($uniqueTags)) {
+            return;
+        }
+
+        foreach ($uniqueTags as $tag) {
+            self::consolidateTagDuplicates($wpdb, $tag->name);
+        }
+    }
+
+    /**
+     * Consolidate duplicate tags with the same name.
+     *
+     * @param \wpdb  $wpdb    WordPress database instance.
+     * @param string $tagName The tag name to consolidate.
+     */
+    private static function consolidateTagDuplicates(\wpdb $wpdb, string $tagName): void
+    {
+        $tagIds = $wpdb->get_results(
+            $wpdb->prepare("SELECT id FROM {$wpdb->prefix}sb_tags WHERE name=%s", $tagName)
+        );
+
+        if (!is_array($tagIds) || count($tagIds) < 2) {
+            return;
+        }
+
+        $primaryTagId = $tagIds[0]->id;
+
+        foreach ($tagIds as $tagId) {
+            $wpdb->query(
+                "UPDATE {$wpdb->prefix}sb_sermons_tags " .
+                "SET tag_id='{$primaryTagId}' WHERE tag_id='{$tagId->id}'"
+            );
+
+            if ($primaryTagId !== $tagId->id) {
+                $wpdb->query("DELETE FROM {$wpdb->prefix}sb_tags WHERE id='{$tagId->id}'");
+            }
+        }
     }
 
     /**

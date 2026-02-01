@@ -133,29 +133,63 @@ final class PodcastFeed
                 break;
             }
 
-            $media = sb_get_stuff($sermon);
+            $itemCount += self::renderSermonMedia($sermon);
+        }
+    }
 
-            if (!is_array($media['Files'] ?? null) && !is_array($media['URLs'] ?? null)) {
+    /**
+     * Render media items for a single sermon.
+     *
+     * @param object $sermon The sermon object.
+     *
+     * @return int Number of items rendered.
+     */
+    private static function renderSermonMedia(object $sermon): int
+    {
+        $media = sb_get_stuff($sermon);
+
+        if (!is_array($media['Files'] ?? null) && !is_array($media['URLs'] ?? null)) {
+            return 0;
+        }
+
+        $rendered = 0;
+
+        foreach ($media as $mediaType => $mediaNames) {
+            if (!is_array($mediaNames) || $mediaType === 'Code') {
                 continue;
             }
 
-            foreach ($media as $mediaType => $mediaNames) {
-                if (!is_array($mediaNames) || $mediaType === 'Code') {
-                    continue;
-                }
-
-                foreach ((array) $mediaNames as $mediaName) {
-                    $extension = strtolower(substr($mediaName, -3));
-
-                    if (!in_array($extension, self::ACCEPTED_EXTENSIONS, true)) {
-                        continue;
-                    }
-
-                    $itemCount++;
-                    self::renderItem($sermon, $mediaName, $mediaType);
-                }
-            }
+            $rendered += self::renderMediaTypeItems($sermon, $mediaNames, $mediaType);
         }
+
+        return $rendered;
+    }
+
+    /**
+     * Render items for a specific media type.
+     *
+     * @param object        $sermon     The sermon object.
+     * @param array<string> $mediaNames Array of media filenames/URLs.
+     * @param string        $mediaType  The media type ('Files' or 'URLs').
+     *
+     * @return int Number of items rendered.
+     */
+    private static function renderMediaTypeItems(object $sermon, array $mediaNames, string $mediaType): int
+    {
+        $rendered = 0;
+
+        foreach ($mediaNames as $mediaName) {
+            $extension = strtolower(substr($mediaName, -3));
+
+            if (!in_array($extension, self::ACCEPTED_EXTENSIONS, true)) {
+                continue;
+            }
+
+            self::renderItem($sermon, $mediaName, $mediaType);
+            $rendered++;
+        }
+
+        return $rendered;
     }
 
     /**
