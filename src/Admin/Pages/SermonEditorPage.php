@@ -517,22 +517,25 @@ class SermonEditorPage
         $books = $formData['books'];
         $mid = isset($_GET['mid']) ? (int) $_GET['mid'] : null;
 
+        // Pre-compute form values using helpers.
+        $titleValue = $this->getFormValue($id3_tags, $curSermon, 'title', 'title');
+        $titleValue = is_string($titleValue) ? htmlspecialchars(stripslashes($titleValue)) : '';
+        $tagsValue = isset($tags) ? stripslashes($tags) : '';
+        $preacherId = $this->getSelectedId($id3_tags, $curSermon, 'preacher', 'preacher_id');
+        $seriesId = $this->getSelectedId($id3_tags, $curSermon, 'series', 'series_id');
+        $serviceId = $curSermon->service_id ?? -1;
+        $dateValue = $this->getDateValue($id3_tags, $curSermon);
+        $descValue = $this->getFormValue($id3_tags, $curSermon, 'description', 'description');
+        $descValue = is_string($descValue) ? stripslashes($descValue) : '';
+        $timeValue = $curSermon->time ?? '';
+        $overrideChecked = isset($curSermon->override) && $curSermon->override;
+
         // Render form components.
         $this->renderFormHelperScripts($timeArr);
         sb_do_alerts();
+        $this->renderFormHeader($mid);
+        $this->renderImportPrompt($mid);
         ?>
-        <div class="wrap">
-            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
-            <h2><?php echo isset($_GET['mid']) ? __('Edit Sermon', 'sermon-browser') : __('Add Sermon', 'sermon-browser'); ?></h2>
-            <?php if (!isset($_GET['mid']) && !isset($_GET['getid3']) && sb_get_option('import_prompt')) {
-                if (!sb_import_options_set()) {
-                    echo '<p class="plugin-update">';
-                    sb_print_import_options_message(true);
-                    echo "</p>\n";
-                } else {
-                    sb_print_upload_form();
-                }
-            } ?>
             <br/>
             <form method="post" enctype="multipart/form-data">
             <fieldset>
@@ -546,106 +549,52 @@ class SermonEditorPage
                         <td>
                             <strong><?php _e('Title', 'sermon-browser') ?></strong>
                             <div>
-                                <input type="text" value="<?php if (isset($id3_tags['title'])) {
-                                    echo $id3_tags['title'];
-                                                          } elseif (isset($curSermon->title)) {
-                                                              echo htmlspecialchars(stripslashes($curSermon->title));
-                                                          } ?>" name="title" size="60" style="width:400px;" />
+                                <input type="text" value="<?php echo esc_attr($titleValue); ?>" name="title" size="60" style="width:400px;" />
                             </div>
                         </td>
                         <td>
                             <strong><?php _e('Tags (comma separated)', 'sermon-browser') ?></strong>
                             <div>
-                                <input type="text" name="tags" value="<?php echo isset($tags) ? stripslashes($tags) : ''?>" style="width:400px" />
+                                <input type="text" name="tags" value="<?php echo esc_attr($tagsValue); ?>" style="width:400px" />
                             </div>
                         </td>
                     </tr>
                     <tr>
                         <td>
                             <strong><?php _e('Preacher', 'sermon-browser') ?></strong><br/>
-                                <select id="preacher" name="preacher" onchange="createNewPreacher(this)">
-                                    <?php if (count($preachers) == 0) : ?>
-                                        <option value="" selected="selected"></option>
-                                    <?php else : ?>
-                                        <?php foreach ($preachers as $preacher) :
-                                            if (isset($id3_tags['preacher'])) {
-                                                $preacher_id = $id3_tags['preacher'];
-                                            } elseif (isset($curSermon->preacher_id)) {
-                                                $preacher_id = $curSermon->preacher_id;
-                                            } else {
-                                                $preacher_id = -1;
-                                            } ?>
-                                        <option value="<?php echo $preacher->id ?>" <?php echo $preacher->id == $preacher_id ? 'selected="selected"' : ''?>><?php echo htmlspecialchars(stripslashes($preacher->name), ENT_QUOTES) ?></option>
-                                        <?php endforeach ?>
-                                    <?php endif ?>
-                                    <option value="newPreacher"><?php _e('Create new preacher', 'sermon-browser') ?></option>
-                                </select>
+                            <?php $this->renderSelectDropdown('preacher', 'preacher', $preachers, $preacherId, __('Create new preacher', 'sermon-browser'), 'createNewPreacher(this)'); ?>
                         </td>
                         <td>
                             <strong><?php _e('Series', 'sermon-browser') ?></strong><br/>
-                            <select id="series" name="series" onchange="createNewSeries(this)">
-                                <?php if (count($series) == 0) : ?>
-                                    <option value="" selected="selected"></option>
-                                <?php else : ?>
-                                    <?php foreach ($series as $item) :
-                                        if (isset($id3_tags['series'])) {
-                                            $series_id = $id3_tags['series'];
-                                        } elseif (isset($curSermon->series_id)) {
-                                            $series_id = $curSermon->series_id;
-                                        } else {
-                                            $series_id = -1;
-                                        } ?>
-                                        <option value="<?php echo $item->id ?>" <?php echo $item->id == $series_id ? 'selected="selected"' : '' ?>><?php echo htmlspecialchars(stripslashes($item->name), ENT_QUOTES) ?></option>
-                                    <?php endforeach ?>
-                                <?php endif ?>
-                                <option value="newSeries"><?php _e('Create new series', 'sermon-browser') ?></option>
-                            </select>
+                            <?php $this->renderSelectDropdown('series', 'series', $series, $seriesId, __('Create new series', 'sermon-browser'), 'createNewSeries(this)'); ?>
                         </td>
                     </tr>
                     <tr>
                         <td style="overflow: visible">
                             <strong><?php _e('Date', 'sermon-browser') ?></strong> (yyyy-mm-dd)
                             <div>
-                                <input type="text" id="date" name="date" value="<?php if ((isset($curSermon->datetime) && $curSermon->datetime != '1970-01-01 00:00:00') || isset($id3_tags['date'])) {
-                                    echo isset($id3_tags['date']) ? $id3_tags['date'] : substr(stripslashes($curSermon->datetime), 0, 10);
-                                                                                } ?>" />
+                                <input type="text" id="date" name="date" value="<?php echo esc_attr($dateValue); ?>" />
                             </div>
                         </td>
                         <td rowspan="3">
                             <strong><?php _e('Description', 'sermon-browser') ?></strong>
                             <div>
-                                <?php   if (isset($id3_tags['description'])) {
-                                    $desc = $id3_tags['description'];
-                                } elseif (isset($curSermon->description)) {
-                                    $desc = stripslashes($curSermon->description);
-                                } else {
-                                    $desc = '';
-                                } ?>
-                                <textarea name="description" cols="50" rows="7"><?php echo $desc; ?></textarea>
+                                <textarea name="description" cols="50" rows="7"><?php echo esc_textarea($descValue); ?></textarea>
                             </div>
                         </td>
                     </tr>
                     <tr>
                         <td>
                             <strong><?php _e('Service', 'sermon-browser') ?></strong><br/>
-                            <select id="service" name="service" onchange="createNewService(this)">
-                                <?php if (count($services) == 0) : ?>
-                                    <option value="" selected="selected"></option>
-                                <?php else : ?>
-                                    <?php foreach ($services as $service) : ?>
-                                        <option value="<?php echo $service->id ?>" <?php echo (isset($curSermon->service_id) && $service->id == $curSermon->service_id) ? 'selected="selected"' : '' ?>><?php echo htmlspecialchars(stripslashes($service->name), ENT_QUOTES) ?></option>
-                                    <?php endforeach ?>
-                                <?php endif ?>
-                                <option value="newService"><?php _e('Create new service', 'sermon-browser') ?></option>
-                            </select>
+                            <?php $this->renderSelectDropdown('service', 'service', $services, $serviceId, __('Create new service', 'sermon-browser'), 'createNewService(this)'); ?>
                         </td>
                     </tr>
                     <tr>
                         <td>
                             <strong><?php _e('Time', 'sermon-browser') ?></strong>
                             <div>
-                                <input type="text" name="time" value="<?php echo isset($curSermon->time) ? $curSermon->time : ''?>" id="time" <?php echo isset($curSermon->override) && $curSermon->override ? '' : 'disabled="disabled" class="gray"' ?> />
-                                <input type="checkbox" name="override" id="override" onchange="doOverride()" <?php echo isset($curSermon->override) && $curSermon->override ? 'checked="checked"' : ''?>> <?php _e('Override default time', 'sermon-browser') ?>
+                                <input type="text" name="time" value="<?php echo esc_attr($timeValue); ?>" id="time" <?php echo $overrideChecked ? '' : 'disabled="disabled" class="gray"'; ?> />
+                                <input type="checkbox" name="override" id="override" onchange="doOverride()" <?php echo $overrideChecked ? 'checked="checked"' : ''; ?>> <?php _e('Override default time', 'sermon-browser') ?>
                             </div>
                         </td>
                     </tr>
@@ -662,14 +611,7 @@ class SermonEditorPage
                         <td>
                             <table>
                                 <tr>
-                                    <td>
-                                        <select id="startbook" name="start[book][]" onchange="syncBook(this)" class="start1">
-                                            <option value=""></option>
-                                            <?php foreach ($books as $book) : ?>
-                                                <option value="<?php echo $book ?>"><?php echo $translated_books[$book] ?></option>
-                                            <?php endforeach ?>
-                                        </select>
-                                    </td>
+                                    <td><?php $this->renderBooksDropdown('startbook', 'start[book][]', $books, $translated_books, 'start1', 'syncBook(this)'); ?></td>
                                     <td><input type="text" style="width:60px;" name="start[chapter][]" value="" class="start2" /><br /></td>
                                     <td><input type="text" style="width:60px;" name="start[verse][]" value="" class="start3" /><br /></td>
                                 </tr>
@@ -678,26 +620,94 @@ class SermonEditorPage
                         <td>
                             <table>
                                 <tr>
-                                    <td>
-                                        <select id="endbook" name="end[book][]" class="end">
-                                            <option value=""></option>
-                                            <?php foreach ($books as $book) : ?>
-                                                <option value="<?php echo $book ?>"><?php echo $translated_books[$book] ?></option>
-                                            <?php endforeach ?>
-                                        </select>
-                                    </td>
+                                    <td><?php $this->renderBooksDropdown('endbook', 'end[book][]', $books, $translated_books, 'end'); ?></td>
                                     <td><input type="text" style="width:60px;" name="end[chapter][]" value="" class="end2" /><br /></td>
                                     <td><input type="text" style="width:60px;" name="end[verse][]" value="" class="end3" /><br /></td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
+                    <?php $this->renderAttachmentsRow($files); ?>
+                </table>
+            </fieldset>
+            <p class="submit"><input type="submit" name="save" value="<?php _e('Save', 'sermon-browser') ?> &raquo;" /></p>
+            <?php wp_nonce_field('sermon_browser_save', 'sermon_browser_save_nonce'); ?>
+            </form>
+        </div>
+        <?php
+        $this->renderFormInitScripts($curSermon, $mid, $startArr, $endArr);
+    }
+
+    /**
+     * Get the date value for the form.
+     *
+     * @param array<string, mixed> $id3_tags ID3 tag data.
+     * @param object|null $curSermon Current sermon object.
+     * @return string The date value.
+     */
+    private function getDateValue(array $id3_tags, ?object $curSermon): string
+    {
+        if (isset($id3_tags['date'])) {
+            return $id3_tags['date'];
+        }
+        if ($curSermon !== null && isset($curSermon->datetime) && $curSermon->datetime !== '1970-01-01 00:00:00') {
+            return substr(stripslashes($curSermon->datetime), 0, 10);
+        }
+        return '';
+    }
+
+    /**
+     * Render the form header with logo and title.
+     *
+     * @param int|null $mid Sermon ID if editing.
+     * @return void
+     */
+    private function renderFormHeader(?int $mid): void
+    {
+        $pageTitle = $mid !== null ? __('Edit Sermon', 'sermon-browser') : __('Add Sermon', 'sermon-browser');
+        ?>
+        <div class="wrap">
+            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+            <h2><?php echo esc_html($pageTitle); ?></h2>
+        <?php
+    }
+
+    /**
+     * Render the import prompt if applicable.
+     *
+     * @param int|null $mid Sermon ID if editing.
+     * @return void
+     */
+    private function renderImportPrompt(?int $mid): void
+    {
+        if ($mid !== null || isset($_GET['getid3']) || !sb_get_option('import_prompt')) {
+            return;
+        }
+
+        if (!sb_import_options_set()) {
+            echo '<p class="plugin-update">';
+            sb_print_import_options_message(true);
+            echo "</p>\n";
+        } else {
+            sb_print_upload_form();
+        }
+    }
+
+    /**
+     * Render the attachments row.
+     *
+     * @param array<object> $files Available files.
+     * @return void
+     */
+    private function renderAttachmentsRow(array $files): void
+    {
+        ?>
                     <tr>
                         <td colspan="2">
                             <strong><?php _e('Attachments', 'sermon-browser') ?></strong> (<a href="javascript:addFile()"><?php _e('add more', 'sermon-browser') ?></a>)
                         </td>
                     </tr>
-                    <tr >
+                    <tr>
                         <td colspan="2">
                             <table>
                                 <tr id="choosefile" class="choose">
@@ -711,10 +721,10 @@ class SermonEditorPage
                                     </th>
                                     <td class="filelist">
                                         <select id="file" name="file[]">
-                                        <?php echo count($files) == 0 ? '<option value="0">No files found</option>' : '<option value="0"></option>' ?>
+                                        <?php echo count($files) === 0 ? '<option value="0">No files found</option>' : '<option value="0"></option>'; ?>
                                         <?php foreach ($files as $file) : ?>
-                                            <option value="<?php echo $file->id ?>"><?php echo $file->name ?></option>
-                                        <?php endforeach ?>
+                                            <option value="<?php echo esc_attr((string) $file->id); ?>"><?php echo esc_html($file->name); ?></option>
+                                        <?php endforeach; ?>
                                         </select>
                                     </td>
                                     <td class="newupload" style="display:none"><input type="file" size="50" name="upload[]"/></td>
@@ -724,14 +734,7 @@ class SermonEditorPage
                             </table>
                         </td>
                     </tr>
-                </table>
-            </fieldset>
-            <p class="submit"><input type="submit" name="save" value="<?php _e('Save', 'sermon-browser') ?> &raquo;" /></p>
-            <?php wp_nonce_field('sermon_browser_save', 'sermon_browser_save_nonce'); ?>
-            </form>
-        </div>
         <?php
-        $this->renderFormInitScripts($curSermon, $mid, $startArr, $endArr);
     }
 
     /**
@@ -1025,5 +1028,114 @@ class SermonEditorPage
                     jQuery(this).val(end3[i]);
                 });
         <?php
+    }
+
+    /**
+     * Get a form field value with priority: id3_tags > curSermon > default.
+     *
+     * @param array<string, mixed> $id3_tags ID3 tag data.
+     * @param object|null $curSermon Current sermon object.
+     * @param string $id3Key Key in id3_tags array.
+     * @param string $sermonProp Property on sermon object.
+     * @param mixed $default Default value.
+     * @return mixed The resolved value.
+     */
+    private function getFormValue(array $id3_tags, ?object $curSermon, string $id3Key, string $sermonProp, mixed $default = ''): mixed
+    {
+        if (isset($id3_tags[$id3Key])) {
+            return $id3_tags[$id3Key];
+        }
+        if ($curSermon !== null && isset($curSermon->$sermonProp)) {
+            return $curSermon->$sermonProp;
+        }
+        return $default;
+    }
+
+    /**
+     * Get the selected ID for a dropdown with priority: id3_tags > curSermon > default.
+     *
+     * @param array<string, mixed> $id3_tags ID3 tag data.
+     * @param object|null $curSermon Current sermon object.
+     * @param string $id3Key Key in id3_tags array.
+     * @param string $sermonProp Property on sermon object.
+     * @return int The selected ID or -1 if none.
+     */
+    private function getSelectedId(array $id3_tags, ?object $curSermon, string $id3Key, string $sermonProp): int
+    {
+        if (isset($id3_tags[$id3Key])) {
+            return (int) $id3_tags[$id3Key];
+        }
+        if ($curSermon !== null && isset($curSermon->$sermonProp)) {
+            return (int) $curSermon->$sermonProp;
+        }
+        return -1;
+    }
+
+    /**
+     * Render a select dropdown with options.
+     *
+     * @param string $id Element ID.
+     * @param string $name Element name.
+     * @param array<object> $items Items with id and name properties.
+     * @param int $selectedId Currently selected ID.
+     * @param string $createLabel Label for "create new" option.
+     * @param string $onChange JavaScript onChange handler.
+     * @return void
+     */
+    private function renderSelectDropdown(
+        string $id,
+        string $name,
+        array $items,
+        int $selectedId,
+        string $createLabel,
+        string $onChange = ''
+    ): void {
+        $onChangeAttr = $onChange ? ' onchange="' . esc_attr($onChange) . '"' : '';
+        echo '<select id="' . esc_attr($id) . '" name="' . esc_attr($name) . '"' . $onChangeAttr . '>';
+
+        if (count($items) === 0) {
+            echo '<option value="" selected="selected"></option>';
+        } else {
+            foreach ($items as $item) {
+                $selected = ($item->id === $selectedId) ? ' selected="selected"' : '';
+                $itemName = htmlspecialchars(stripslashes($item->name), ENT_QUOTES);
+                echo '<option value="' . esc_attr((string) $item->id) . '"' . $selected . '>' . $itemName . '</option>';
+            }
+        }
+
+        echo '<option value="new' . ucfirst($id) . '">' . esc_html($createLabel) . '</option>';
+        echo '</select>';
+    }
+
+    /**
+     * Render the books dropdown for Bible passage selection.
+     *
+     * @param string $id Element ID.
+     * @param string $name Element name.
+     * @param array<string> $books Book identifiers.
+     * @param array<string, string> $translatedBooks Translated book names.
+     * @param string $class CSS class.
+     * @param string $onChange JavaScript onChange handler.
+     * @return void
+     */
+    private function renderBooksDropdown(
+        string $id,
+        string $name,
+        array $books,
+        array $translatedBooks,
+        string $class = '',
+        string $onChange = ''
+    ): void {
+        $classAttr = $class ? ' class="' . esc_attr($class) . '"' : '';
+        $onChangeAttr = $onChange ? ' onchange="' . esc_attr($onChange) . '"' : '';
+        echo '<select id="' . esc_attr($id) . '" name="' . esc_attr($name) . '"' . $classAttr . $onChangeAttr . '>';
+        echo '<option value=""></option>';
+
+        foreach ($books as $book) {
+            $translatedName = $translatedBooks[$book] ?? $book;
+            echo '<option value="' . esc_attr($book) . '">' . esc_html($translatedName) . '</option>';
+        }
+
+        echo '</select>';
     }
 }
