@@ -203,38 +203,82 @@ class BibleText
         }
 
         $xml = self::getXml($pageContent);
-        $output = '';
-
-        if (isset($xml->item)) {
-            foreach ($xml->item as $item) {
-                $text = (string) $item->text;
-                if ($text !== '[[EMPTY]]') {
-                    if (substr($text, 0, 8) === '<p class') {
-                        $paraend = stripos($text, '>', 8);
-                        if ($paraend !== false) {
-                            $paraend++;
-                            $output .= "\n" . substr($text, 0, $paraend);
-                            $text = substr($text, $paraend);
-                        }
-                    }
-
-                    $itemChapter = (string) $item->chapter;
-                    $itemVerse = (string) $item->verse;
-
-                    if ($oldChapter === $itemChapter) {
-                        $output .= " <span class=\"verse-num\">{$itemVerse}</span>";
-                    } else {
-                        $output .= " <span class=\"chapter-num\">{$itemChapter}:{$itemVerse}</span> ";
-                        $oldChapter = $itemChapter;
-                    }
-                    $output .= $text;
-                }
-            }
-        }
+        $output = self::processNetXmlItems($xml, $oldChapter);
 
         $tidyRef = self::tidyReference($start, $end);
         return "<div class=\"net\">\r<h2>{$tidyRef}</h2><p>{$output} "
             . "(<a href=\"http://net.bible.org/?{$reference}\">NET Bible</a>)</p></div>";
+    }
+
+    /**
+     * Process NET Bible XML items into output string.
+     *
+     * @param \SimpleXMLElement|null $xml The XML object.
+     * @param string $oldChapter Starting chapter for comparison.
+     * @return string The processed output.
+     */
+    private static function processNetXmlItems($xml, string $oldChapter): string
+    {
+        $output = '';
+        if (!isset($xml->item)) {
+            return $output;
+        }
+
+        foreach ($xml->item as $item) {
+            $text = (string) $item->text;
+            if ($text === '[[EMPTY]]') {
+                continue;
+            }
+
+            $text = self::extractParagraphTag($text, $output);
+            $output .= self::formatVerseReference($item, $oldChapter);
+            $output .= $text;
+        }
+
+        return $output;
+    }
+
+    /**
+     * Extract and prepend paragraph tag if present.
+     *
+     * @param string $text The text to process.
+     * @param string &$output Output string to append paragraph to.
+     * @return string The remaining text after paragraph extraction.
+     */
+    private static function extractParagraphTag(string $text, string &$output): string
+    {
+        if (substr($text, 0, 8) !== '<p class') {
+            return $text;
+        }
+
+        $paraend = stripos($text, '>', 8);
+        if ($paraend === false) {
+            return $text;
+        }
+
+        $paraend++;
+        $output .= "\n" . substr($text, 0, $paraend);
+        return substr($text, $paraend);
+    }
+
+    /**
+     * Format the verse reference span.
+     *
+     * @param \SimpleXMLElement $item The XML item.
+     * @param string &$oldChapter Chapter tracker (by reference).
+     * @return string The formatted verse/chapter span.
+     */
+    private static function formatVerseReference($item, string &$oldChapter): string
+    {
+        $itemChapter = (string) $item->chapter;
+        $itemVerse = (string) $item->verse;
+
+        if ($oldChapter === $itemChapter) {
+            return " <span class=\"verse-num\">{$itemVerse}</span>";
+        }
+
+        $oldChapter = $itemChapter;
+        return " <span class=\"chapter-num\">{$itemChapter}:{$itemVerse}</span> ";
     }
 
     /**

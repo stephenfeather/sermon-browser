@@ -27,11 +27,6 @@ class Constants
     public const LABEL_FILE_NAME = 'File name';
     public const LABEL_FILE_TYPE = 'File type';
 
-    // JavaScript snippets (for PopularWidget)
-    public const JS_HTML_SUFFIX = '").html("';
-    public const JS_BOLD_STYLE = '").attr("style", "font-weight:bold"); ';
-    public const JS_POPULAR_WRAPPER = 'jQuery("#sb_popular_wrapper';
-
     // Date formats
     public const RFC822_DATE = 'D, d M Y H:i:s O';
     public const DEFAULT_TIME = '00:00';

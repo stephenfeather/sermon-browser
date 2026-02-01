@@ -109,72 +109,99 @@ final class SermonWidget
      */
     public static function widget(array $args, $widgetArgs = 1): void
     {
-        $beforeWidget = isset($args['before_widget']) ? $args['before_widget'] : '';
-        $afterWidget = isset($args['after_widget']) ? $args['after_widget'] : '';
-        $beforeTitle = isset($args['before_title']) ? $args['before_title'] : '';
-        $afterTitle = isset($args['after_title']) ? $args['after_title'] : '';
+        $beforeWidget = $args['before_widget'] ?? '';
+        $afterWidget = $args['after_widget'] ?? '';
+        $beforeTitle = $args['before_title'] ?? '';
+        $afterTitle = $args['after_title'] ?? '';
 
         if (is_numeric($widgetArgs)) {
             $widgetArgs = ['number' => $widgetArgs];
         }
         $widgetArgs = wp_parse_args($widgetArgs, ['number' => -1]);
-        $number = isset($widgetArgs['number']) ? $widgetArgs['number'] : -1;
+        $number = $widgetArgs['number'] ?? -1;
 
         $options = sb_get_option('sermons_widget_options');
         if (!isset($options[$number])) {
             return;
         }
 
-        // Extract widget-specific options.
-        $widgetOpts = $options[$number];
-        $title = isset($widgetOpts['title']) ? $widgetOpts['title'] : '';
-        $preacher = isset($widgetOpts['preacher']) ? $widgetOpts['preacher'] : 0;
-        $service = isset($widgetOpts['service']) ? $widgetOpts['service'] : 0;
-        $series = isset($widgetOpts['series']) ? $widgetOpts['series'] : 0;
-        $limit = isset($widgetOpts['limit']) ? $widgetOpts['limit'] : 5;
-        $book = isset($widgetOpts['book']) ? $widgetOpts['book'] : false;
-        $preacherz = isset($widgetOpts['preacherz']) ? $widgetOpts['preacherz'] : false;
-        $date = isset($widgetOpts['date']) ? $widgetOpts['date'] : false;
+        $widgetOpts = self::extractWidgetOptions($options[$number]);
 
         echo $beforeWidget;
-        echo $beforeTitle . $title . $afterTitle;
+        echo $beforeTitle . $widgetOpts['title'] . $afterTitle;
 
         $sermons = sb_get_sermons(
             [
-                'preacher' => $preacher,
-                'service' => $service,
-                'series' => $series,
+                'preacher' => $widgetOpts['preacher'],
+                'service' => $widgetOpts['service'],
+                'series' => $widgetOpts['series'],
             ],
             [],
             1,
-            $limit
+            $widgetOpts['limit']
         );
 
         echo "<ul class=\"sermon-widget\">";
         foreach ((array) $sermons as $sermon) {
-            echo "<li><span class=\"sermon-title\">";
-            echo '<a href="' . sb_build_url(['sermon_id' => $sermon->id], true) . '">';
-            echo stripslashes($sermon->title) . '</a></span>';
-            if ($book) {
-                $foo = unserialize($sermon->start);
-                $bar = unserialize($sermon->end);
-                if (isset($foo[0]) && isset($bar[0])) {
-                    echo " <span class=\"sermon-passage\">(" . sb_get_books($foo[0], $bar[0]) . ")</span>";
-                }
-            }
-            if ($preacherz) {
-                echo " <span class=\"sermon-preacher\">" . __('by', 'sermon-browser') . " <a href=\"";
-                sb_print_preacher_link($sermon);
-                echo "\">" . stripslashes($sermon->preacher) . "</a></span>";
-            }
-            if ($date) {
-                echo " <span class=\"sermon-date\">" . __(' on ', 'sermon-browser');
-                echo sb_formatted_date($sermon) . "</span>";
-            }
-            echo ".</li>";
+            self::renderSermonItem($sermon, $widgetOpts);
         }
         echo "</ul>";
         echo $afterWidget;
+    }
+
+    /**
+     * Extract widget options with defaults.
+     *
+     * @param array<string, mixed> $opts Raw widget options.
+     * @return array<string, mixed> Normalized options with defaults.
+     */
+    private static function extractWidgetOptions(array $opts): array
+    {
+        return [
+            'title' => $opts['title'] ?? '',
+            'preacher' => $opts['preacher'] ?? 0,
+            'service' => $opts['service'] ?? 0,
+            'series' => $opts['series'] ?? 0,
+            'limit' => $opts['limit'] ?? 5,
+            'book' => $opts['book'] ?? false,
+            'preacherz' => $opts['preacherz'] ?? false,
+            'date' => $opts['date'] ?? false,
+        ];
+    }
+
+    /**
+     * Render a single sermon item in the widget list.
+     *
+     * @param object $sermon Sermon object.
+     * @param array<string, mixed> $opts Widget display options.
+     * @return void
+     */
+    private static function renderSermonItem(object $sermon, array $opts): void
+    {
+        echo "<li><span class=\"sermon-title\">";
+        echo '<a href="' . sb_build_url(['sermon_id' => $sermon->id], true) . '">';
+        echo stripslashes($sermon->title) . '</a></span>';
+
+        if ($opts['book']) {
+            $start = unserialize($sermon->start);
+            $end = unserialize($sermon->end);
+            if (isset($start[0], $end[0])) {
+                echo " <span class=\"sermon-passage\">(" . sb_get_books($start[0], $end[0]) . ")</span>";
+            }
+        }
+
+        if ($opts['preacherz']) {
+            echo " <span class=\"sermon-preacher\">" . __('by', 'sermon-browser') . " <a href=\"";
+            sb_print_preacher_link($sermon);
+            echo "\">" . stripslashes($sermon->preacher) . "</a></span>";
+        }
+
+        if ($opts['date']) {
+            echo " <span class=\"sermon-date\">" . __(' on ', 'sermon-browser');
+            echo sb_formatted_date($sermon) . "</span>";
+        }
+
+        echo ".</li>";
     }
 
     // =========================================================================

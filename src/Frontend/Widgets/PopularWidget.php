@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend\Widgets;
 
-use SermonBrowser\Constants;
 use SermonBrowser\Facades\File;
 
 /**
@@ -27,13 +26,12 @@ final class PopularWidget
      */
     public static function widget(array $args): void
     {
-        // Extract widget arguments
-        $beforeWidget = isset($args['before_widget']) ? $args['before_widget'] : '';
-        $afterWidget = isset($args['after_widget']) ? $args['after_widget'] : '';
-        $beforeTitle = isset($args['before_title']) ? $args['before_title'] : '';
-        $afterTitle = isset($args['after_title']) ? $args['after_title'] : '';
-        $suffix = isset($args['suffix']) ? $args['suffix'] : '_w';
-        $options = isset($args['options']) ? $args['options'] : sb_get_option('popular_widget_options');
+        $beforeWidget = $args['before_widget'] ?? '';
+        $afterWidget = $args['after_widget'] ?? '';
+        $beforeTitle = $args['before_title'] ?? '';
+        $afterTitle = $args['after_title'] ?? '';
+        $suffix = $args['suffix'] ?? '_w';
+        $options = $args['options'] ?? sb_get_option('popular_widget_options');
 
         echo $beforeWidget;
         if ($options['title'] != '') {
@@ -44,97 +42,184 @@ final class PopularWidget
         $trigger = [];
         $output = [];
 
-        // Popular Sermons using Facade
+        // Build popular content sections
         if ($options['display_sermons']) {
-            $sermons = File::getPopularSermons((int) $options['limit']);
-            if ($sermons) {
-                $output['sermons'] = '<div class="popular-sermons' . $suffix . '"><ul>';
-                foreach ($sermons as $sermon) {
-                    $output['sermons'] .= '<li><a href="' . sb_build_url(['sermon_id' => $sermon->id], true) . '">';
-                    $output['sermons'] .= $sermon->title . '</a></li>';
-                }
-                $output['sermons'] .= '</ul></div>';
-                $trigger[] = '<a id="popular_sermons_trigger' . $suffix . '" href="#">Sermons</a>';
-                $jscript .= 'jQuery("#popular_sermons_trigger' . $suffix . '").click(function() {
-                            jQuery(this).attr("style", "font-weight:bold");
-                            jQuery("#popular_series_trigger' . $suffix . '").removeAttr("style");
-                            jQuery("#popular_preachers_trigger' . $suffix . '").removeAttr("style");
-                            jQuery.setSbCookie("sermons");
-                            jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-                                jQuery("#sb_popular_wrapper' . $suffix . ' . Constants::JS_HTML_SUFFIX . ';
-                $jscript .= addslashes($output['sermons']) . '").fadeIn("slow");
-                            });
-                            return false;
-                        });';
-            }
+            self::buildSermonsSection($options, $suffix, $output, $trigger, $jscript);
         }
 
-        // Popular Series using Facade
         if ($options['display_series']) {
-            $seriesList = File::getPopularSeries((int) $options['limit']);
-            if ($seriesList) {
-                $output['series'] = '<div class="popular-series' . $suffix . '"><ul>';
-                foreach ($seriesList as $series) {
-                    $output['series'] .= '<li><a href="' . sb_build_url(['series' => $series->id], true) . '">';
-                    $output['series'] .= $series->name . '</a></li>';
-                }
-                $output['series'] .= '</ul></div>';
-            }
-            $trigger[] = '<a id="popular_series_trigger' . $suffix . '" href="#">Series</a>';
-            $jscript .= 'jQuery("#popular_series_trigger' . $suffix . '").click(function() {
-                        jQuery(this).attr("style", "font-weight:bold");
-                        jQuery("#popular_sermons_trigger' . $suffix . '").removeAttr("style");
-                        jQuery("#popular_preachers_trigger' . $suffix . '").removeAttr("style");
-                        jQuery.setSbCookie("series");
-                        jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-                            jQuery("#sb_popular_wrapper' . $suffix . ' . Constants::JS_HTML_SUFFIX . ';
-            $jscript .= addslashes($output['series'] ?? '') . '").fadeIn("slow");
-                        });
-                        return false;
-                    });';
+            self::buildSeriesSection($options, $suffix, $output, $trigger, $jscript);
         }
 
-        // Popular Preachers using Facade
         if ($options['display_preachers']) {
-            $preachersList = File::getPopularPreachers((int) $options['limit']);
-            if ($preachersList) {
-                $output['preachers'] = '<div class="popular-preachers' . $suffix . '"><ul>';
-                foreach ($preachersList as $preacher) {
-                    $output['preachers'] .= '<li><a href="' . sb_build_url(['preacher' => $preacher->id], true) . '">';
-                    $output['preachers'] .= $preacher->name . '</a></li>';
-                }
-                $output['preachers'] .= '</ul></div>';
-                $trigger[] = '<a id="popular_preachers_trigger' . $suffix . '" href="#">Preachers</a>';
-                $jscript .= 'jQuery("#popular_preachers_trigger' . $suffix . '").click(function() {
-                            jQuery(this).attr("style", "font-weight:bold");
-                            jQuery("#popular_series_trigger' . $suffix . '").removeAttr("style");
-                            jQuery("#popular_sermons_trigger' . $suffix . '").removeAttr("style");
-                            jQuery.setSbCookie("preachers");
-                            jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-                                jQuery("#sb_popular_wrapper' . $suffix . ' . Constants::JS_HTML_SUFFIX . ';
-                $jscript .= addslashes($output['preachers']) . '").fadeIn("slow");
-                            });
-                            return false;
-                        });';
-            }
+            self::buildPreachersSection($options, $suffix, $output, $trigger, $jscript);
         }
 
         // Cookie-based state restoration
-        $jscript .= 'if (jQuery.getSbCookie() == "preachers") { ';
-        $jscript .= 'jQuery("#popular_preachers_trigger' . $suffix . ' . Constants::JS_BOLD_STYLE . ';
-        $jscript .= ' . Constants::JS_POPULAR_WRAPPER . ' . $suffix . ' . Constants::JS_HTML_SUFFIX . ' . addslashes($output['preachers'] ?? '');
-        $jscript .= '")};';
+        $jscript .= self::buildCookieRestoration($suffix, $output);
 
-        $jscript .= 'if (jQuery.getSbCookie() == "series") { ';
-        $jscript .= 'jQuery("#popular_series_trigger' . $suffix . ' . Constants::JS_BOLD_STYLE . ';
-        $jscript .= ' . Constants::JS_POPULAR_WRAPPER . ' . $suffix . ' . Constants::JS_HTML_SUFFIX . ' . addslashes($output['series'] ?? '');
-        $jscript .= '")};';
+        self::renderWidgetOutput($trigger, $suffix, $output, $jscript, $afterWidget);
+    }
 
-        $jscript .= 'if (jQuery.getSbCookie() == "sermons") { ';
-        $jscript .= 'jQuery("#popular_sermons_trigger' . $suffix . ' . Constants::JS_BOLD_STYLE . ';
-        $jscript .= ' . Constants::JS_POPULAR_WRAPPER . ' . $suffix . ' . Constants::JS_HTML_SUFFIX . ' . addslashes($output['sermons'] ?? '');
-        $jscript .= '")};';
+    /**
+     * Build the popular sermons section.
+     *
+     * @param array<string, mixed> $options Widget options.
+     * @param string $suffix Element ID suffix.
+     * @param array<string, string> &$output Output array (by reference).
+     * @param array<string> &$trigger Trigger array (by reference).
+     * @param string &$jscript JavaScript string (by reference).
+     * @return void
+     */
+    private static function buildSermonsSection(
+        array $options,
+        string $suffix,
+        array &$output,
+        array &$trigger,
+        string &$jscript
+    ): void {
+        $sermons = File::getPopularSermons((int) $options['limit']);
+        if (!$sermons) {
+            return;
+        }
 
+        $output['sermons'] = '<div class="popular-sermons' . $suffix . '"><ul>';
+        foreach ($sermons as $sermon) {
+            $output['sermons'] .= '<li><a href="' . sb_build_url(['sermon_id' => $sermon->id], true) . '">';
+            $output['sermons'] .= $sermon->title . '</a></li>';
+        }
+        $output['sermons'] .= '</ul></div>';
+        $trigger[] = '<a id="popular_sermons_trigger' . $suffix . '" href="#">Sermons</a>';
+        $jscript .= self::buildClickHandler('sermons', $suffix, ['series', 'preachers'], $output['sermons']);
+    }
+
+    /**
+     * Build the popular series section.
+     *
+     * @param array<string, mixed> $options Widget options.
+     * @param string $suffix Element ID suffix.
+     * @param array<string, string> &$output Output array (by reference).
+     * @param array<string> &$trigger Trigger array (by reference).
+     * @param string &$jscript JavaScript string (by reference).
+     * @return void
+     */
+    private static function buildSeriesSection(
+        array $options,
+        string $suffix,
+        array &$output,
+        array &$trigger,
+        string &$jscript
+    ): void {
+        $seriesList = File::getPopularSeries((int) $options['limit']);
+        if ($seriesList) {
+            $output['series'] = '<div class="popular-series' . $suffix . '"><ul>';
+            foreach ($seriesList as $series) {
+                $output['series'] .= '<li><a href="' . sb_build_url(['series' => $series->id], true) . '">';
+                $output['series'] .= $series->name . '</a></li>';
+            }
+            $output['series'] .= '</ul></div>';
+        }
+        $trigger[] = '<a id="popular_series_trigger' . $suffix . '" href="#">Series</a>';
+        $jscript .= self::buildClickHandler('series', $suffix, ['sermons', 'preachers'], $output['series'] ?? '');
+    }
+
+    /**
+     * Build the popular preachers section.
+     *
+     * @param array<string, mixed> $options Widget options.
+     * @param string $suffix Element ID suffix.
+     * @param array<string, string> &$output Output array (by reference).
+     * @param array<string> &$trigger Trigger array (by reference).
+     * @param string &$jscript JavaScript string (by reference).
+     * @return void
+     */
+    private static function buildPreachersSection(
+        array $options,
+        string $suffix,
+        array &$output,
+        array &$trigger,
+        string &$jscript
+    ): void {
+        $preachersList = File::getPopularPreachers((int) $options['limit']);
+        if (!$preachersList) {
+            return;
+        }
+
+        $output['preachers'] = '<div class="popular-preachers' . $suffix . '"><ul>';
+        foreach ($preachersList as $preacher) {
+            $output['preachers'] .= '<li><a href="' . sb_build_url(['preacher' => $preacher->id], true) . '">';
+            $output['preachers'] .= $preacher->name . '</a></li>';
+        }
+        $output['preachers'] .= '</ul></div>';
+        $trigger[] = '<a id="popular_preachers_trigger' . $suffix . '" href="#">Preachers</a>';
+        $jscript .= self::buildClickHandler('preachers', $suffix, ['sermons', 'series'], $output['preachers']);
+    }
+
+    /**
+     * Build a click handler for a tab trigger.
+     *
+     * @param string $type The tab type (sermons, series, preachers).
+     * @param string $suffix Element ID suffix.
+     * @param array<string> $otherTypes Other tab types to clear styling.
+     * @param string $content HTML content to display.
+     * @return string JavaScript click handler code.
+     */
+    private static function buildClickHandler(
+        string $type,
+        string $suffix,
+        array $otherTypes,
+        string $content
+    ): string {
+        $js = 'jQuery("#popular_' . $type . '_trigger' . $suffix . '").click(function() {';
+        $js .= 'jQuery(this).attr("style", "font-weight:bold");';
+        foreach ($otherTypes as $other) {
+            $js .= 'jQuery("#popular_' . $other . '_trigger' . $suffix . '").removeAttr("style");';
+        }
+        $js .= 'jQuery.setSbCookie("' . $type . '");';
+        $js .= 'jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {';
+        $js .= 'jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($content) . '").fadeIn("slow");';
+        $js .= '});';
+        $js .= 'return false;';
+        $js .= '});';
+        return $js;
+    }
+
+    /**
+     * Build cookie restoration JavaScript.
+     *
+     * @param string $suffix Element ID suffix.
+     * @param array<string, string> $output Content output array.
+     * @return string JavaScript cookie restoration code.
+     */
+    private static function buildCookieRestoration(string $suffix, array $output): string
+    {
+        $js = '';
+        $types = ['preachers', 'series', 'sermons'];
+        foreach ($types as $type) {
+            $js .= 'if (jQuery.getSbCookie() == "' . $type . '") { ';
+            $js .= 'jQuery("#popular_' . $type . '_trigger' . $suffix . '").attr("style", "font-weight:bold"); ';
+            $js .= 'jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output[$type] ?? '') . '")};';
+        }
+        return $js;
+    }
+
+    /**
+     * Render the widget output HTML and scripts.
+     *
+     * @param array<string> $trigger Trigger links.
+     * @param string $suffix Element ID suffix.
+     * @param array<string, string> $output Content output.
+     * @param string $jscript JavaScript code.
+     * @param string $afterWidget After widget HTML.
+     * @return void
+     */
+    private static function renderWidgetOutput(
+        array $trigger,
+        string $suffix,
+        array $output,
+        string $jscript,
+        string $afterWidget
+    ): void {
         echo '<p>' . implode(' | ', $trigger) . '</p>';
         echo '<div id="sb_popular_wrapper' . $suffix . '">' . current($output) . '</div>';
         echo '<script type="text/javascript">jQuery.setSbCookie = function (value) {

@@ -57,13 +57,7 @@ class SermonsWidget extends WP_Widget
         $title = !empty($instance['title']) ? $instance['title'] : '';
         $title = apply_filters('widget_title', $title, $instance, $this->id_base);
 
-        $limit = isset($instance['limit']) ? (int) $instance['limit'] : 5;
-        $preacher = isset($instance['preacher']) ? (int) $instance['preacher'] : 0;
-        $service = isset($instance['service']) ? (int) $instance['service'] : 0;
-        $series = isset($instance['series']) ? (int) $instance['series'] : 0;
-        $showPreacher = isset($instance['show_preacher']) ? (bool) $instance['show_preacher'] : false;
-        $showBook = isset($instance['show_book']) ? (bool) $instance['show_book'] : false;
-        $showDate = isset($instance['show_date']) ? (bool) $instance['show_date'] : false;
+        $opts = $this->extractInstanceOptions($instance);
 
         echo $beforeWidget;
 
@@ -73,46 +67,99 @@ class SermonsWidget extends WP_Widget
 
         $sermons = sb_get_sermons(
             [
-                'preacher' => $preacher,
-                'service' => $service,
-                'series' => $series,
+                'preacher' => $opts['preacher'],
+                'service' => $opts['service'],
+                'series' => $opts['series'],
             ],
             [],
             1,
-            $limit
+            $opts['limit']
         );
 
         echo '<ul class="sermon-widget">';
         foreach ((array) $sermons as $sermon) {
-            echo '<li><span class="sermon-title">';
-            echo '<a href="' . esc_url(sb_build_url(['sermon_id' => $sermon->id], true)) . '">';
-            echo esc_html(stripslashes($sermon->title)) . '</a></span>';
-
-            if ($showBook && !empty($sermon->start) && !empty($sermon->end)) {
-                $startData = unserialize($sermon->start);
-                $endData = unserialize($sermon->end);
-                if ($startData && $endData) {
-                    echo ' <span class="sermon-passage">(';
-                    echo esc_html(sb_get_books($startData[0], $endData[0])) . ')</span>';
-                }
-            }
-
-            if ($showPreacher && !empty($sermon->preacher)) {
-                echo ' <span class="sermon-preacher">' . esc_html__('by', 'sermon-browser') . ' <a href="';
-                sb_print_preacher_link($sermon);
-                echo '">' . esc_html(stripslashes($sermon->preacher)) . '</a></span>';
-            }
-
-            if ($showDate) {
-                echo ' <span class="sermon-date">' . esc_html__(' on ', 'sermon-browser');
-                echo esc_html(sb_formatted_date($sermon)) . '</span>';
-            }
-
-            echo '.</li>';
+            $this->renderSermonListItem($sermon, $opts);
         }
         echo '</ul>';
 
         echo $afterWidget;
+    }
+
+    /**
+     * Extract instance options with defaults.
+     *
+     * @param array<string, mixed> $instance Widget instance.
+     * @return array<string, mixed> Normalized options.
+     */
+    private function extractInstanceOptions(array $instance): array
+    {
+        return [
+            'limit' => (int) ($instance['limit'] ?? 5),
+            'preacher' => (int) ($instance['preacher'] ?? 0),
+            'service' => (int) ($instance['service'] ?? 0),
+            'series' => (int) ($instance['series'] ?? 0),
+            'show_preacher' => (bool) ($instance['show_preacher'] ?? false),
+            'show_book' => (bool) ($instance['show_book'] ?? false),
+            'show_date' => (bool) ($instance['show_date'] ?? false),
+        ];
+    }
+
+    /**
+     * Render a single sermon list item.
+     *
+     * @param object $sermon Sermon object.
+     * @param array<string, mixed> $opts Display options.
+     * @return void
+     */
+    private function renderSermonListItem(object $sermon, array $opts): void
+    {
+        echo '<li><span class="sermon-title">';
+        echo '<a href="' . esc_url(sb_build_url(['sermon_id' => $sermon->id], true)) . '">';
+        echo esc_html(stripslashes($sermon->title)) . '</a></span>';
+
+        if ($opts['show_book'] && !empty($sermon->start) && !empty($sermon->end)) {
+            $this->renderBookPassage($sermon);
+        }
+
+        if ($opts['show_preacher'] && !empty($sermon->preacher)) {
+            $this->renderPreacherLink($sermon);
+        }
+
+        if ($opts['show_date']) {
+            echo ' <span class="sermon-date">' . esc_html__(' on ', 'sermon-browser');
+            echo esc_html(sb_formatted_date($sermon)) . '</span>';
+        }
+
+        echo '.</li>';
+    }
+
+    /**
+     * Render the book passage span.
+     *
+     * @param object $sermon Sermon object.
+     * @return void
+     */
+    private function renderBookPassage(object $sermon): void
+    {
+        $startData = unserialize($sermon->start);
+        $endData = unserialize($sermon->end);
+        if ($startData && $endData) {
+            echo ' <span class="sermon-passage">(';
+            echo esc_html(sb_get_books($startData[0], $endData[0])) . ')</span>';
+        }
+    }
+
+    /**
+     * Render the preacher link span.
+     *
+     * @param object $sermon Sermon object.
+     * @return void
+     */
+    private function renderPreacherLink(object $sermon): void
+    {
+        echo ' <span class="sermon-preacher">' . esc_html__('by', 'sermon-browser') . ' <a href="';
+        sb_print_preacher_link($sermon);
+        echo '">' . esc_html(stripslashes($sermon->preacher)) . '</a></span>';
     }
 
     /**

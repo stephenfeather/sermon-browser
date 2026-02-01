@@ -149,66 +149,95 @@ class FilterRenderer
      */
     public static function renderDateLine(array $dates): void
     {
-        // PHP 8 fix: Early return if dates array is empty
         if (empty($dates)) {
+            return;
+        }
+
+        $first = $dates[0];
+        $last = end($dates);
+
+        // Same year and month - nothing to show
+        if ($first->year === $last->year && $first->month === $last->month) {
             return;
         }
 
         $dateOutput = "<div id = \"dates\" class=\"filter\">\r";
         $dateOutput .= "<span class=\"filter-heading\">" . esc_html__('Date', 'sermon-browser') . ":</span> \r";
 
-        $first = $dates[0];
-        $last = end($dates);
+        if ($first->year === $last->year) {
+            $dateOutput .= self::renderMonthlyDateLinks($dates);
+        } else {
+            $dateOutput .= self::renderYearlyDateLinks($dates);
+        }
+
+        echo rtrim($dateOutput, ', ') . "</div>\r";
+    }
+
+    /**
+     * Render monthly date links when all dates are in the same year.
+     *
+     * @param array<object> $dates Array of date objects.
+     * @return string HTML output for monthly links.
+     */
+    private static function renderMonthlyDateLinks(array $dates): string
+    {
+        $output = '';
+        $previousMonth = -1;
         $count = 0;
 
-        if ($first->year === $last->year) {
-            if ($first->month === $last->month) {
-                $dateOutput = '';
+        foreach ($dates as $date) {
+            if ($date->month !== $previousMonth) {
+                if ($count !== 0) {
+                    $output .= '(' . $count . '), ';
+                }
+                $url = sb_build_url([
+                    'date' => $date->year . '-' . $date->month . '-01',
+                    'enddate' => $date->year . '-' . $date->month . '-31'
+                ], false);
+                $monthName = wp_date('F', strtotime("{$date->year}-{$date->month}-{$date->day}"));
+                $output .= '<a href="' . esc_url($url) . '">' . esc_html($monthName) . '</a> ';
+                $previousMonth = $date->month;
+                $count = 1;
             } else {
-                $previousMonth = -1;
-                foreach ($dates as $date) {
-                    if ($date->month !== $previousMonth) {
-                        if ($count !== 0) {
-                            $dateOutput .= '(' . $count . '), ';
-                        }
-                        $url = sb_build_url([
-                            'date' => $date->year . '-' . $date->month . '-01',
-                            'enddate' => $date->year . '-' . $date->month . '-31'
-                        ], false);
-                        $monthName = wp_date('F', strtotime("{$date->year}-{$date->month}-{$date->day}"));
-                        $dateOutput .= '<a href="' . esc_url($url) . '">' . esc_html($monthName) . '</a> ';
-                        $previousMonth = $date->month;
-                        $count = 1;
-                    } else {
-                        $count++;
-                    }
-                }
-                $dateOutput .= '(' . $count . '), ';
+                $count++;
             }
-        } else {
-            $previousYear = 0;
-            foreach ($dates as $date) {
-                if ($date->year !== $previousYear) {
-                    if ($count !== 0) {
-                        $dateOutput .= '(' . $count . '), ';
-                    }
-                    $url = sb_build_url([
-                        'date' => $date->year . '-01-01',
-                        'enddate' => $date->year . '-12-31'
-                    ], false);
-                    $dateOutput .= '<a href="' . esc_url($url) . '">' . (int) $date->year . '</a> ';
-                    $previousYear = $date->year;
-                    $count = 1;
-                } else {
-                    $count++;
-                }
-            }
-            $dateOutput .= '(' . $count . '), ';
         }
+        $output .= '(' . $count . '), ';
 
-        if ($dateOutput !== '') {
-            echo rtrim($dateOutput, ', ') . "</div>\r";
+        return $output;
+    }
+
+    /**
+     * Render yearly date links when dates span multiple years.
+     *
+     * @param array<object> $dates Array of date objects.
+     * @return string HTML output for yearly links.
+     */
+    private static function renderYearlyDateLinks(array $dates): string
+    {
+        $output = '';
+        $previousYear = 0;
+        $count = 0;
+
+        foreach ($dates as $date) {
+            if ($date->year !== $previousYear) {
+                if ($count !== 0) {
+                    $output .= '(' . $count . '), ';
+                }
+                $url = sb_build_url([
+                    'date' => $date->year . '-01-01',
+                    'enddate' => $date->year . '-12-31'
+                ], false);
+                $output .= '<a href="' . esc_url($url) . '">' . (int) $date->year . '</a> ';
+                $previousYear = $date->year;
+                $count = 1;
+            } else {
+                $count++;
+            }
         }
+        $output .= '(' . $count . '), ';
+
+        return $output;
     }
 
     /**
