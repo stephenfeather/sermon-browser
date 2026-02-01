@@ -96,7 +96,7 @@ final class PodcastHelper
 
         // Duration not cached, analyze the file
         if (!class_exists('getID3')) {
-            require ABSPATH . WPINC . '/ID3/getid3.php';
+            require_once ABSPATH . WPINC . '/ID3/getid3.php';
         }
 
         $getID3 = new \getID3();
@@ -200,7 +200,7 @@ final class PodcastHelper
             return;
         }
 
-        require SB_INCLUDES_DIR . '/filetypes.php';
+        require_once SB_INCLUDES_DIR . '/filetypes.php';
 
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Variables from included file
         self::$filetypes = $filetypes ?? [];

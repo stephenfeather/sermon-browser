@@ -32,23 +32,20 @@ class UploadHelper
     {
         $sermonUploadDir = SB_ABSPATH . sb_get_option('upload_dir') . $foldername;
 
-        if (is_dir($sermonUploadDir)) {
-            // Dir exists
-            $fp = @fopen($sermonUploadDir . 'sermontest.txt', 'w');
-            if ($fp) {
-                // Delete this test file
-                fclose($fp);
-                unset($fp);
-                @unlink($sermonUploadDir . 'sermontest.txt');
-                return 'writeable';
-            } else {
-                return 'unwriteable';
-            }
-        } else {
+        if (!is_dir($sermonUploadDir)) {
             return 'notexist';
         }
 
-        return false;
+        // Dir exists - test if writeable
+        $fp = @fopen($sermonUploadDir . 'sermontest.txt', 'w');
+        if (!$fp) {
+            return 'unwriteable';
+        }
+
+        // Delete this test file
+        fclose($fp);
+        @unlink($sermonUploadDir . 'sermontest.txt');
+        return 'writeable';
     }
 
     /**
