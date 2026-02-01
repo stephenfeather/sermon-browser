@@ -395,7 +395,7 @@ class FilesPage
                 });
             }
             function findNow() {
-                var searchTerm = jQuery('#search').val();
+                var searchTerm = jQuery('#search-input').val();
                 if (!searchTerm) return;
                 SBAdmin.filePagination.search(searchTerm).done(function(response) {
                     SBAdmin.handleResponse(response, function(data) {
@@ -500,7 +500,7 @@ class FilesPage
             <h2><?php _e('Search for files', 'sermon-browser') ?></h2>
             <form id="searchform" name="searchform">
                 <p>
-                    <input type="text" size="30" value="" id="search" />
+                    <input type="text" size="30" value="" id="search-input" />
                     <input type="submit" class="button" value="<?php _e('Search', 'sermon-browser') ?> &raquo;" onclick="javascript:findNow();return false;" />
                 </p>
             </form>

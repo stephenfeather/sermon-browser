@@ -1,97 +1,59 @@
 <?php
 
+/**
+ * Shared constants for Sermon Browser plugin.
+ *
+ * Centralizes repeated string literals to satisfy SonarQube rule php:S1192.
+ *
+ * @package SermonBrowser
+ */
+
 declare(strict_types=1);
 
 namespace SermonBrowser;
 
 /**
- * Centralized constants for the Sermon Browser plugin.
- *
- * This class consolidates string literals used throughout the codebase
- * to avoid duplication and ensure consistency.
- *
- * @since 1.0.0
+ * Plugin-wide constants.
  */
-final class Constants
+class Constants
 {
-    // =========================================================================
-    // Database Table Suffixes
-    // =========================================================================
-    // These are appended to $wpdb->prefix to form full table names.
+    // HTML attributes
+    public const SELECTED = 'selected="selected"';
+    public const CHECKED = 'checked="checked"';
 
-    public const TABLE_SERMONS = 'sb_sermons';
-    public const TABLE_PREACHERS = 'sb_preachers';
-    public const TABLE_SERIES = 'sb_series';
-    public const TABLE_SERVICES = 'sb_services';
-    public const TABLE_FILES = 'sb_files';
-    public const TABLE_STUFF = 'sb_stuff';  // Legacy table name for sermon attachments
-    public const TABLE_TAGS = 'sb_tags';
-    public const TABLE_BOOKS = 'sb_books';
-    public const TABLE_SERMONS_TAGS = 'sb_sermons_tags';
-    public const TABLE_BOOKS_SERMONS = 'sb_books_sermons';
+    // UI strings
+    public const ALL_FILTER = '[All]';
 
-    // =========================================================================
-    // WordPress Capabilities
-    // =========================================================================
+    // Date formats
+    public const RFC822_DATE = 'D, d M Y H:i:s O';
+    public const DEFAULT_TIME = '00:00';
 
-    /**
-     * Capability required to manage sermons (create, edit, delete).
-     */
-    public const CAP_MANAGE_SERMONS = 'edit_posts';
+    // Paths
+    public const IMAGES_PATH = 'images/';
 
-    // =========================================================================
-    // Option Keys
-    // =========================================================================
-    // Used with sb_get_option() and sb_update_option().
+    // Admin URLs (relative)
+    public const SERMON_PAGE = 'admin.php?page=sermon-browser/sermon.php';
+    public const NEW_SERMON_GETID3 = 'admin.php?page=sermon-browser/new_sermon.php&getid3=';
 
-    public const OPT_UPLOAD_DIR = 'upload_dir';
-    public const OPT_UPLOAD_URL = 'upload_url';
-    public const OPT_PODCAST_URL = 'podcast_url';
-    public const OPT_SERMONS_PER_PAGE = 'sermons_per_page';
-    public const OPT_MP3_SHORTCODE = 'mp3_shortcode';
-    public const OPT_ESV_API_KEY = 'esv_api_key';
-    public const OPT_FILTER_TYPE = 'filter_type';
-    public const OPT_FILTER_HIDE = 'filter_hide';
-    public const OPT_HIDE_NO_ATTACHMENTS = 'hide_no_attachments';
-    public const OPT_FILETYPES = 'filetypes';
-    public const OPT_CSS_STYLE = 'css_style';
-    public const OPT_SINGLE_TEMPLATE = 'single_template';
-    public const OPT_SEARCH_TEMPLATE = 'search_template';
-    public const OPT_SHOW_DONATE_REMINDER = 'show_donate_reminder';
+    // REST API error messages
+    public const ERR_SERMON_NOT_FOUND = 'Sermon not found.';
+    public const ERR_PREACHER_NOT_FOUND = 'Preacher not found.';
+    public const ERR_SERIES_NOT_FOUND = 'Series not found.';
+    public const ERR_SERVICE_NOT_FOUND = 'Service not found.';
+    public const ERR_FILE_NOT_FOUND = 'File not found.';
+    public const ERR_NO_PERMISSION = 'You do not have the correct permissions to edit the SermonBrowser options';
 
-    // Import options
-    public const OPT_IMPORT_PROMPT = 'import_prompt';
-    public const OPT_IMPORT_TITLE = 'import_title';
-    public const OPT_IMPORT_ARTIST = 'import_artist';
-    public const OPT_IMPORT_ALBUM = 'import_album';
-    public const OPT_IMPORT_COMMENTS = 'import_comments';
-    public const OPT_IMPORT_FILENAME = 'import_filename';
+    // REST API descriptions
+    public const DESC_SERMON_ID = 'Unique identifier for the sermon.';
+    public const DESC_PREACHER_ID = 'Unique identifier for the preacher.';
+    public const DESC_SERIES_ID = 'Unique identifier for the series.';
+    public const DESC_SERVICE_ID = 'Unique identifier for the service.';
 
-    // =========================================================================
-    // REST API
-    // =========================================================================
+    // SQL fragments
+    public const SQL_LIMIT = ' LIMIT %d';
+    public const SQL_LIMIT_OFFSET = ' LIMIT %d OFFSET %d';
 
-    public const REST_NAMESPACE = 'sermon-browser/v1';
-
-    // =========================================================================
-    // AJAX Actions
-    // =========================================================================
-
-    public const AJAX_PREFIX = 'sb_';
-
-    // =========================================================================
-    // Defaults
-    // =========================================================================
-
-    public const DEFAULT_SERMONS_PER_PAGE = 10;
-    public const DEFAULT_PAGINATION_MAX = 100;
-
-    // =========================================================================
-    // Prevent instantiation
-    // =========================================================================
-
-    private function __construct()
-    {
-        // Static class - cannot be instantiated
-    }
+    // Protocol prefixes
+    public const HTTP = 'http://';
+    public const HTTPS = 'https://';
 }
