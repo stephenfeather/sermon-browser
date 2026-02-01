@@ -1,4 +1,9 @@
 <?php
+
+use SermonBrowser\Frontend\Widgets\PopularWidget;
+use SermonBrowser\Frontend\Widgets\SermonWidget;
+use SermonBrowser\Frontend\Widgets\TagCloudWidget;
+
 /**
  * Deprecated function - displays error message
  *
@@ -10,187 +15,40 @@ function display_sermons($_options = array())
     echo "This function is now deprecated. Use sb_display_sermons or the sermon browser widget, instead.";
 }
 
-// Function to display sermons for users to add to their template
+/**
+ * Display sermons for template use.
+ *
+ * @param array $options Display options.
+ */
 function sb_display_sermons($options = array())
 {
-    $default = array(
-        'display_preacher' => 1,
-        'display_passage' => 1,
-        'display_date' => 1,
-        'preacher' => 0,
-        'service' => 0,
-        'series' => 0,
-        'limit' => 5,
-        'url_only' => 0,
-    );
-    $options = array_merge($default, (array) $options);
-    // Phase 5: Replace extract() with explicit variable assignments.
-    $display_preacher = $options['display_preacher'];
-    $display_passage = $options['display_passage'];
-    $display_date = $options['display_date'];
-    $preacher = $options['preacher'];
-    $service = $options['service'];
-    $series = $options['series'];
-    $limit = $options['limit'];
-    $url_only = $options['url_only'];
-    if ($url_only == 1) {
-        $limit = 1;
-    }
-    $sermons = sb_get_sermons(
-        array(
-            'preacher' => $preacher,
-            'service' => $service,
-            'series' => $series
-        ),
-        array(),
-        1,
-        $limit
-    );
-    if ($url_only == 1) {
-        sb_print_sermon_link($sermons[0], true);
-    } else {
-        echo "<ul class=\"sermon-widget\">\r";
-        foreach ((array) $sermons as $sermon) {
-            echo "\t<li>";
-            echo "<span class=\"sermon-title\"><a href=\"";
-            sb_print_sermon_link($sermon, true);
-            echo "\">" . stripslashes($sermon->title) . "</a></span>";
-            if ($display_passage) {
-                $foo = unserialize($sermon->start);
-                $bar = unserialize($sermon->end);
-                echo "<span class=\"sermon-passage\"> (" . sb_get_books($foo[0], $bar[0]) . ")</span>";
-            }
-            if ($display_preacher) {
-                echo "<span class=\"sermon-preacher\">" . __('by', 'sermon-browser') . " <a href=\"";
-                sb_print_preacher_link($sermon);
-                echo "\">" . stripslashes($sermon->preacher) . "</a></span>";
-            }
-            if ($display_date) {
-                echo " <span class=\"sermon-date\">" . __('on', 'sermon-browser') . " " . sb_formatted_date($sermon) . "</span>";
-            }
-            echo ".</li>\r";
-        }
-        echo "</ul>\r";
-    }
+    SermonWidget::display((array) $options);
 }
 
-// Displays the widget
+/**
+ * Display the sermon widget in sidebar.
+ *
+ * @param array     $args        Widget arguments.
+ * @param array|int $widget_args Widget instance arguments.
+ */
 function sb_widget_sermon($args, $widget_args = 1)
 {
-    // Phase 5: Replace extract() with explicit variable assignments.
-    $before_widget = isset($args['before_widget']) ? $args['before_widget'] : '';
-    $after_widget = isset($args['after_widget']) ? $args['after_widget'] : '';
-    $before_title = isset($args['before_title']) ? $args['before_title'] : '';
-    $after_title = isset($args['after_title']) ? $args['after_title'] : '';
-
-    if (is_numeric($widget_args)) {
-        $widget_args = array( 'number' => $widget_args );
-    }
-    $widget_args = wp_parse_args($widget_args, array( 'number' => -1 ));
-    $number = isset($widget_args['number']) ? $widget_args['number'] : -1;
-
-    $options = sb_get_option('sermons_widget_options');
-    if (!isset($options[$number])) {
-        return;
-    }
-
-    // Extract widget-specific options.
-    $widget_opts = $options[$number];
-    $title = isset($widget_opts['title']) ? $widget_opts['title'] : '';
-    $preacher = isset($widget_opts['preacher']) ? $widget_opts['preacher'] : 0;
-    $service = isset($widget_opts['service']) ? $widget_opts['service'] : 0;
-    $series = isset($widget_opts['series']) ? $widget_opts['series'] : 0;
-    $limit = isset($widget_opts['limit']) ? $widget_opts['limit'] : 5;
-    $book = isset($widget_opts['book']) ? $widget_opts['book'] : false;
-    $preacherz = isset($widget_opts['preacherz']) ? $widget_opts['preacherz'] : false;
-    $date = isset($widget_opts['date']) ? $widget_opts['date'] : false;
-
-    echo $before_widget;
-    echo $before_title . $title . $after_title;
-    $sermons = sb_get_sermons(
-        array(
-            'preacher' => $preacher,
-            'service' => $service,
-            'series' => $series
-        ),
-        array(),
-        1,
-        $limit
-    );
-    $i = 0;
-    echo "<ul class=\"sermon-widget\">";
-    foreach ((array) $sermons as $sermon) {
-        $i++;
-        echo "<li><span class=\"sermon-title\">";
-        echo '<a href="' . sb_build_url(array('sermon_id' => $sermon->id), true) . '">' . stripslashes($sermon->title) . '</a></span>';
-        if ($book) {
-            $foo = unserialize($sermon->start);
-            $bar = unserialize($sermon->end);
-            if (isset($foo[0]) && isset($bar[0])) {
-                echo " <span class=\"sermon-passage\">(" . sb_get_books($foo[0], $bar[0]) . ")</span>";
-            }
-        }
-        if ($preacherz) {
-            echo " <span class=\"sermon-preacher\">" . __('by', 'sermon-browser') . " <a href=\"";
-            sb_print_preacher_link($sermon);
-            echo "\">" . stripslashes($sermon->preacher) . "</a></span>";
-        }
-        if ($date) {
-            echo " <span class=\"sermon-date\">" . __(' on ', 'sermon-browser') . sb_formatted_date($sermon) . "</span>";
-        }
-        echo ".</li>";
-    }
-    echo "</ul>";
-    echo $after_widget;
+    SermonWidget::widget($args, $widget_args);
 }
 
-// Displays the tag cloud in the sidebar
+/**
+ * Display the tag cloud widget in sidebar.
+ *
+ * @param array $args Widget arguments.
+ */
 function sb_widget_tag_cloud($args)
 {
-    // Phase 5: Replace extract() with explicit variable assignments.
-    $before_widget = isset($args['before_widget']) ? $args['before_widget'] : '';
-    $after_widget = isset($args['after_widget']) ? $args['after_widget'] : '';
-    $before_title = isset($args['before_title']) ? $args['before_title'] : '';
-    $after_title = isset($args['after_title']) ? $args['after_title'] : '';
-
-    echo $before_widget;
-    echo $before_title . __('Sermon Browser tags', 'sermon-browser') . $after_title;
-    sb_print_tag_clouds();
-    echo $after_widget;
+    TagCloudWidget::widget($args);
 }
 
 function sb_admin_bar_menu()
 {
-    global $wp_admin_bar;
-    if (!current_user_can('edit_posts') || !class_exists('WP_Admin_Bar')) {
-        return;
-    }
-    if (isset($_GET['sermon_id']) && (int)$_GET['sermon_id'] != 0 && current_user_can('publish_pages')) {
-        $wp_admin_bar->add_menu(array('id' => 'sermon-browser-menu', 'title' => __('Edit Sermon', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/new_sermon.php&mid=' . (int)$_GET['sermon_id'])));
-        $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-sermons', 'title' => __('List Sermons', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/sermon.php')));
-    } else {
-        $wp_admin_bar->add_menu(array('id' => 'sermon-browser-menu', 'title' => __('Sermons', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/sermon.php')));
-        if (current_user_can('publish_pages')) {
-            $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-add', 'title' => __('Add Sermon', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/new_sermon.php')));
-        }
-    }
-    if (current_user_can('upload_files')) {
-        $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-files', 'title' => __('Files', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/files.php')));
-    }
-    if (current_user_can('manage_categories')) {
-        $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-preachers', 'title' => __('Preachers', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/preachers.php')));
-        $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-series', 'title' => __('Series &amp; Services', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/manage.php')));
-    }
-    if (current_user_can('manage_options')) {
-        $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-options', 'title' => __('Options', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/options.php')));
-        $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-series', 'title' => __('Templates', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/templates.php')));
-    }
-    if (current_user_can('edit_plugins')) {
-        $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-uninstall', 'title' => __('Uninstall', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/uninstall.php')));
-    }
-    $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-help', 'title' => __('Help', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/help.php')));
-    $wp_admin_bar->add_menu(array('parent' => 'sermon-browser-menu', 'id' => 'sermon-browser-japan', 'title' => __('Pray for Japan', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/japan.php')));
-    $wp_admin_bar->add_menu(array('parent' => 'new-content', 'id' => 'sermon-browser-add2', 'title' => __('Sermon', 'sermon-browser'), 'href' => admin_url('admin.php?page=sermon-browser/new_sermon.php')));
+    \SermonBrowser\Admin\AdminBarMenu::register();
 }
 
 // Sorts an object by rank
@@ -202,611 +60,284 @@ function sb_sort_object($a, $b)
     return ($a->rank < $b->rank) ? -1 : 1;
 }
 
-// Displays the most popular sermons in the sidebar
+/**
+ * Display the most popular sermons widget in sidebar.
+ *
+ * @param array $args Widget arguments.
+ */
 function sb_widget_popular($args)
 {
-    // Extract widget arguments
-    $before_widget = isset($args['before_widget']) ? $args['before_widget'] : '';
-    $after_widget = isset($args['after_widget']) ? $args['after_widget'] : '';
-    $before_title = isset($args['before_title']) ? $args['before_title'] : '';
-    $after_title = isset($args['after_title']) ? $args['after_title'] : '';
-    $suffix = isset($args['suffix']) ? $args['suffix'] : '_w';
-    $options = isset($args['options']) ? $args['options'] : sb_get_option('popular_widget_options');
-
-    echo $before_widget;
-    if ($options['title'] != '') {
-        echo $before_title . $options['title'] . $after_title;
-    }
-
-    $jscript = '';
-    $trigger = [];
-    $output = [];
-
-    // Popular Sermons using Facade
-    if ($options['display_sermons']) {
-        $sermons = \SermonBrowser\Facades\File::getPopularSermons((int) $options['limit']);
-        if ($sermons) {
-            $output['sermons'] = '<div class="popular-sermons' . $suffix . '"><ul>';
-            foreach ($sermons as $sermon) {
-                $output['sermons'] .= '<li><a href="' . sb_build_url(['sermon_id' => $sermon->id], true) . '">' . $sermon->title . '</a></li>';
-            }
-            $output['sermons'] .= '</ul></div>';
-            $trigger[] = '<a id="popular_sermons_trigger' . $suffix . '" href="#">Sermons</a>';
-            $jscript .= 'jQuery("#popular_sermons_trigger' . $suffix . '").click(function() {
-							jQuery(this).attr("style", "font-weight:bold");
-							jQuery("#popular_series_trigger' . $suffix . '").removeAttr("style");
-							jQuery("#popular_preachers_trigger' . $suffix . '").removeAttr("style");
-							jQuery.setSbCookie("sermons");
-							jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-								jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['sermons']) . '").fadeIn("slow");
-							});
-							return false;
-						});';
-        }
-    }
-
-    // Popular Series using Facade
-    if ($options['display_series']) {
-        $series_list = \SermonBrowser\Facades\File::getPopularSeries((int) $options['limit']);
-        if ($series_list) {
-            $output['series'] = '<div class="popular-series' . $suffix . '"><ul>';
-            foreach ($series_list as $series) {
-                $output['series'] .= '<li><a href="' . sb_build_url(['series' => $series->id], true) . '">' . $series->name . '</a></li>';
-            }
-            $output['series'] .= '</ul></div>';
-        }
-        $trigger[] = '<a id="popular_series_trigger' . $suffix . '" href="#">Series</a>';
-        $jscript .= 'jQuery("#popular_series_trigger' . $suffix . '").click(function() {
-						jQuery(this).attr("style", "font-weight:bold");
-						jQuery("#popular_sermons_trigger' . $suffix . '").removeAttr("style");
-						jQuery("#popular_preachers_trigger' . $suffix . '").removeAttr("style");
-						jQuery.setSbCookie("series");
-						jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-							jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['series'] ?? '') . '").fadeIn("slow");
-						});
-						return false;
-					});';
-    }
-
-    // Popular Preachers using Facade
-    if ($options['display_preachers']) {
-        $preachers_list = \SermonBrowser\Facades\File::getPopularPreachers((int) $options['limit']);
-        if ($preachers_list) {
-            $output['preachers'] = '<div class="popular-preachers' . $suffix . '"><ul>';
-            foreach ($preachers_list as $preacher) {
-                $output['preachers'] .= '<li><a href="' . sb_build_url(['preacher' => $preacher->id], true) . '">' . $preacher->name . '</a></li>';
-            }
-            $output['preachers'] .= '</ul></div>';
-            $trigger[] = '<a id="popular_preachers_trigger' . $suffix . '" href="#">Preachers</a>';
-            $jscript .= 'jQuery("#popular_preachers_trigger' . $suffix . '").click(function() {
-							jQuery(this).attr("style", "font-weight:bold");
-							jQuery("#popular_series_trigger' . $suffix . '").removeAttr("style");
-							jQuery("#popular_sermons_trigger' . $suffix . '").removeAttr("style");
-							jQuery.setSbCookie("preachers");
-							jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {
-								jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['preachers']) . '").fadeIn("slow");
-							});
-							return false;
-						});';
-        }
-    }
-
-    // Cookie-based state restoration
-    $jscript .= 'if (jQuery.getSbCookie() == "preachers") { jQuery("#popular_preachers_trigger' . $suffix . '").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['preachers'] ?? '') . '")};';
-    $jscript .= 'if (jQuery.getSbCookie() == "series") { jQuery("#popular_series_trigger' . $suffix . '").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['series'] ?? '') . '")};';
-    $jscript .= 'if (jQuery.getSbCookie() == "sermons") { jQuery("#popular_sermons_trigger' . $suffix . '").attr("style", "font-weight:bold"); jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output['sermons'] ?? '') . '")};';
-
-    echo '<p>' . implode(' | ', $trigger) . '</p>';
-    echo '<div id="sb_popular_wrapper' . $suffix . '">' . current($output) . '</div>';
-    echo '<script type="text/javascript">jQuery.setSbCookie = function (value) {
-			document.cookie = "sb_popular="+encodeURIComponent(value);
-		};</script>';
-    echo '<script type="text/javascript">jQuery.getSbCookie = function () {
-			var cookieValue = null;
-			if (document.cookie && document.cookie != "") {
-				var cookies = document.cookie.split(";");
-				for (var i = 0; i < cookies.length; i++) {
-					var cookie = jQuery.trim(cookies[i]);
-					var name = "sb_popular";
-					if (cookie.substring(0, name.length + 1) == (name + "=")) {
-						cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-						break;
-					}
-				}
-			}
-			return cookieValue;
-		}</script>';
-    echo '<script type="text/javascript">jQuery(document).ready(function() {' . $jscript . '});</script>';
-    echo $after_widget;
+    PopularWidget::widget($args);
 }
 
+/**
+ * Print the most popular widget with default styling.
+ *
+ * Convenience function for template usage.
+ */
 function sb_print_most_popular()
 {
-    $args['before_widget'] = '<div id="sermon_most_popular" style="border: 1px solid ; margin: 0pt 0pt 1em 2em; padding: 5px; float: right; font-size: 75%; line-height: 1em">';
-    $args['after_widget'] = '</div>';
-    $args['before_title'] = '<span class="popular_title">';
-    $args['after_title'] = '</span>';
-    $args['suffix'] = '_f';
-    sb_widget_popular($args);
+    PopularWidget::printMostPopular();
 }
 
 //Modify page title
 function sb_page_title($title)
 {
-    if (isset($_GET['sermon_id'])) {
-        $id = (int)$_GET['sermon_id'];
-        $sermon = \SermonBrowser\Facades\Sermon::findWithRelations($id);
-        if ($sermon) {
-            return $title . ' (' . stripslashes($sermon->title) . ' - ' . stripslashes($sermon->preacher_name) . ')';
-        } else {
-            return $title . ' (' . __('No sermons found.', 'sermon-browser') . ')';
-        }
-    } else {
-        return $title;
-    }
+    return \SermonBrowser\Frontend\PageTitle::modify((string) $title);
 }
 
-//Downloads external webpage. Used to add Bible passages to sermon page.
+/**
+ * Downloads external webpage. Used to add Bible passages to sermon page.
+ *
+ * @param string $page_url The URL to fetch.
+ * @param array|string $headers Optional headers.
+ * @return string|null The response body.
+ */
 function sb_download_page($page_url, $headers = array())
 {
-    $response = wp_remote_get($page_url, array ('headers' => $headers));
-    if (is_array($response)) {
-        return $response['body'];
-    }
+    return \SermonBrowser\Frontend\BibleText::downloadPage($page_url, $headers);
 }
 
-// Returns human friendly Bible reference (e.g. John 3:1-16, not John 3:1-John 3:16)
+/**
+ * Returns human friendly Bible reference (e.g. John 3:1-16, not John 3:1-John 3:16).
+ *
+ * @param array $start Start reference with book, chapter, verse keys.
+ * @param array $end End reference with book, chapter, verse keys.
+ * @param bool $add_link Whether to add filter links to book names.
+ * @return string The formatted reference.
+ */
 function sb_tidy_reference($start, $end, $add_link = false)
 {
-    if (!trim($start['book'])) {
-        return "";
-    }
-    $translated_books = array_combine(sb_get_default('eng_bible_books'), sb_get_default('bible_books'));
-    $start_book = $translated_books[trim($start['book'])];
-    $end_book = $translated_books[trim($end['book'])];
-    $start_chapter = trim($start['chapter']);
-    $end_chapter = trim($end['chapter']);
-    $start_verse = trim($start['verse']);
-    $end_verse = trim($end['verse']);
-    if ($add_link) {
-        $start_book = "<a href=\"" . sb_get_book_link(trim($start['book'])) . "\">{$start_book}</a>";
-        $end_book = "<a href=\"" . sb_get_book_link(trim($end['book'])) . "\">{$end_book}</a>";
-    }
-    if ($start_book == $end_book) {
-        if ($start_chapter == $end_chapter) {
-            if ($start_verse == $end_verse) {
-                $reference = "$start_book $start_chapter:$start_verse";
-            } else {
-                $reference = "$start_book $start_chapter:$start_verse-$end_verse";
-            }
-        } else {
-             $reference = "$start_book $start_chapter:$start_verse-$end_chapter:$end_verse";
-        }
-    } else {
-        $reference =  "$start_book $start_chapter:$start_verse - $end_book $end_chapter:$end_verse";
-    }
-    return $reference;
+    return \SermonBrowser\Frontend\BibleText::tidyReference($start, $end, $add_link);
 }
 
-//Print unstyled bible passage
+/**
+ * Print unstyled bible passage.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @return void
+ */
 function sb_print_bible_passage($start, $end)
 {
-    echo "<p class='bible-passage'>" . sb_tidy_reference($start, $end) . "</p>";
+    \SermonBrowser\Frontend\BibleText::printBiblePassage($start, $end);
 }
 
-// Returns human friendly Bible reference with link to filter
+/**
+ * Returns human friendly Bible reference with link to filter.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @return string The formatted reference with links.
+ */
 function sb_get_books($start, $end)
 {
-    return sb_tidy_reference($start, $end, true);
+    return \SermonBrowser\Frontend\BibleText::getBooks($start, $end);
 }
 
-//Add Bible text to single sermon page
+/**
+ * Add Bible text to single sermon page.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @param string $version Bible version code.
+ * @return string The Bible text HTML.
+ */
 function sb_add_bible_text($start, $end, $version)
 {
-    if ($version == 'esv') {
-        return sb_add_esv_text($start, $end);
-    } elseif ($version == 'net') {
-        return sb_add_net_text($start, $end);
-    } else {
-        return sb_add_other_bibles($start, $end, $version);
-    }
+    return \SermonBrowser\Frontend\BibleText::addBibleText($start, $end, $version);
 }
 
-//Returns ESV text
+/**
+ * Returns ESV text.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @return string The ESV text HTML.
+ */
 function sb_add_esv_text($start, $end)
 {
-    $api_key = sb_get_option('esv_api_key');
-    if ($api_key) {
-        $header = 'Authorization: Token ' . $api_key;
-        $esv_url = 'https://api.esv.org/v3/passage/html?q=' . rawurlencode(sb_tidy_reference($start, $end)) . '&include-headings=false&include-footnotes=false';
-        $api_body = sb_download_page($esv_url, $header);
-        $decode = json_decode($api_body);
-        if (is_object($decode) && isset($decode->passages) && is_array($decode->passages)) {
-            return implode('', $decode->passages);
-        }
-    } else {
-        return sb_add_bible_text($start, $end, 'kjv');
-    }
+    return \SermonBrowser\Frontend\BibleText::addEsvText($start, $end);
 }
 
-// Converts XML string to object
+/**
+ * Converts XML string to object.
+ *
+ * @param string $content The XML string.
+ * @return SimpleXMLElement The parsed XML object.
+ */
 function sb_get_xml($content)
 {
-    $xml = new SimpleXMLElement($content);
-    return $xml;
+    return \SermonBrowser\Frontend\BibleText::getXml($content);
 }
 
-//Returns NET Bible text
+/**
+ * Returns NET Bible text.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @return string The NET Bible text HTML.
+ */
 function sb_add_net_text($start, $end)
 {
-    $reference = str_replace(' ', '+', sb_tidy_reference($start, $end));
-    $old_chapter = $start['chapter'];
-    $net_url = "http://labs.bible.org/api/xml/verse.php?passage={$reference}";
-    $xml = sb_get_xml(sb_download_page($net_url . '&formatting=para'));
-    $output = '';
-    $items = array();
-    $items = $xml->item;
-    foreach ($items as $item) {
-        if ($item->text != '[[EMPTY]]') {
-            if (substr($item->text, 0, 8) == '<p class') {
-                $paraend = stripos($item->text, '>', 8) + 1;
-                $output .= "\n" . substr($item->text, 0, $paraend);
-                $item->text = substr($item->text, $paraend);
-            }
-            if ($old_chapter == $item->chapter) {
-                $output .= " <span class=\"verse-num\">{$item->verse}</span>";
-            } else {
-                $output .= " <span class=\"chapter-num\">{$item->chapter}:{$item->verse}</span> ";
-                $old_chapter = strval($item->chapter);
-            }
-            $output .=  $item->text;
-        }
-    }
-    return "<div class=\"net\">\r<h2>" . sb_tidy_reference($start, $end) . "</h2><p>{$output} (<a href=\"http://net.bible.org/?{$reference}\">NET Bible</a>)</p></div>";
+    return \SermonBrowser\Frontend\BibleText::addNetText($start, $end);
 }
 
-//Returns Bible text using SermonBrowser's own API
+/**
+ * Returns Bible text using SermonBrowser's own API.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @param string $version Bible version code.
+ * @return string The Bible text HTML.
+ */
 function sb_add_other_bibles($start, $end, $version)
 {
-    if ($version == 'hnv') {
-        return '<div class="' . $version . '"><p>Sorry, the Hebrew Names Version is no longer available.</p></div>';
-    }
-    $reference = str_replace(' ', '+', sb_tidy_reference($start, $end));
-    $reference = str_replace('Psalm+', 'Psalms+', $reference);      //Fix for API "Psalms" vs "Psalm"
-    $old_chapter = $start['chapter'];
-    $url = "http://api.preachingcentral.com/bible.php?passage={$reference}&version={$version}";
-    $xml = sb_get_xml(sb_download_page($url));
-    $output = '';
-    $items = array();
-    $items = $xml->range->item;
-    if ($xml->range->item) {
-        foreach ($xml->range->item as $item) {
-            if ($item->text != '[[EMPTY]]') {
-                if ($old_chapter == $item->chapter) {
-                    $output .= " <span class=\"verse-num\">{$item->verse}</span>";
-                } else {
-                    $output .= " <span class=\"chapter-num\">{$item->chapter}:{$item->verse}</span> ";
-                    $old_chapter = strval($item->chapter);
-                }
-                $output .=   $item->text;
-            }
-        }
-    }
-    return '<div class="' . $version . '"><h2>' . sb_tidy_reference($start, $end) . '</h2><p>' . $output . ' (<a href="http://biblepro.bibleocean.com/dox/default.aspx">' . strtoupper($version) . '</a>)</p></div>';
+    return \SermonBrowser\Frontend\BibleText::addOtherBibles($start, $end, $version);
 }
 
 //Adds edit sermon link if current user has edit rights
 function sb_edit_link($id)
 {
-    if (current_user_can('publish_posts')) {
-        $id = (int)$id;
-        echo '<div class="sb_edit_link"><a href="' . admin_url('admin.php?page=sermon-browser/new_sermon.php&mid=' . $id) . '">Edit Sermon</a></div>';
-    }
+    \SermonBrowser\Frontend\TemplateHelper::editLink((int) $id);
 }
 
 // Returns URL for search links
 // Relative links now deprecated
 function sb_build_url($arr, $clear = false)
 {
-    // Word list for URL building purpose
-    $wl = array('preacher', 'title', 'date', 'enddate', 'series', 'service', 'sortby', 'dir', 'book', 'stag', 'podcast');
-    $foo = array_merge((array) $_GET, (array) $_POST, $arr);
-    foreach ($foo as $k => $v) {
-        if (in_array($k, array_keys($arr)) || (in_array($k, $wl) && !$clear)) {
-            $bar[] = rawurlencode($k) . '=' . rawurlencode($v);
-        }
-    }
-    if (isset($bar)) {
-            return esc_url(sb_display_url() . sb_query_char() . implode('&', $bar));
-    } else {
-        return sb_display_url();
-    }
+    return \SermonBrowser\Frontend\UrlBuilder::build($arr, $clear);
 }
 
 // Adds javascript and CSS where required
 function sb_add_headers()
 {
-    global $post, $wp_scripts;
-    if (isset($post->ID) && $post->ID != '') {
-        echo "<!-- Added by SermonBrowser (version " . SB_CURRENT_VERSION . ") - http://www.sermonbrowser.com/ -->\r";
-        echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"" . __('Sermon podcast', 'sermon-browser') . "\" href=\"" . sb_get_option('podcast_url') . "\" />\r";
-        wp_enqueue_style('sb_style');
-        // Check if post contains sermon shortcode (replaces database query)
-        $has_sermon_shortcode = isset($post->post_content) && strpos($post->post_content, '[sermons') !== false;
-        if ($has_sermon_shortcode) {
-            if (sb_get_option('filter_type') == 'dropdown') {
-                wp_enqueue_script('jquery-ui-datepicker');
-                wp_enqueue_style('jquery-ui-css', 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css', array(), '1.13.2');
-            }
-            if (isset($_REQUEST['title']) || isset($_REQUEST['preacher']) || isset($_REQUEST['date']) || isset($_REQUEST['enddate']) || isset($_REQUEST['series']) || isset($_REQUEST['service']) || isset($_REQUEST['book']) || isset($_REQUEST['stag'])) {
-                echo "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"" . __('Custom sermon podcast', 'sermon-browser') . "\" href=\"" . sb_podcast_url() . "\" />\r";
-            }
-            wp_enqueue_script('jquery');
-        } else {
-            $sidebars_widgets = wp_get_sidebars_widgets();
-            if (isset($sidebars_widgets['wp_inactive_widgets'])) {
-                unset($sidebars_widgets['wp_inactive_widgets']);
-            }
-            if (is_array($sidebars_widgets)) {
-                foreach ($sidebars_widgets as $sb_w) {
-                    if (is_array($sb_w) && in_array('sermon-browser-popular', $sb_w)) {
-                        wp_enqueue_script('jquery');
-                    }
-                }
-            }
-        }
-    }
+    \SermonBrowser\Frontend\AssetLoader::addHeaders();
 }
 
 // Formats date into words
 function sb_formatted_date($sermon)
 {
-    if (isset($sermon->time) && $sermon->time != '') {
-        $sermon_time = $sermon->time;
-    } else {
-        $sermon_time = sb_default_time($sermon->sid);
-    }
-    if ($sermon->datetime == '1970-01-01 00:00:00') {
-        return __('Unknown Date', 'sermon-browser');
-    } else {
-        return date_i18n(get_option('date_format'), strtotime($sermon->datetime));
-    }
+    return \SermonBrowser\Frontend\TemplateHelper::formattedDate($sermon);
 }
 
 // Returns podcast URL
 function sb_podcast_url()
 {
-    return str_replace(' ', '%20', sb_build_url(array('podcast' => 1, 'dir' => 'desc', 'sortby' => 'm.datetime')));
+    return \SermonBrowser\Frontend\UrlBuilder::podcastUrl();
 }
 
 // Prints sermon search URL
 function sb_print_sermon_link($sermon, $echo = true)
 {
+    $url = \SermonBrowser\Frontend\UrlBuilder::sermonLink($sermon);
     if ($echo) {
-        echo sb_build_url(array('sermon_id' => $sermon->id), true);
+        echo $url;
     } else {
-        return sb_build_url(array('sermon_id' => $sermon->id), true);
+        return $url;
     }
 }
 
 // Prints preacher search URL
 function sb_print_preacher_link($sermon)
 {
-    echo sb_build_url(array('preacher' => $sermon->pid), false);
+    echo \SermonBrowser\Frontend\UrlBuilder::preacherLink($sermon);
 }
 
 // Prints series search URL
 function sb_print_series_link($sermon)
 {
-    echo sb_build_url(array('series' => $sermon->ssid), false);
+    echo \SermonBrowser\Frontend\UrlBuilder::seriesLink($sermon);
 }
 
 // Prints service search URL
 function sb_print_service_link($sermon)
 {
-    echo sb_build_url(array('service' => $sermon->sid), false);
+    echo \SermonBrowser\Frontend\UrlBuilder::serviceLink($sermon);
 }
 
 // Prints bible book search URL
 function sb_get_book_link($book_name)
 {
-    return sb_build_url(array('book' => $book_name), false);
+    return \SermonBrowser\Frontend\UrlBuilder::bookLink($book_name);
 }
 
 // Prints tag search URL
 function sb_get_tag_link($tag)
 {
-    return sb_build_url(array('stag' => $tag), false);
+    return \SermonBrowser\Frontend\UrlBuilder::tagLink($tag);
 }
 
 // Prints tags
 function sb_print_tags($tags)
 {
-    $out = array();
-    foreach ((array) $tags as $tag) {
-        $tag = stripslashes($tag);
-        $out[] = '<a href="' . sb_get_tag_link($tag) . '">' . $tag . '</a>';
-    }
-    $tags = implode(', ', (array) $out);
-    echo $tags;
+    \SermonBrowser\Frontend\TemplateHelper::printTags((array) $tags);
 }
 
 //Prints tag cloud
 function sb_print_tag_clouds($minfont = 80, $maxfont = 150)
 {
-    $tags = \SermonBrowser\Facades\Tag::findAllWithSermonCount();
-
-    if (empty($tags)) {
-        return;
-    }
-
-    // Build count array from tag objects
-    $cnt = [];
-    foreach ($tags as $tag) {
-        if (!empty($tag->name)) {
-            $cnt[$tag->name] = (int) $tag->sermon_count;
-        }
-    }
-
-    if (empty($cnt)) {
-        return;
-    }
-
-    $fontrange = $maxfont - $minfont;
-    $maxcnt = max($cnt);
-    $mincnt = min($cnt);
-    $minlog = log($mincnt);
-    $maxlog = log($maxcnt);
-    $logrange = $maxlog == $minlog ? 1 : $maxlog - $minlog;
-    arsort($cnt);
-    $out = [];
-    foreach ($cnt as $tag => $count) {
-        $size = $minfont + $fontrange * (log($count) - $minlog) / $logrange;
-        $out[] = '<a style="font-size:' . (int) $size . '%" href="' . sb_get_tag_link($tag) . '">' . $tag . '</a>';
-    }
-    echo implode(' ', $out);
+    \SermonBrowser\Frontend\TemplateHelper::printTagClouds((int) $minfont, (int) $maxfont);
 }
 
 //Prints link to next page
 function sb_print_next_page_link($limit = 0)
 {
-    global $record_count;
-    if ($limit == 0) {
-        $limit = sb_get_option('sermons_per_page');
-    }
-    $current = isset($_REQUEST['pagenum']) ? (int) $_REQUEST['pagenum'] : 1;
-    if ($current < ceil($record_count / $limit)) {
-        $url = sb_build_url(array('pagenum' => ++$current), false);
-        echo '<a href="' . $url . '">' . __('Next page', 'sermon-browser') . ' &raquo;</a>';
-    }
+    \SermonBrowser\Frontend\Pagination::printNextPageLink((int) $limit);
 }
 
 //Prints link to previous page
 function sb_print_prev_page_link($limit = 0)
 {
-    if ($limit == 0) {
-        $limit = sb_get_option('sermons_per_page');
-    }
-    $current = isset($_REQUEST['pagenum']) ? (int) $_REQUEST['pagenum'] : 1;
-    if ($current > 1) {
-        $url = sb_build_url(array('pagenum' => --$current), false);
-        echo '<a href="' . $url . '">&laquo; ' . __('Previous page', 'sermon-browser') . '</a>';
-    }
+    \SermonBrowser\Frontend\Pagination::printPrevPageLink((int) $limit);
 }
 
 // Print link to attached files
 function sb_print_url($url)
 {
-    require SB_INCLUDES_DIR . '/filetypes.php';
-    $pathinfo = pathinfo($url);
-    $ext = $pathinfo['extension'];
-    if ((substr($url, 0, 7) == "http://") or (substr($url, 0, 8) == 'https://')) {
-        $url = sb_display_url() . sb_query_char(false) . 'show&url=' . rawurlencode($url);
-    } elseif (strtolower($ext) == 'mp3') {
-            $url = sb_display_url() . sb_query_char(false) . 'show&file_name=' . rawurlencode($url);
-    } else {
-        $url = sb_display_url() . sb_query_char(false) . 'download&file_name=' . rawurlencode($url);
-    }
-    $uicon = $default_site_icon;
-    foreach ($siteicons as $site => $icon) {
-        if (strpos($url, $site) !== false) {
-            $uicon = $icon;
-            break;
-        }
-    }
-    $uicon = isset($filetypes[$ext]['icon']) ? $filetypes[$ext]['icon'] : $uicon;
-    if (strtolower($ext) == 'mp3') {
-        if (do_shortcode(sb_get_option('mp3_shortcode')) != sb_get_option('mp3_shortcode')) {
-            echo do_shortcode(str_ireplace('%SERMONURL%', $url, sb_get_option('mp3_shortcode')));
-            return;
-        }
-    }
-    $uicon = SB_PLUGIN_URL . '/assets/images/icons/' . $uicon;
-    if (!isset($filetypes[$ext]['name'])) {
-        $filetypes[$ext]['name'] = sprintf(__('%s file', 'sermon-browser'), addslashes($ext));
-    } else {
-        $filetypes[$ext]['name'] = addslashes($filetypes[$ext]['name']);
-    }
-    echo "<a href=\"{$url}\"><img class=\"site-icon\" alt=\"{$filetypes[$ext]['name']}\" title=\"{$filetypes[$ext]['name']}\" src=\"{$uicon}\"></a>";
+    \SermonBrowser\Frontend\FileDisplay::printUrl($url);
 }
 
 // Print link to attached external URLs
 function sb_print_url_link($url)
 {
-    echo '<div class="sermon_file">';
-    sb_print_url($url);
-    if (strtolower(substr($url, -4)) == ".mp3") {
-        if ((substr($url, 0, 7) == "http://") or (substr($url, 0, 8) == 'https://')) {
-            $param = "url";
-        } else {
-            $param = "file_name";
-        }
-        $url = rawurlencode($url);
-        echo ' <a href="' . sb_display_url() . sb_query_char() . 'download&amp;' . $param . '=' . $url . '">' . __('Download', 'sermon-browser') . '</a>';
-    }
-    echo '</div>';
+    \SermonBrowser\Frontend\FileDisplay::printUrlLink($url);
 }
 
 //Decode base64 encoded data
 function sb_print_code($code)
 {
-    echo do_shortcode(base64_decode($code));
+    \SermonBrowser\Frontend\FileDisplay::printCode($code);
 }
 
 //Prints preacher description
 function sb_print_preacher_description($sermon)
 {
-    if (strlen($sermon->preacher_description) > 0) {
-        echo "<div class='preacher-description'><span class='about'>" . __('About', 'sermon-browser') . ' ' . stripslashes($sermon->preacher) . ': </span>';
-        echo "<span class='description'>" . stripslashes($sermon->preacher_description) . "</span></div>";
-    }
+    \SermonBrowser\Frontend\TemplateHelper::printPreacherDescription($sermon);
 }
 
 //Prints preacher image
 function sb_print_preacher_image($sermon)
 {
-    if ($sermon->image) {
-        echo "<img alt='" . stripslashes($sermon->preacher) . "' class='preacher' src='" . trailingslashit(site_url()) . sb_get_option('upload_dir') . 'images/' . $sermon->image . "'>";
-    }
+    \SermonBrowser\Frontend\TemplateHelper::printPreacherImage($sermon);
 }
 
 //Prints link to sermon preached next (but not today)
 function sb_print_next_sermon_link($sermon)
 {
-    $next = \SermonBrowser\Facades\Sermon::findNextByDate($sermon->datetime, (int) $sermon->id);
-    if (!$next) {
-        return;
-    }
-    echo '<a href="';
-    sb_print_sermon_link($next);
-    echo '">' . stripslashes($next->title) . ' &raquo;</a>';
+    \SermonBrowser\Frontend\TemplateHelper::printNextSermonLink($sermon);
 }
 
 //Prints link to sermon preached on previous days
 function sb_print_prev_sermon_link($sermon)
 {
-    $prev = \SermonBrowser\Facades\Sermon::findPreviousByDate($sermon->datetime, (int) $sermon->id);
-    if (!$prev) {
-        return;
-    }
-    echo '<a href="';
-    sb_print_sermon_link($prev);
-    echo '">&laquo; ' . stripslashes($prev->title) . '</a>';
+    \SermonBrowser\Frontend\TemplateHelper::printPrevSermonLink($sermon);
 }
 
 //Prints links to other sermons preached on the same day
 function sb_print_sameday_sermon_link($sermon)
 {
-    $same = \SermonBrowser\Facades\Sermon::findSameDay($sermon->datetime, (int) $sermon->id);
-    if (empty($same)) {
-        _e('None', 'sermon-browser');
-        return;
-    }
-    $output = array();
-    foreach ($same as $cur) {
-        $output[] = '<a href="' . sb_print_sermon_link($cur, false) . '">' . stripslashes($cur->title) . '</a>';
-    }
-    echo implode(', ', $output);
+    \SermonBrowser\Frontend\TemplateHelper::printSamedaySermonLink($sermon);
 }
 
 //Gets single sermon from the database
@@ -861,367 +392,29 @@ function sb_get_single_sermon($id)
 //Prints the filter line for a given parameter
 function sb_print_filter_line($id, $results, $filter, $display, $max_num = 7)
 {
-    global $more_applied;
-    $translate_book = false;
-    if ($id == 'book') {
-        $translate_book = true;
-        $translated_books = array_combine(sb_get_default('eng_bible_books'), sb_get_default('bible_books'));
-    }
-    echo "<div id = \"{$id}\" class=\"filter\">\r<span class=\"filter-heading\">" . __(ucwords($id), 'sermon-browser') . ":</span> \r";
-    $i = 1;
-    $more = false;
-    foreach ($results as $result) {
-        if ($i == $max_num) {
-            echo "<span id=\"{$id}-more\">";
-            $more = true;
-            $more_applied[] = $id;
-        }
-        if ($i != 1) {
-            echo ", \r";
-        }
-        if ($translate_book) {
-            echo '<a href="' . sb_build_url(array($id => $result->$filter), false) . '">' . $translated_books[stripslashes($result->$display)] . '</a>&nbsp;(' . $result->count . ')';
-        } else {
-            echo '<a href="' . sb_build_url(array($id => $result->$filter), false) . '">' . stripslashes($result->$display) . '</a>&nbsp;(' . $result->count . ')';
-        }
-        $i++;
-    }
-    echo ".";
-    if ($more) {
-        echo "</span>\r<span id=\"{$id}-more-link\" style=\"display:none\">&hellip; (<a  id=\"{$id}-toggle\" href=\"#\"><strong>" . ($i - $max_num) . ' ' . __('more', 'sermon-browser') . '</strong></a>)</span>';
-    }
-    echo '</div>';
+    \SermonBrowser\Frontend\FilterRenderer::renderLine($id, $results, $filter, $display, $max_num);
 }
 
 //Prints the filter line for the date parameter
 function sb_print_date_filter_line($dates)
 {
-    global $more_applied;
-
-    // PHP 8 fix: Early return if dates array is empty
-    if (empty($dates)) {
-        return;
-    }
-
-    $date_output = "<div id = \"dates\" class=\"filter\">\r<span class=\"filter-heading\">" . __('Date', 'sermon-browser') . ":</span> \r";
-    $first = $dates[0];
-    $last = end($dates);
-    $count = 0;
-    if ($first->year == $last->year) {
-        if ($first->month == $last->month) {
-            $date_output = '';
-        } else {
-            $previous_month = -1;
-            foreach ($dates as $date) {
-                if ($date->month != $previous_month) {
-                    if ($count != 0) {
-                        $date_output .= '(' . $count . '), ';
-                    }
-                    $date_output .= '<a href="' . sb_build_url(array ('date' => $date->year . '-' . $date->month . '-01', 'enddate' => $date->year . '-' . $date->month . '-31'), false) . '">' . wp_date('F', strtotime("{$date->year}-{$date->month}-{$date->day}")) . '</a> ';
-                    $previous_month = $date->month;
-                    $count = 1;
-                } else {
-                    $count++;
-                }
-            }
-            $date_output .= '(' . $count . '), ';
-        }
-    } else {
-        $previous_year = 0;
-        foreach ($dates as $date) {
-            if ($date->year !== $previous_year) {
-                if ($count !== 0) {
-                    $date_output .= '(' . $count . '), ';
-                }
-                $date_output .= '<a href="' . sb_build_url(array ('date' => $date->year . '-01-01', 'enddate' => $date->year . '-12-31'), false) . '">' . $date->year . '</a> ';
-                $previous_year = $date->year;
-                $count = 1;
-            } else {
-                $count++;
-            }
-        }
-        $date_output .= '(' . $count . '), ';
-    }
-    if ($date_output != '') {
-        echo rtrim($date_output, ', ') . "</div>\r";
-    }
+    \SermonBrowser\Frontend\FilterRenderer::renderDateLine($dates);
 }
 
 //Returns the filter URL minus a given parameter
 function sb_url_minus_parameter($param1, $param2 = '')
 {
-    global $filter_options;
-    $existing_params = array_merge((array) $_GET, (array) $_POST);
-    $returned_query = array();
-    foreach (array_keys($existing_params) as $query) {
-        if (in_array($query, $filter_options) && $query != $param1 && $query != $param2) {
-            $returned_query[] = "{$query}={$existing_params[$query]}";
-        }
-    }
-    if (count($returned_query) > 0) {
-        return esc_url(sb_display_url() . sb_query_char() . implode('&', $returned_query));
-    } else {
-        return sb_display_url();
-    }
+    return \SermonBrowser\Frontend\FilterRenderer::urlMinusParameter($param1, $param2);
 }
 
 //Displays the filter on sermon search page
 function sb_print_filters($filter)
 {
-    global $more_applied, $filter_options;
-    $hide_filter = false;
-    if ($filter['filterhide'] == 'hide') {
-        $hide_filter = true;
-        $js_hide = "
-		var filter_visible = false;
-		jQuery('#mainfilter').hide();
-		jQuery('#show_hide_filter').text('[ SHOW ]');
-		jQuery('#show_hide_filter').click(function() {
-			jQuery('#mainfilter:visible').slideUp('slow');
-			jQuery('#mainfilter:hidden').slideDown('slow');
-			if (filter_visible) {
-				jQuery('#show_hide_filter').text('[ SHOW ]');
-				filter_visible = false;
-			} else {
-				jQuery('#show_hide_filter').text('[ HIDE ]');
-				filter_visible = true;
-			}
-			return false;
-		});";
-        $js_hide = str_replace('SHOW', __('Show filter', 'sermon-browser'), $js_hide);
-        $js_hide = str_replace('HIDE', __('Hide filter', 'sermon-browser'), $js_hide);
-    }
-    if ($filter['filter'] == 'oneclick') {
-        // One click filter
-        $hide_custom_podcast = true;
-        $filter_options = array ('preacher', 'book', 'service', 'series', 'date', 'enddate', 'title');
-        $output = '';
-        foreach ($filter_options as $filter_option) {
-            if (isset($_REQUEST[$filter_option])) {
-                if ($filter_option != 'enddate') {
-                    if ($output != '') {
-                        $output .= "\r, ";
-                    }
-                    if ($filter_option == 'date') {
-                        $output .= '<strong>' . __('Date', 'sermon-browser') . '</strong>:&nbsp;';
-                        if (substr($_REQUEST['date'], 0, 4) == substr($_REQUEST['enddate'], 0, 4)) {
-                            $output .= (int)substr($_REQUEST['date'], 0, 4) . '&nbsp;(<a href="' . sb_url_minus_parameter('date', 'enddate') . '">x</a>)';
-                        }
-                        if (substr($_REQUEST['date'], 5, 2) == substr($_REQUEST['enddate'], 5, 2)) {
-                            $output .= ', ' . wp_date('F', strtotime($_REQUEST['date'])) . ' (<a href="' . sb_build_url(array ('date' => (int)substr($_REQUEST['date'], 0, 4) . '-01-01', 'enddate' => (int)substr($_REQUEST['date'], 0, 4) . '-12-31'), false) . '">x</a>)';
-                        }
-                    } else {
-                        $output .= '<strong>' . __(ucwords($filter_option), 'sermon-browser') . '</strong>:&nbsp;*' . $filter_option . '*';
-                        $output .= '&nbsp;(<a href="' . sb_url_minus_parameter($filter_option) . '">x</a>)';
-                    }
-                }
-                $hide_custom_podcast = false;
-            }
-        }
-        $hide_empty = sb_get_option('hide_no_attachments');
-        $sermons = sb_get_sermons($filter, array(), 1, 99999, $hide_empty);
-        $ids = array();
-        foreach ($sermons as $sermon) {
-            $ids[] = $sermon->id;
-        }
-
-        $preachers = \SermonBrowser\Facades\Preacher::findBySermonIdsWithCount($ids);
-        $series = \SermonBrowser\Facades\Series::findBySermonIdsWithCount($ids);
-        $services = \SermonBrowser\Facades\Service::findBySermonIdsWithCount($ids);
-        $book_count = \SermonBrowser\Facades\Book::findBySermonIdsWithCount($ids);
-        $dates = \SermonBrowser\Facades\Sermon::findDatesForIds($ids);
-
-        $more_applied = array();
-        $output = str_replace('*preacher*', isset($preachers[0]->name) ? $preachers[0]->name : '', $output);
-        $output = str_replace('*book*', isset($_REQUEST['book']) ? esc_html__($_REQUEST['book'], 'sermon-browser') : '', $output);
-        $output = str_replace('*service*', isset($services[0]->name) ? $services[0]->name : '', $output);
-        $output = str_replace('*series*', isset($series[0]->name) ? $series[0]->name : '', $output);
-
-        echo "<span class=\"inline_controls\"><a href=\"#\" id=\"show_hide_filter\"></a></span>";
-        if ($output != '') {
-            echo '<div class="filtered">' . __('Active filter', 'sermon-browser') . ': ' . $output . "</div>\r";
-        }
-        echo '<div id="mainfilter">';
-        if (count($preachers) > 1) {
-            sb_print_filter_line('preacher', $preachers, 'id', 'name', 7);
-        }
-        if (count($book_count) > 1) {
-            sb_print_filter_line('book', $book_count, 'name', 'name', 10);
-        }
-        if (count($series) > 1) {
-            sb_print_filter_line('series', $series, 'id', 'name', 10);
-        }
-        if (count($services) > 1) {
-            sb_print_filter_line('service', $services, 'id', 'name', 10);
-        }
-        sb_print_date_filter_line($dates);
-        echo "</div>\r";
-        if (count($more_applied) > 0 || $output != '' || $hide_custom_podcast === true || $hide_filter === true) {
-            echo "<script type=\"text/javascript\">\r";
-            echo "\tjQuery(document).ready(function() {\r";
-            if ($hide_filter === true) {
-                echo $js_hide . "\r";
-            }
-            if ($hide_custom_podcast === true) {
-                echo "\t\tjQuery('.podcastcustom').hide();\r";
-            }
-            if (count($more_applied) > 0) {
-                foreach ($more_applied as $element_id) {
-                    echo "\t\tjQuery('#{$element_id}-more').hide();\r";
-                    echo "\t\tjQuery('#{$element_id}-more-link').show();\r";
-                    echo "\t\tjQuery('a#{$element_id}-toggle').click(function() {\r";
-                    echo "\t\t\tjQuery('#{$element_id}-more').show();\r";
-                    echo "\t\t\tjQuery('#{$element_id}-more-link').hide();\r";
-                    echo "\t\t\treturn false;\r";
-                    echo "\t\t});\r";
-                }
-            }
-            echo "\t});\r";
-            echo "</script>\r";
-        }
-    } elseif ($filter['filter'] == 'dropdown') {
-        // Drop-down filter
-        $translated_books = array_combine(sb_get_default('eng_bible_books'), sb_get_default('bible_books'));
-        $preachers = \SermonBrowser\Facades\Preacher::findAllForFilter();
-        $series = \SermonBrowser\Facades\Series::findAllForFilter();
-        $services = \SermonBrowser\Facades\Service::findAllForFilter();
-        $book_count = \SermonBrowser\Facades\Book::findAllWithSermonCount();
-        $sb = array(
-            'Title' => 'm.title',
-            'Preacher' => 'preacher',
-            'Date' => 'm.datetime',
-            'Passage' => 'b.id',
-        );
-        $di = array(
-            __('Ascending', 'sermon-browser') => 'asc',
-            __('Descending', 'sermon-browser') => 'desc',
-        );
-        $csb = isset($_REQUEST['sortby']) ? sanitize_text_field($_REQUEST['sortby']) : 'm.datetime';
-        $cd = (isset($_REQUEST['dir']) && (strtolower($_REQUEST['dir']) == 'asc' || strtolower($_REQUEST['dir']) == 'desc')) ? $_REQUEST['dir'] : 'desc';
-        ?>
-        <span class="inline_controls"><a href="#" id="show_hide_filter"></a></span>
-        <div id="mainfilter">
-            <form method="post" id="sermon-filter" action="<?php echo sb_display_url(); ?>">
-                <div style="clear:both">
-                    <table class="sermonbrowser">
-                        <tr>
-                            <td class="fieldname"><?php _e('Preacher', 'sermon-browser') ?></td>
-                            <td class="field"><select name="preacher" id="preacher">
-                                    <option value="0" <?php echo (isset($_REQUEST['preacher']) && $_REQUEST['preacher'] != 0) ? '' : 'selected="selected"' ?>><?php _e('[All]', 'sermon-browser') ?></option>
-                                    <?php foreach ($preachers as $preacher) : ?>
-                                    <option value="<?php echo $preacher->id ?>" <?php echo isset($_REQUEST['preacher']) && $_REQUEST['preacher'] == $preacher->id ? 'selected="selected"' : '' ?>><?php echo stripslashes($preacher->name) . ' (' . $preacher->count . ')' ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </td>
-                            <td class="fieldname rightcolumn"><?php _e('Services', 'sermon-browser') ?></td>
-                            <td class="field"><select name="service" id="service">
-                                    <option value="0" <?php echo isset($_REQUEST['service']) && $_REQUEST['service'] != 0 ? '' : 'selected="selected"' ?>><?php _e('[All]', 'sermon-browser') ?></option>
-                                    <?php foreach ($services as $service) : ?>
-                                    <option value="<?php echo $service->id ?>" <?php echo isset($_REQUEST['service']) && $_REQUEST['service'] == $service->id ? 'selected="selected"' : '' ?>><?php echo stripslashes($service->name) . ' (' . $service->count . ')' ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="fieldname"><?php _e('Book', 'sermon-browser') ?></td>
-                            <td class="field"><select name="book">
-                                    <option value=""><?php _e('[All]', 'sermon-browser') ?></option>
-                                    <?php foreach ($book_count as $book) : ?>
-                                    <option value="<?php echo $book->name ?>" <?php echo isset($_REQUEST['book']) && $_REQUEST['book'] == $book->name ? 'selected=selected' : '' ?>><?php echo $translated_books[stripslashes($book->name)] . ' (' . $book->count . ')' ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </td>
-                            <td class="fieldname rightcolumn"><?php _e('Series', 'sermon-browser') ?></td>
-                            <td class="field"><select name="series" id="series">
-                                    <option value="0" <?php echo (isset($_REQUEST['series']) && $_REQUEST['series'] != 0) ? '' : 'selected="selected"' ?>><?php _e('[All]', 'sermon-browser') ?></option>
-                                    <?php foreach ($series as $item) : ?>
-                                    <option value="<?php echo $item->id ?>" <?php echo isset($_REQUEST['series']) && $_REQUEST['series'] == $item->id ? 'selected="selected"' : '' ?>><?php echo stripslashes($item->name) . ' (' . $item->count . ')' ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="fieldname"><?php _e('Start date', 'sermon-browser') ?></td>
-                            <td class="field"><input type="text" name="date" id="date" value="<?php echo (isset($_REQUEST['date']) ? esc_html($_REQUEST['date']) : '') ?>" /></td>
-                            <td class="fieldname rightcolumn"><?php _e('End date', 'sermon-browser') ?></td>
-                            <td class="field"><input type="text" name="enddate" id="enddate" value="<?php echo (isset($_REQUEST['enddate']) ? esc_html($_REQUEST['enddate']) : '') ?>" /></td>
-                        </tr>
-                        <tr>
-                            <td class="fieldname"><?php _e('Keywords', 'sermon-browser') ?></td>
-                            <td class="field" colspan="3"><input style="width: 98.5%" type="text" id="title" name="title" value="<?php echo (isset($_REQUEST['title']) ? esc_html($_REQUEST['title']) : '') ?>" /></td>
-                        </tr>
-                        <tr>
-                            <td class="fieldname"><?php _e('Sort by', 'sermon-browser') ?></td>
-                            <td class="field"><select name="sortby" id="sortby">
-                                    <?php foreach ($sb as $k => $v) : ?>
-                                    <option value="<?php echo $v ?>" <?php echo $csb == $v ? 'selected="selected"' : '' ?>><?php _e($k, 'sermon-browser') ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </td>
-                            <td class="fieldname rightcolumn"><?php _e('Direction', 'sermon-browser') ?></td>
-                            <td class="field"><select name="dir" id="dir">
-                                    <?php foreach ($di as $k => $v) : ?>
-                                    <option value="<?php echo $v ?>" <?php echo $cd == $v ? 'selected="selected"' : '' ?>><?php _e($k, 'sermon-browser') ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">&nbsp;</td>
-                            <td class="field"><input type="submit" class="filter" value="<?php _e('Filter &raquo;', 'sermon-browser') ?>">          </td>
-                        </tr>
-                    </table>
-                    <input type="hidden" name="page" value="1">
-                </div>
-            </form>
-        </div>
-        <script type="text/javascript">
-            jQuery(function($) {
-                $('#date').datepicker({
-                    dateFormat: 'yy-mm-dd',
-                    minDate: new Date(1970, 0, 1),
-                    changeMonth: true,
-                    changeYear: true
-                });
-                $('#enddate').datepicker({
-                    dateFormat: 'yy-mm-dd',
-                    minDate: new Date(1970, 0, 1),
-                    changeMonth: true,
-                    changeYear: true
-                });
-                <?php if ($hide_filter === true) { ?>
-                    <?php echo $js_hide; ?>
-                <?php } ?>
-            });
-        </script>
-        <?php
-    }
+    \SermonBrowser\Frontend\FilterRenderer::render($filter);
 }
 // Returns the first MP3 file attached to a sermon
 // Stats have to be turned off for iTunes compatibility
 function sb_first_mp3($sermon, $stats = true)
 {
-    $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
-    if (stripos($user_agent, 'itunes') !== false || stripos($user_agent, 'FeedBurner') !== false) {
-        $stats = false;
-    }
-    $stuff = sb_get_stuff($sermon, true);
-    $stuff = array_merge((array)$stuff['Files'], (array)$stuff['URLs']);
-    foreach ((array) $stuff as $file) {
-        if (strtolower(substr($file, strrpos($file, '.') + 1)) == 'mp3') {
-            if ((substr($file, 0, 7) == "http://") or (substr($file, 0, 8) == 'https://')) {
-                if ($stats) {
-                    $file = sb_display_url() . sb_query_char() . 'show&amp;url=' . rawurlencode($file);
-                }
-            } else {
-                if (!$stats) {
-                    $file = trailingslashit(site_url()) . sb_get_option('upload_dir') . rawurlencode($file);
-                } else {
-                    $file = sb_display_url() . sb_query_char() . 'show&amp;file_name=' . rawurlencode($file);
-                }
-            }
-            return $file;
-            break;
-        }
-    }
+    return \SermonBrowser\Frontend\FileDisplay::firstMp3($sermon, $stats);
 }
