@@ -104,7 +104,7 @@ $filetypes = array(
 );
 
 $siteicons = array(
-    'http://google.com' => 'url.png',
+    'https://google.com' => 'url.png',
 );
 
 $default_file_icon = 'unknown.png';
