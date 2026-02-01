@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\REST\Endpoints;
 
+use SermonBrowser\Constants;
 use SermonBrowser\REST\RestController;
 use SermonBrowser\Facades\Service;
 use WP_Error;
@@ -273,7 +274,7 @@ class ServicesController extends RestController
 
         if ($service === null) {
             return $this->prepare_error_response(
-                __('Service not found.', 'sermon-browser'),
+                __(Constants::ERR_SERVICE_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -341,7 +342,7 @@ class ServicesController extends RestController
 
         if ($service === null) {
             return $this->prepare_error_response(
-                __('Service not found.', 'sermon-browser'),
+                __(Constants::ERR_SERVICE_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -381,7 +382,7 @@ class ServicesController extends RestController
 
         if ($service === null) {
             return $this->prepare_error_response(
-                __('Service not found.', 'sermon-browser'),
+                __(Constants::ERR_SERVICE_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }

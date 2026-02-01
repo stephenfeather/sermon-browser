@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Constants;
 use SermonBrowser\Facades\Book;
 
 /**
@@ -544,7 +545,7 @@ class OptionsPage
             <td>
                 <?php
                 foreach ($filter_options as $value => $filter_option) {
-                    $checked = ($ft === $value) ? 'checked="checked"' : '';
+                    $checked = ($ft === $value) ? Constants::CHECKED : '';
                     echo "<input type=\"radio\" name=\"filtertype\" value=\"{$value}\" {$checked}/> {$filter_option}<br/>\n";
                 }
                 ?>
@@ -553,7 +554,7 @@ class OptionsPage
         <tr>
             <td>
                 <input type="checkbox" name="filterhide"
-                    <?php echo (sb_get_option('filter_hide') === 'hide') ? 'checked="checked"' : ''; ?>
+                    <?php echo (sb_get_option('filter_hide') === 'hide') ? Constants::CHECKED : ''; ?>
                        value="hide"/>
                 <?php _e('Minimise filter', 'sermon-browser'); ?>
             </td>
@@ -573,7 +574,7 @@ class OptionsPage
             <td style="text-align:right"><?php _e('Hide sermons without attachments?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="hide_no_attachments"
-                    <?php echo sb_get_option('hide_no_attachments') ? 'checked="checked"' : ''; ?>
+                    <?php echo sb_get_option('hide_no_attachments') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </td>
         </tr>
@@ -746,7 +747,7 @@ class OptionsPage
             <td style="text-align:right"><?php _e('Add files prompt to top of Add Sermon page?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_prompt"
-                    <?php echo sb_get_option('import_prompt') ? 'checked="checked"' : ''; ?>
+                    <?php echo sb_get_option('import_prompt') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </td>
         </tr>
@@ -754,7 +755,7 @@ class OptionsPage
             <td style="text-align:right"><?php _e('Use title tag for sermon title?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_title"
-                    <?php echo sb_get_option('import_title') ? 'checked="checked"' : ''; ?>
+                    <?php echo sb_get_option('import_title') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </td>
         </tr>
@@ -762,7 +763,7 @@ class OptionsPage
             <td style="text-align:right"><?php _e('Use artist tag for preacher?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_artist"
-                    <?php echo sb_get_option('import_artist') ? 'checked="checked"' : ''; ?>
+                    <?php echo sb_get_option('import_artist') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </td>
         </tr>
@@ -770,7 +771,7 @@ class OptionsPage
             <td style="text-align:right"><?php _e('Use album tag for series?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_album"
-                    <?php echo sb_get_option('import_album') ? 'checked="checked"' : ''; ?>
+                    <?php echo sb_get_option('import_album') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </td>
         </tr>
@@ -778,7 +779,7 @@ class OptionsPage
             <td style="text-align:right"><?php _e('Use comments tag for sermon description?', 'sermon-browser') ?></td>
             <td>
                 <input type="checkbox" name="import_comments"
-                    <?php echo sb_get_option('import_comments') ? 'checked="checked"' : ''; ?>
+                    <?php echo sb_get_option('import_comments') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </td>
         </tr>
@@ -798,7 +799,7 @@ class OptionsPage
                     $saved_option = sb_get_option('import_filename');
 
                     foreach ($filename_options as $option => $text) {
-                        $sel = ($saved_option === $option) ? ' selected="selected"' : '';
+                        $sel = ($saved_option === $option) ? ' ' . Constants::SELECTED : '';
                         echo "<option value=\"{$option}\"{$sel}>{$text}</option>\n";
                     }
                     ?>

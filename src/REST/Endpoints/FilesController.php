@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\REST\Endpoints;
 
+use SermonBrowser\Constants;
 use SermonBrowser\REST\RestController;
 use SermonBrowser\Facades\File;
 use SermonBrowser\Facades\Sermon;
@@ -272,7 +273,7 @@ class FilesController extends RestController
 
         if ($file === null) {
             return $this->prepare_error_response(
-                __('File not found.', 'sermon-browser'),
+                __(Constants::ERR_FILE_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -297,7 +298,7 @@ class FilesController extends RestController
 
         if ($sermon === null) {
             return $this->prepare_error_response(
-                __('Sermon not found.', 'sermon-browser'),
+                __(Constants::ERR_SERMON_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -329,7 +330,7 @@ class FilesController extends RestController
 
         if ($sermon === null) {
             return $this->prepare_error_response(
-                __('Sermon not found.', 'sermon-browser'),
+                __(Constants::ERR_SERMON_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -349,7 +350,7 @@ class FilesController extends RestController
 
         if ($file === null) {
             return $this->prepare_error_response(
-                __('File not found.', 'sermon-browser'),
+                __(Constants::ERR_FILE_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -378,7 +379,7 @@ class FilesController extends RestController
 
         if ($file === null) {
             return $this->prepare_error_response(
-                __('File not found.', 'sermon-browser'),
+                __(Constants::ERR_FILE_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }

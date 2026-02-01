@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\REST\Endpoints;
 
+use SermonBrowser\Constants;
 use SermonBrowser\REST\RestController;
 use SermonBrowser\Facades\Tag;
 use SermonBrowser\Facades\Sermon;
@@ -160,7 +161,7 @@ class TagsController extends RestController
 
         if ($tag === null) {
             return $this->prepare_error_response(
-                __('Tag not found.', 'sermon-browser'),
+                __(Constants::ERR_TAG_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }

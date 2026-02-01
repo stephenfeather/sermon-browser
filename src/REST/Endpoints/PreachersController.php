@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\REST\Endpoints;
 
+use SermonBrowser\Constants;
 use SermonBrowser\REST\RestController;
 use SermonBrowser\Facades\Preacher;
 use WP_Error;
@@ -318,7 +319,7 @@ class PreachersController extends RestController
 
         if ($preacher === null) {
             return $this->prepare_error_response(
-                __('Preacher not found.', 'sermon-browser'),
+                __(Constants::ERR_PREACHER_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -389,7 +390,7 @@ class PreachersController extends RestController
 
         if ($preacher === null) {
             return $this->prepare_error_response(
-                __('Preacher not found.', 'sermon-browser'),
+                __(Constants::ERR_PREACHER_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -429,7 +430,7 @@ class PreachersController extends RestController
 
         if ($preacher === null) {
             return $this->prepare_error_response(
-                __('Preacher not found.', 'sermon-browser'),
+                __(Constants::ERR_PREACHER_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }

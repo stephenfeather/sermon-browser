@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Constants;
 use SermonBrowser\Facades\Preacher;
 use SermonBrowser\Facades\Series;
 use SermonBrowser\Facades\Service;
@@ -549,17 +550,17 @@ class FilterRenderer
                         <tr>
                             <td class="fieldname"><?php esc_html_e('Preacher', 'sermon-browser'); ?></td>
                             <td class="field"><select name="preacher" id="preacher">
-                                    <option value="0" <?php echo (!isset($_REQUEST['preacher']) || $_REQUEST['preacher'] == 0) ? 'selected="selected"' : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
+                                    <option value="0" <?php echo (!isset($_REQUEST['preacher']) || $_REQUEST['preacher'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
                                     <?php foreach ($preachers as $preacher) : ?>
-                                    <option value="<?php echo (int) $preacher->id; ?>" <?php echo isset($_REQUEST['preacher']) && $_REQUEST['preacher'] == $preacher->id ? 'selected="selected"' : ''; ?>><?php echo esc_html(stripslashes($preacher->name) . ' (' . $preacher->count . ')'); ?></option>
+                                    <option value="<?php echo (int) $preacher->id; ?>" <?php echo isset($_REQUEST['preacher']) && $_REQUEST['preacher'] == $preacher->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($preacher->name) . ' (' . $preacher->count . ')'); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
                             <td class="fieldname rightcolumn"><?php esc_html_e('Services', 'sermon-browser'); ?></td>
                             <td class="field"><select name="service" id="service">
-                                    <option value="0" <?php echo (!isset($_REQUEST['service']) || $_REQUEST['service'] == 0) ? 'selected="selected"' : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
+                                    <option value="0" <?php echo (!isset($_REQUEST['service']) || $_REQUEST['service'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
                                     <?php foreach ($services as $service) : ?>
-                                    <option value="<?php echo (int) $service->id; ?>" <?php echo isset($_REQUEST['service']) && $_REQUEST['service'] == $service->id ? 'selected="selected"' : ''; ?>><?php echo esc_html(stripslashes($service->name) . ' (' . $service->count . ')'); ?></option>
+                                    <option value="<?php echo (int) $service->id; ?>" <?php echo isset($_REQUEST['service']) && $_REQUEST['service'] == $service->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($service->name) . ' (' . $service->count . ')'); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
@@ -569,15 +570,15 @@ class FilterRenderer
                             <td class="field"><select name="book">
                                     <option value=""><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
                                     <?php foreach ($bookCount as $book) : ?>
-                                    <option value="<?php echo esc_attr($book->name); ?>" <?php echo isset($_REQUEST['book']) && $_REQUEST['book'] === $book->name ? 'selected="selected"' : ''; ?>><?php echo esc_html(($translatedBooks[stripslashes($book->name)] ?? stripslashes($book->name)) . ' (' . $book->count . ')'); ?></option>
+                                    <option value="<?php echo esc_attr($book->name); ?>" <?php echo isset($_REQUEST['book']) && $_REQUEST['book'] === $book->name ? Constants::SELECTED : ''; ?>><?php echo esc_html(($translatedBooks[stripslashes($book->name)] ?? stripslashes($book->name)) . ' (' . $book->count . ')'); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
                             <td class="fieldname rightcolumn"><?php esc_html_e('Series', 'sermon-browser'); ?></td>
                             <td class="field"><select name="series" id="series">
-                                    <option value="0" <?php echo (!isset($_REQUEST['series']) || $_REQUEST['series'] == 0) ? 'selected="selected"' : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
+                                    <option value="0" <?php echo (!isset($_REQUEST['series']) || $_REQUEST['series'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e('[All]', 'sermon-browser'); ?></option>
                                     <?php foreach ($series as $item) : ?>
-                                    <option value="<?php echo (int) $item->id; ?>" <?php echo isset($_REQUEST['series']) && $_REQUEST['series'] == $item->id ? 'selected="selected"' : ''; ?>><?php echo esc_html(stripslashes($item->name) . ' (' . $item->count . ')'); ?></option>
+                                    <option value="<?php echo (int) $item->id; ?>" <?php echo isset($_REQUEST['series']) && $_REQUEST['series'] == $item->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($item->name) . ' (' . $item->count . ')'); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
@@ -596,14 +597,14 @@ class FilterRenderer
                             <td class="fieldname"><?php esc_html_e('Sort by', 'sermon-browser'); ?></td>
                             <td class="field"><select name="sortby" id="sortby">
                                     <?php foreach ($sortByOptions as $label => $value) : ?>
-                                    <option value="<?php echo esc_attr($value); ?>" <?php echo $currentSortBy === $value ? 'selected="selected"' : ''; ?>><?php esc_html_e($label, 'sermon-browser'); ?></option>
+                                    <option value="<?php echo esc_attr($value); ?>" <?php echo $currentSortBy === $value ? Constants::SELECTED : ''; ?>><?php esc_html_e($label, 'sermon-browser'); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
                             <td class="fieldname rightcolumn"><?php esc_html_e('Direction', 'sermon-browser'); ?></td>
                             <td class="field"><select name="dir" id="dir">
                                     <?php foreach ($directionOptions as $label => $value) : ?>
-                                    <option value="<?php echo esc_attr($value); ?>" <?php echo $currentDir === $value ? 'selected="selected"' : ''; ?>><?php echo esc_html($label); ?></option>
+                                    <option value="<?php echo esc_attr($value); ?>" <?php echo $currentDir === $value ? Constants::SELECTED : ''; ?>><?php echo esc_html($label); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>

@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\REST\Endpoints;
 
+use SermonBrowser\Constants;
 use SermonBrowser\REST\RestController;
 use SermonBrowser\Facades\Series;
 use SermonBrowser\Facades\Sermon;
@@ -324,7 +325,7 @@ class SeriesController extends RestController
 
         if ($series === null) {
             return $this->prepare_error_response(
-                __('Series not found.', 'sermon-browser'),
+                __(Constants::ERR_SERIES_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -348,7 +349,7 @@ class SeriesController extends RestController
 
         if ($series === null) {
             return $this->prepare_error_response(
-                __('Series not found.', 'sermon-browser'),
+                __(Constants::ERR_SERIES_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -417,7 +418,7 @@ class SeriesController extends RestController
 
         if ($series === null) {
             return $this->prepare_error_response(
-                __('Series not found.', 'sermon-browser'),
+                __(Constants::ERR_SERIES_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
@@ -457,7 +458,7 @@ class SeriesController extends RestController
 
         if ($series === null) {
             return $this->prepare_error_response(
-                __('Series not found.', 'sermon-browser'),
+                __(Constants::ERR_SERIES_NOT_FOUND, 'sermon-browser'),
                 404
             );
         }
