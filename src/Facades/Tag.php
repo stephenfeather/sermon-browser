@@ -7,6 +7,18 @@
  *
  * @package SermonBrowser\Facades
  * @since 0.6.0
+ */
+
+declare(strict_types=1);
+
+namespace SermonBrowser\Facades;
+
+use SermonBrowser\Repositories\TagRepository;
+
+/**
+ * Class Tag
+ *
+ * Facade for TagRepository.
  *
  * @method static object|null find(int $id)
  * @method static array findAll(array $criteria = [], int $limit = 0, int $offset = 0, string $orderBy = 'id', string $order = 'ASC')
@@ -27,18 +39,6 @@
  * @method static array findAllWithSermonCount(int $limit = 0)
  * @method static int deleteUnused()
  * @method static int countNonEmpty()
- */
-
-declare(strict_types=1);
-
-namespace SermonBrowser\Facades;
-
-use SermonBrowser\Repositories\TagRepository;
-
-/**
- * Class Tag
- *
- * Facade for TagRepository.
  */
 class Tag extends Facade
 {

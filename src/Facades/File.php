@@ -7,6 +7,18 @@
  *
  * @package SermonBrowser\Facades
  * @since 0.6.0
+ */
+
+declare(strict_types=1);
+
+namespace SermonBrowser\Facades;
+
+use SermonBrowser\Repositories\FileRepository;
+
+/**
+ * Class File
+ *
+ * Facade for FileRepository.
  *
  * @method static object|null find(int $id)
  * @method static array findAll(array $criteria = [], int $limit = 0, int $offset = 0, string $orderBy = 'id', string $order = 'ASC')
@@ -50,18 +62,6 @@
  * @method static array getPopularPreachers(int $limit)
  * @method static string|null getFileDuration(string $name)
  * @method static bool setFileDuration(string $name, string $duration)
- */
-
-declare(strict_types=1);
-
-namespace SermonBrowser\Facades;
-
-use SermonBrowser\Repositories\FileRepository;
-
-/**
- * Class File
- *
- * Facade for FileRepository.
  */
 class File extends Facade
 {

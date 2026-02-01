@@ -83,7 +83,7 @@ class TagParser
      * Convert loop tags [sermons_loop], [files_loop], etc. to markers.
      *
      * @param string $template The template string.
-     * @param string $context The context.
+     * @param string $_context The context (unused, reserved for future use).
      * @return string The template with loop tags converted to markers.
      */
     private function convertLoopTagsToMarkers(string $template, string $_context): string

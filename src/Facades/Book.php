@@ -7,6 +7,18 @@
  *
  * @package SermonBrowser\Facades
  * @since 0.6.0
+ */
+
+declare(strict_types=1);
+
+namespace SermonBrowser\Facades;
+
+use SermonBrowser\Repositories\BookRepository;
+
+/**
+ * Class Book
+ *
+ * Facade for BookRepository.
  *
  * @method static bool truncate()
  * @method static int insertBook(string $name)
@@ -20,18 +32,6 @@
  * @method static array findAllNames()
  * @method static array findAllWithSermonCount()
  * @method static array findBySermonIdsWithCount(array $sermonIds)
- */
-
-declare(strict_types=1);
-
-namespace SermonBrowser\Facades;
-
-use SermonBrowser\Repositories\BookRepository;
-
-/**
- * Class Book
- *
- * Facade for BookRepository.
  */
 class Book extends Facade
 {

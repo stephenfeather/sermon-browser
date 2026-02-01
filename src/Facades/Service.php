@@ -7,6 +7,18 @@
  *
  * @package SermonBrowser\Facades
  * @since 0.6.0
+ */
+
+declare(strict_types=1);
+
+namespace SermonBrowser\Facades;
+
+use SermonBrowser\Repositories\ServiceRepository;
+
+/**
+ * Class Service
+ *
+ * Facade for ServiceRepository.
  *
  * @method static object|null find(int $id)
  * @method static array findAll(array $criteria = [], int $limit = 0, int $offset = 0, string $orderBy = 'id', string $order = 'ASC')
@@ -23,18 +35,6 @@
  * @method static array findBySermonIdsWithCount(array $sermonIds)
  * @method static bool updateWithTimeShift(int $id, string $name, string $time)
  * @method static string|null getTime(int $id)
- */
-
-declare(strict_types=1);
-
-namespace SermonBrowser\Facades;
-
-use SermonBrowser\Repositories\ServiceRepository;
-
-/**
- * Class Service
- *
- * Facade for ServiceRepository.
  */
 class Service extends Facade
 {

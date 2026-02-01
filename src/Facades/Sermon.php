@@ -7,6 +7,18 @@
  *
  * @package SermonBrowser\Facades
  * @since 0.6.0
+ */
+
+declare(strict_types=1);
+
+namespace SermonBrowser\Facades;
+
+use SermonBrowser\Repositories\SermonRepository;
+
+/**
+ * Class Sermon
+ *
+ * Facade for SermonRepository.
  *
  * @method static object|null find(int $id)
  * @method static array findAll(array $criteria = [], int $limit = 0, int $offset = 0, string $orderBy = 'id', string $order = 'ASC')
@@ -34,18 +46,6 @@
  * @method static object|null findForTemplate(int $id)
  * @method static array findDatesForIds(array $sermonIds)
  * @method static array findForFrontendListing(array $filter = [], array $order = [], int $page = 1, int $limit = 0, bool $hideEmpty = false)
- */
-
-declare(strict_types=1);
-
-namespace SermonBrowser\Facades;
-
-use SermonBrowser\Repositories\SermonRepository;
-
-/**
- * Class Sermon
- *
- * Facade for SermonRepository.
  */
 class Sermon extends Facade
 {

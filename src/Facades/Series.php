@@ -7,6 +7,18 @@
  *
  * @package SermonBrowser\Facades
  * @since 0.6.0
+ */
+
+declare(strict_types=1);
+
+namespace SermonBrowser\Facades;
+
+use SermonBrowser\Repositories\SeriesRepository;
+
+/**
+ * Class Series
+ *
+ * Facade for SeriesRepository.
  *
  * @method static object|null find(int $id)
  * @method static array findAll(array $criteria = [], int $limit = 0, int $offset = 0, string $orderBy = 'id', string $order = 'ASC')
@@ -23,18 +35,6 @@
  * @method static array findBySermonIdsWithCount(array $sermonIds)
  * @method static object|null findByNameLike(string $name)
  * @method static int findOrCreate(string $name)
- */
-
-declare(strict_types=1);
-
-namespace SermonBrowser\Facades;
-
-use SermonBrowser\Repositories\SeriesRepository;
-
-/**
- * Class Series
- *
- * Facade for SeriesRepository.
  */
 class Series extends Facade
 {

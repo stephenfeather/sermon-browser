@@ -20,6 +20,8 @@ use SermonBrowser\Facades\File;
  * Class FilePaginationAjax
  *
  * AJAX handler for file list pagination.
+ *
+ * @phpstan-type FileObject object{id: int, name: string, sermon_id: int|null, title: string|null}
  */
 class FilePaginationAjax extends AjaxHandler
 {
@@ -158,7 +160,7 @@ class FilePaginationAjax extends AjaxHandler
     /**
      * Format file data for JSON response.
      *
-     * @param array<object> $files Array of file objects.
+     * @param array<FileObject> $files Array of file objects.
      * @param bool $isUnlinked Whether these are unlinked files.
      * @return array<array<string, mixed>> Formatted file data.
      */
