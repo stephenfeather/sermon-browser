@@ -194,105 +194,154 @@ function sb_hijack()
 function sb_sermon_init()
 {
     global $defaultMultiForm, $defaultSingleForm, $defaultStyle;
-    if (IS_MU) {
-        load_plugin_textdomain('sermon-browser', '', 'languages');
-    } else {
-        load_plugin_textdomain('sermon-browser', '', 'sermon-browser/languages');
-    }
 
-    // Phase 1: Use get_locale() instead of deprecated WPLANG constant.
+    // Load translations
+    $textdomain_path = IS_MU ? 'languages' : 'sermon-browser/languages';
+    load_plugin_textdomain('sermon-browser', '', $textdomain_path);
+
+    // Set locale if available
     $locale_string = sb_get_locale_string();
     if (!empty($locale_string)) {
         setlocale(LC_ALL, $locale_string);
     }
 
-    //Display the podcast if that's what's requested
+    // Display the podcast if requested
     if (isset($_GET['podcast'])) {
         PodcastFeed::render();
     }
 
-    // Register custom CSS and javascript files
-    // jQuery UI Datepicker is bundled with WordPress - no registration needed
-    if (get_option('permalink_structure') == '') {
-        wp_register_style('sb_style', trailingslashit(home_url()) . '?sb-style&', false, sb_get_option('style_date_modified'));
-    } else {
-        wp_register_style('sb_style', trailingslashit(home_url()) . 'sb-style.css', false, sb_get_option('style_date_modified'));
-    }
+    // Register stylesheet
+    sb_register_styles();
 
     // Register [sermon] shortcode handler
     add_shortcode('sermons', 'sb_shortcode');
     add_shortcode('sermon', 'sb_shortcode');
 
-    // Attempt to set php.ini directives
-    if (strpos(ini_get('disable_functions'), 'ini_set') === false) {
-        if (sb_return_kbytes(ini_get('upload_max_filesize')) < 15360) {
-            ini_set('upload_max_filesize', '15M');
-        }
-        if (sb_return_kbytes(ini_get('post_max_size')) < 15360) {
-            ini_set('post_max_size', '15M');
-        }
-        if (sb_return_kbytes(ini_get('memory_limit')) < 49152) {
-            ini_set('memory_limit', '48M');
-        }
-        if (intval(ini_get('max_input_time')) < 600) {
-            ini_set('max_input_time', '600');
-        }
-        if (intval(ini_get('max_execution_time')) < 600) {
-            ini_set('max_execution_time', '600');
-        }
-        if (ini_get('file_uploads') <> '1') {
-            ini_set('file_uploads', '1');
-        }
-    }
+    // Configure PHP limits
+    sb_configure_php_ini();
 
-    // Check whether upgrade required
-    if (current_user_can('manage_options') && is_admin()) {
-        if (get_option('sb_sermon_db_version')) {
-            $db_version = get_option('sb_sermon_db_version');
-        } else {
-            $db_version = sb_get_option('db_version');
-        }
-        if ($db_version && $db_version != SB_DATABASE_VERSION) {
-            Upgrader::databaseUpgrade($db_version);
-        } elseif (!$db_version) {
-            Installer::run();
-        }
-        $sb_version = sb_get_option('code_version');
-        if ($sb_version != SB_CURRENT_VERSION) {
-            Upgrader::versionUpgrade($sb_version, SB_CURRENT_VERSION);
-        }
-
-        // Phase 6: Run template migration for existing installs upgrading to 0.6.0+.
-        $template_version = sb_get_option('template_version');
-        if (version_compare($template_version ?: '0', '0.6.0', '<')) {
-            $migrator = new \SermonBrowser\Templates\TemplateMigrator();
-            $result = $migrator->migrate();
-            set_transient('sb_migration_result', $result, HOUR_IN_SECONDS);
-            sb_update_option('template_version', '0.6.0');
-        }
-    }
+    // Check for upgrades (admin only)
+    sb_check_admin_upgrades();
 
     // Load shared (admin/frontend) features
     add_action('save_post', 'sb_update_podcast_url');
 
-    // Check to see what functions are required, and only load what is needed
+    // Register context-specific hooks
     if (!is_admin()) {
-        add_action('wp_head', 'sb_add_headers', 0);
-        add_action('wp_head', 'wp_print_styles', 9);
-        add_action('admin_bar_menu', 'sb_admin_bar_menu', 45);
-        add_filter('wp_title', 'sb_page_title');
-        if (defined('SAVEQUERIES') && SAVEQUERIES) {
-            add_action('wp_footer', 'sb_footer_stats');
-        }
+        sb_register_frontend_hooks();
     } else {
-        add_action('admin_menu', 'sb_add_pages');
-        add_filter('dashboard_glance_items', 'sb_dashboard_glance');
-        add_action('admin_enqueue_scripts', 'sb_add_admin_headers');
-        // Phase 1: Use Help Tabs API instead of deprecated contextual_help filter.
-        add_action('current_screen', 'sb_add_help_tabs');
-        if (defined('SAVEQUERIES') && SAVEQUERIES) {
-            add_action('admin_footer', 'sb_footer_stats');
+        sb_register_admin_hooks();
+    }
+}
+
+/**
+ * Register the SermonBrowser stylesheet.
+ */
+function sb_register_styles()
+{
+    $style_version = sb_get_option('style_date_modified');
+    $base_url = trailingslashit(home_url());
+
+    $style_url = (get_option('permalink_structure') == '')
+        ? $base_url . '?sb-style&'
+        : $base_url . 'sb-style.css';
+
+    wp_register_style('sb_style', $style_url, false, $style_version);
+}
+
+/**
+ * Configure PHP ini directives for file uploads.
+ */
+function sb_configure_php_ini()
+{
+    if (strpos(ini_get('disable_functions'), 'ini_set') !== false) {
+        return;
+    }
+
+    $settings = [
+        'upload_max_filesize' => ['threshold' => 15360, 'value' => '15M', 'type' => 'kbytes'],
+        'post_max_size' => ['threshold' => 15360, 'value' => '15M', 'type' => 'kbytes'],
+        'memory_limit' => ['threshold' => 49152, 'value' => '48M', 'type' => 'kbytes'],
+        'max_input_time' => ['threshold' => 600, 'value' => '600', 'type' => 'int'],
+        'max_execution_time' => ['threshold' => 600, 'value' => '600', 'type' => 'int'],
+        'file_uploads' => ['threshold' => '1', 'value' => '1', 'type' => 'string'],
+    ];
+
+    foreach ($settings as $key => $config) {
+        $current = ini_get($key);
+        $below_threshold = match ($config['type']) {
+            'kbytes' => sb_return_kbytes($current) < $config['threshold'],
+            'int' => intval($current) < $config['threshold'],
+            'string' => $current != $config['threshold'],
+        };
+
+        if ($below_threshold) {
+            ini_set($key, $config['value']);
         }
+    }
+}
+
+/**
+ * Check and run admin upgrades if needed.
+ */
+function sb_check_admin_upgrades()
+{
+    if (!current_user_can('manage_options') || !is_admin()) {
+        return;
+    }
+
+    // Check database version
+    $db_version = get_option('sb_sermon_db_version') ?: sb_get_option('db_version');
+
+    if ($db_version && $db_version != SB_DATABASE_VERSION) {
+        Upgrader::databaseUpgrade($db_version);
+    } elseif (!$db_version) {
+        Installer::run();
+    }
+
+    // Check code version
+    $sb_version = sb_get_option('code_version');
+    if ($sb_version != SB_CURRENT_VERSION) {
+        Upgrader::versionUpgrade($sb_version, SB_CURRENT_VERSION);
+    }
+
+    // Check template version (Phase 6 migration)
+    $template_version = sb_get_option('template_version') ?: '0';
+    if (version_compare($template_version, '0.6.0', '<')) {
+        $migrator = new \SermonBrowser\Templates\TemplateMigrator();
+        $result = $migrator->migrate();
+        set_transient('sb_migration_result', $result, HOUR_IN_SECONDS);
+        sb_update_option('template_version', '0.6.0');
+    }
+}
+
+/**
+ * Register frontend-specific WordPress hooks.
+ */
+function sb_register_frontend_hooks()
+{
+    add_action('wp_head', 'sb_add_headers', 0);
+    add_action('wp_head', 'wp_print_styles', 9);
+    add_action('admin_bar_menu', 'sb_admin_bar_menu', 45);
+    add_filter('wp_title', 'sb_page_title');
+
+    if (defined('SAVEQUERIES') && SAVEQUERIES) {
+        add_action('wp_footer', 'sb_footer_stats');
+    }
+}
+
+/**
+ * Register admin-specific WordPress hooks.
+ */
+function sb_register_admin_hooks()
+{
+    add_action('admin_menu', 'sb_add_pages');
+    add_filter('dashboard_glance_items', 'sb_dashboard_glance');
+    add_action('admin_enqueue_scripts', 'sb_add_admin_headers');
+    add_action('current_screen', 'sb_add_help_tabs');
+
+    if (defined('SAVEQUERIES') && SAVEQUERIES) {
+        add_action('admin_footer', 'sb_footer_stats');
     }
 }
 
@@ -443,94 +492,158 @@ function sb_query_char($return_entity = true)
 */
 function sb_shortcode($atts, $content = null)
 {
-    global $record_count;
     ob_start();
-    $atts = shortcode_atts(
-        array(
-        'filter' => sb_get_option('filter_type'),
-        'filterhide' => sb_get_option('filter_hide'),
-        'id' => isset($_REQUEST['sermon_id']) ? (int)$_REQUEST['sermon_id'] : '',
-        'preacher' => isset($_REQUEST['preacher']) ? (int)$_REQUEST['preacher'] : '',
-        'series' => isset($_REQUEST['series']) ? (int)$_REQUEST['series'] : '',
-        'book' => isset($_REQUEST['book']) ? sanitize_text_field($_REQUEST['book']) : '',
-        'service' => isset($_REQUEST['service']) ? (int)$_REQUEST['service'] : '',
-        'date' => isset($_REQUEST['date']) ? sanitize_text_field($_REQUEST['date']) : '',
-        'enddate' => isset($_REQUEST['enddate']) ? sanitize_text_field($_REQUEST['enddate']) : '',
-        'tag' => isset($_REQUEST['stag']) ? sanitize_text_field($_REQUEST['stag']) : '',
-        'title' => isset($_REQUEST['title']) ? sanitize_text_field($_REQUEST['title']) : '',
-        'limit' => '0',
-        'dir' => isset($_REQUEST['dir']) ? sanitize_text_field($_REQUEST['dir']) : '',  ),
-        $atts
-    );
+    $atts = shortcode_atts(sb_get_shortcode_defaults(), $atts);
+
     if ($atts['id'] != '') {
-        if (strtolower($atts['id']) == 'latest') {
-            $atts['id'] = '';
-            $query = sb_get_sermons($atts, array(), 1, 1);
-            $atts['id'] = $query[0]->id;
-        }
-        $sermon = sb_get_single_sermon((int) $atts['id']);
-        if ($sermon) {
-            // Phase 6: Use TemplateEngine instead of eval() for security.
-            try {
-                $engine = new TemplateEngine();
-                echo $engine->render('single', [
-                    'Sermon' => $sermon['Sermon'],
-                    'Files' => $sermon['Files'] ?? [],
-                    'Code' => $sermon['Code'] ?? [],
-                    'Tags' => $sermon['Tags'] ?? [],
-                ]);
-            } catch (\Exception $e) {
-                echo '<div class="sermon-browser-error">' .
-                    esc_html__('Template error', 'sermon-browser') . '</div>';
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    echo '<!-- Template error: ' . esc_html($e->getMessage()) . ' -->';
-                }
-            }
-        } else {
-            echo "<div class=\"sermon-browser-results\"><span class=\"error\">";
-            _e('No sermons found.', 'sermon-browser');
-            echo "</span></div>";
-        }
+        sb_render_single_sermon($atts);
     } else {
-        if (isset($_REQUEST['sortby'])) {
-            $sort_criteria = esc_sql($_REQUEST['sortby']);
-        } else {
-            $sort_criteria = 'm.datetime';
-        }
-        if (!empty($atts['dir'])) {
-            $dir = esc_sql($atts['dir']);
-        } elseif ($sort_criteria == 'm.datetime') {
-            $dir = 'desc';
-        } else {
-            $dir = 'asc';
-        }
-        $sort_order = array('by' => $sort_criteria, 'dir' =>  $dir);
-        if (isset($_REQUEST['pagenum'])) {
-            $page = (int)$_REQUEST['pagenum'];
-        } else {
-            $page = 1;
-        }
-        $hide_empty = sb_get_option('hide_no_attachments');
-        $sermons = sb_get_sermons($atts, $sort_order, $page, (int)$atts['limit'], $hide_empty);
-        // Phase 6: Use TemplateEngine instead of eval() for security.
-        try {
-            $engine = new TemplateEngine();
-            echo $engine->render('search', [
-                'sermons' => $sermons,
-                'record_count' => $record_count,
-                'atts' => $atts,
-            ]);
-        } catch (\Exception $e) {
-            echo '<div class="sermon-browser-error">' .
-                esc_html__('Template error', 'sermon-browser') . '</div>';
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                echo '<!-- Template error: ' . esc_html($e->getMessage()) . ' -->';
-            }
-        }
+        sb_render_sermon_list($atts);
     }
+
     $content = ob_get_contents();
     ob_end_clean();
     return $content;
+}
+
+/**
+ * Get default shortcode attributes with request parameter fallbacks.
+ *
+ * @return array Default attribute values.
+ */
+function sb_get_shortcode_defaults()
+{
+    return [
+        'filter' => sb_get_option('filter_type'),
+        'filterhide' => sb_get_option('filter_hide'),
+        'id' => sb_get_request_int('sermon_id'),
+        'preacher' => sb_get_request_int('preacher'),
+        'series' => sb_get_request_int('series'),
+        'book' => sb_get_request_text('book'),
+        'service' => sb_get_request_int('service'),
+        'date' => sb_get_request_text('date'),
+        'enddate' => sb_get_request_text('enddate'),
+        'tag' => sb_get_request_text('stag'),
+        'title' => sb_get_request_text('title'),
+        'limit' => '0',
+        'dir' => sb_get_request_text('dir'),
+    ];
+}
+
+/**
+ * Get an integer value from $_REQUEST or return empty string.
+ *
+ * @param string $key Request parameter name.
+ * @return int|string Integer value or empty string.
+ */
+function sb_get_request_int($key)
+{
+    return isset($_REQUEST[$key]) ? (int) $_REQUEST[$key] : '';
+}
+
+/**
+ * Get a sanitized text value from $_REQUEST or return empty string.
+ *
+ * @param string $key Request parameter name.
+ * @return string Sanitized value or empty string.
+ */
+function sb_get_request_text($key)
+{
+    return isset($_REQUEST[$key]) ? sanitize_text_field($_REQUEST[$key]) : '';
+}
+
+/**
+ * Render a single sermon view.
+ *
+ * @param array $atts Shortcode attributes.
+ */
+function sb_render_single_sermon($atts)
+{
+    // Handle 'latest' shorthand
+    $sermon_id = $atts['id'];
+    if (strtolower($sermon_id) == 'latest') {
+        $atts['id'] = '';
+        $query = sb_get_sermons($atts, [], 1, 1);
+        $sermon_id = $query[0]->id;
+    }
+
+    $sermon = sb_get_single_sermon((int) $sermon_id);
+
+    if (!$sermon) {
+        echo '<div class="sermon-browser-results"><span class="error">';
+        _e('No sermons found.', 'sermon-browser');
+        echo '</span></div>';
+        return;
+    }
+
+    sb_render_template('single', [
+        'Sermon' => $sermon['Sermon'],
+        'Files' => $sermon['Files'] ?? [],
+        'Code' => $sermon['Code'] ?? [],
+        'Tags' => $sermon['Tags'] ?? [],
+    ]);
+}
+
+/**
+ * Render a sermon list view.
+ *
+ * @param array $atts Shortcode attributes.
+ */
+function sb_render_sermon_list($atts)
+{
+    global $record_count;
+
+    $sort_order = sb_resolve_sort_order($atts);
+    $page = isset($_REQUEST['pagenum']) ? (int) $_REQUEST['pagenum'] : 1;
+    $hide_empty = sb_get_option('hide_no_attachments');
+    $sermons = sb_get_sermons($atts, $sort_order, $page, (int) $atts['limit'], $hide_empty);
+
+    sb_render_template('search', [
+        'sermons' => $sermons,
+        'record_count' => $record_count,
+        'atts' => $atts,
+    ]);
+}
+
+/**
+ * Resolve sort order from request and attributes.
+ *
+ * @param array $atts Shortcode attributes.
+ * @return array Sort order with 'by' and 'dir' keys.
+ */
+function sb_resolve_sort_order($atts)
+{
+    $sort_criteria = isset($_REQUEST['sortby'])
+        ? esc_sql($_REQUEST['sortby'])
+        : 'm.datetime';
+
+    if (!empty($atts['dir'])) {
+        $dir = esc_sql($atts['dir']);
+    } else {
+        $dir = ($sort_criteria == 'm.datetime') ? 'desc' : 'asc';
+    }
+
+    return ['by' => $sort_criteria, 'dir' => $dir];
+}
+
+/**
+ * Render a template with error handling.
+ *
+ * @param string $template Template name ('single' or 'search').
+ * @param array  $data     Template data.
+ */
+function sb_render_template($template, $data)
+{
+    try {
+        $engine = new TemplateEngine();
+        echo $engine->render($template, $data);
+    } catch (\Exception $e) {
+        echo '<div class="sermon-browser-error">' .
+            esc_html__('Template error', 'sermon-browser') . '</div>';
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            echo '<!-- Template error: ' . esc_html($e->getMessage()) . ' -->';
+        }
+    }
 }
 
 /**
@@ -556,59 +669,85 @@ function sb_widget_sermon_init()
  */
 function sb_migrate_widget_settings()
 {
-    // Check if migration already done
     if (get_option('sb_widget_migration_v046')) {
         return;
     }
 
-    // Migrate Sermons widget settings
-    $old_sermon_opts = get_option('sb_widget_sermon');
-    if ($old_sermon_opts && !get_option('widget_sb_sermons')) {
-        $new_opts = array('_multiwidget' => 1);
-        $instance_num = 2; // WordPress reserves 1
+    sb_migrate_sermon_widget();
+    sb_migrate_popular_widget();
 
-        foreach ((array) $old_sermon_opts as $num => $opts) {
-            if (!isset($opts['limit'])) {
-                continue;
-            }
-            $new_opts[$instance_num] = array(
-                'title' => isset($opts['title']) ? $opts['title'] : '',
-                'limit' => isset($opts['limit']) ? (int) $opts['limit'] : 5,
-                'preacher' => isset($opts['preacher']) ? (int) $opts['preacher'] : 0,
-                'service' => isset($opts['service']) ? (int) $opts['service'] : 0,
-                'series' => isset($opts['series']) ? (int) $opts['series'] : 0,
-                'show_preacher' => !empty($opts['preacherz']),
-                'show_book' => !empty($opts['book']),
-                'show_date' => !empty($opts['date']),
-            );
-            $instance_num++;
-        }
-
-        if (count($new_opts) > 1) {
-            update_option('widget_sb_sermons', $new_opts);
-        }
-    }
-
-    // Migrate Popular widget settings
-    $old_popular_opts = sb_get_option('popular_widget_options');
-    if ($old_popular_opts && !get_option('widget_sb_popular')) {
-        $new_opts = array(
-            2 => array(
-                'title' => isset($old_popular_opts['title']) ? $old_popular_opts['title'] : '',
-                'limit' => isset($old_popular_opts['limit']) ? (int) $old_popular_opts['limit'] : 5,
-                'display_sermons' => !empty($old_popular_opts['display_sermons']),
-                'display_series' => !empty($old_popular_opts['display_series']),
-                'display_preachers' => !empty($old_popular_opts['display_preachers']),
-            ),
-            '_multiwidget' => 1,
-        );
-        update_option('widget_sb_popular', $new_opts);
-    }
-
-    // Mark migration complete
     update_option('sb_widget_migration_v046', true);
 }
 add_action('admin_init', 'sb_migrate_widget_settings');
+
+/**
+ * Migrate sermon widget settings from old format.
+ */
+function sb_migrate_sermon_widget()
+{
+    $old_opts = get_option('sb_widget_sermon');
+    if (!$old_opts || get_option('widget_sb_sermons')) {
+        return;
+    }
+
+    $new_opts = ['_multiwidget' => 1];
+    $instance_num = 2; // WordPress reserves 1
+
+    foreach ((array) $old_opts as $opts) {
+        if (!isset($opts['limit'])) {
+            continue;
+        }
+        $new_opts[$instance_num++] = sb_map_sermon_widget_instance($opts);
+    }
+
+    if (count($new_opts) > 1) {
+        update_option('widget_sb_sermons', $new_opts);
+    }
+}
+
+/**
+ * Map old sermon widget options to new format.
+ *
+ * @param array $opts Old widget options.
+ * @return array New widget instance options.
+ */
+function sb_map_sermon_widget_instance($opts)
+{
+    return [
+        'title' => $opts['title'] ?? '',
+        'limit' => (int) ($opts['limit'] ?? 5),
+        'preacher' => (int) ($opts['preacher'] ?? 0),
+        'service' => (int) ($opts['service'] ?? 0),
+        'series' => (int) ($opts['series'] ?? 0),
+        'show_preacher' => !empty($opts['preacherz']),
+        'show_book' => !empty($opts['book']),
+        'show_date' => !empty($opts['date']),
+    ];
+}
+
+/**
+ * Migrate popular widget settings from old format.
+ */
+function sb_migrate_popular_widget()
+{
+    $old_opts = sb_get_option('popular_widget_options');
+    if (!$old_opts || get_option('widget_sb_popular')) {
+        return;
+    }
+
+    $new_opts = [
+        2 => [
+            'title' => $old_opts['title'] ?? '',
+            'limit' => (int) ($old_opts['limit'] ?? 5),
+            'display_sermons' => !empty($old_opts['display_sermons']),
+            'display_series' => !empty($old_opts['display_series']),
+            'display_preachers' => !empty($old_opts['display_preachers']),
+        ],
+        '_multiwidget' => 1,
+    ];
+
+    update_option('widget_sb_popular', $new_opts);
+}
 
 /**
 * Wrapper for sb_widget_sermon in frontend.php
