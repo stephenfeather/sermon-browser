@@ -395,7 +395,7 @@ class LegacyAjaxHandler
         <?php if ($isUnlinked) : ?>
             <a id="" href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
         <?php endif; ?>
-        <a id="link<?php echo $file->id ?>" href="javascript:rename(<?php echo $file->id ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></a> | <a onclick="return deletelinked_<?php echo $file->id;?>('<?php echo $safeName ?>', '<?php echo $safeTitle ?>');" href="javascript:kill(<?php echo $file->id ?>, '<?php echo $file->name ?>');"><?php _e('Delete', 'sermon-browser') ?></a>
+        <button type="button" id="link<?php echo $file->id ?>" class="button-link" onclick="rename(<?php echo $file->id ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></button> | <button type="button" class="button-link" onclick="if(deletelinked_<?php echo $file->id;?>('<?php echo $safeName ?>', '<?php echo $safeTitle ?>')){kill(<?php echo $file->id ?>, '<?php echo $file->name ?>');}"><?php _e('Delete', 'sermon-browser') ?></button>
         <?php
     }
 }

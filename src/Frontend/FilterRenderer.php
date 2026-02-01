@@ -366,7 +366,7 @@ class FilterRenderer
         $output = str_replace('*service*', isset($services[0]->name) ? $services[0]->name : '', $output);
         $output = str_replace('*series*', isset($series[0]->name) ? $series[0]->name : '', $output);
 
-        echo "<span class=\"inline_controls\"><a href=\"#\" id=\"show_hide_filter\"></a></span>";
+        echo '<span class="inline_controls"><button type="button" id="show_hide_filter" class="button-link" aria-label="' . esc_attr__('Toggle filter', 'sermon-browser') . '"></button></span>';
 
         if ($output !== '') {
             echo '<div class="filtered">' . esc_html__('Active filter', 'sermon-browser') . ': ' . $output . "</div>\r";
@@ -573,7 +573,7 @@ class FilterRenderer
         string $currentDir
     ): void {
         ?>
-        <span class="inline_controls"><a href="#" id="show_hide_filter"></a></span>
+        <span class="inline_controls"><button type="button" id="show_hide_filter" class="button-link" aria-label="<?php esc_attr_e('Toggle filter', 'sermon-browser'); ?>"></button></span>
         <div id="mainfilter">
             <form method="post" id="sermon-filter" action="<?php echo esc_url(PageResolver::getDisplayUrl()); ?>">
                 <div style="clear:both">
