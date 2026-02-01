@@ -1214,9 +1214,8 @@ function sb_is_super_admin(): bool
  * Deprecated function - displays error message
  *
  * @deprecated Use sb_display_sermons() or the sermon browser widget instead
- * @param array $options
  */
-function display_sermons($_options = array())
+function display_sermons()
 {
     echo "This function is now deprecated. Use sb_display_sermons or the sermon browser widget, instead.";
 }

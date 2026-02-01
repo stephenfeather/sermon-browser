@@ -65,27 +65,32 @@ final class HelpTabs
      */
     private static function getHelpContent(string $page): string
     {
-        switch ($page) {
-            case 'sermon-browser/sermon.php':
-                return __('From this page you can edit or delete any of your sermons. The most recent sermons are found at the top. Use the filter options to quickly find the one you want.', 'sermon-browser');
+        $contentMap = self::getHelpContentMap();
 
-            case 'sermon-browser/new_sermon.php':
-            case 'sermon-browser/files.php':
-            case 'sermon-browser/preachers.php':
-            case 'sermon-browser/manage.php':
-            case 'sermon-browser/options.php':
-                $content = __('It&#146;s important that these options are set correctly, as otherwise SermonBrowser won&#146;t behave as you expect.', 'sermon-browser') . '<ul>';
-                $content .= '<li>' . __('The upload folder would normally be <b>wp-content/uploads/sermons</b>', 'sermon-browser') . '</li>';
-                $content .= '<li>' . __('You should only change the public podcast feed if you re-direct your podcast using a service like Feedburner. Otherwise it should be the same as the private podcast feed.', 'sermon-browser') . '</li>';
-                $content .= '<li>' . __('The MP3 shortcode you need will be in the documation of your favourite MP3 plugin. Use the tag %SERMONURL% in place of the URL of the MP3 file (e.g. [haiku url="%SERMONURL%"] or [audio:%SERMONURL%]).', 'sermon-browser') . '</li></ul>';
-                return $content;
+        return $contentMap[$page] ?? '';
+    }
 
-            case 'sermon-browser/templates.php':
-                return sprintf(__('Template editing is one of the most powerful features of SermonBrowser. Be sure to look at the complete list of %stemplate tags%s.', 'sermon-browser'), '<a href="http://www.sermonbrowser.com/customisation/">', '</a>');
+    /**
+     * Get the help content mapping for all pages.
+     *
+     * @return array<string, string> Page slug to help content mapping.
+     */
+    private static function getHelpContentMap(): array
+    {
+        $optionsHelp = __('It&#146;s important that these options are set correctly, as otherwise SermonBrowser won&#146;t behave as you expect.', 'sermon-browser') . '<ul>'
+            . '<li>' . __('The upload folder would normally be <b>wp-content/uploads/sermons</b>', 'sermon-browser') . '</li>'
+            . '<li>' . __('You should only change the public podcast feed if you re-direct your podcast using a service like Feedburner. Otherwise it should be the same as the private podcast feed.', 'sermon-browser') . '</li>'
+            . '<li>' . __('The MP3 shortcode you need will be in the documation of your favourite MP3 plugin. Use the tag %SERMONURL% in place of the URL of the MP3 file (e.g. [haiku url="%SERMONURL%"] or [audio:%SERMONURL%]).', 'sermon-browser') . '</li></ul>';
 
-            default:
-                return '';
-        }
+        return [
+            'sermon-browser/sermon.php' => __('From this page you can edit or delete any of your sermons. The most recent sermons are found at the top. Use the filter options to quickly find the one you want.', 'sermon-browser'),
+            'sermon-browser/new_sermon.php' => $optionsHelp,
+            'sermon-browser/files.php' => $optionsHelp,
+            'sermon-browser/preachers.php' => $optionsHelp,
+            'sermon-browser/manage.php' => $optionsHelp,
+            'sermon-browser/options.php' => $optionsHelp,
+            'sermon-browser/templates.php' => sprintf(__('Template editing is one of the most powerful features of SermonBrowser. Be sure to look at the complete list of %stemplate tags%s.', 'sermon-browser'), '<a href="http://www.sermonbrowser.com/customisation/">', '</a>'),
+        ];
     }
 
     /**
