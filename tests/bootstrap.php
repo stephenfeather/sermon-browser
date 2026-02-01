@@ -242,3 +242,54 @@ if (!class_exists('WP_REST_Controller')) {
         }
     }
 }
+
+if (!class_exists('WP_Widget')) {
+    /**
+     * Stub for WordPress WP_Widget base class.
+     */
+    class WP_Widget
+    {
+        public string $id_base = '';
+        public string $name = '';
+        public int $number = 1;
+        public array $widget_options = [];
+        public array $control_options = [];
+
+        public function __construct(
+            string $id_base = '',
+            string $name = '',
+            array $widget_options = [],
+            array $control_options = []
+        ) {
+            $this->id_base = $id_base;
+            $this->name = $name;
+            $this->widget_options = $widget_options;
+            $this->control_options = $control_options;
+        }
+
+        public function widget($args, $instance): void
+        {
+            // To be implemented by child classes.
+        }
+
+        public function form($instance): void
+        {
+            // To be implemented by child classes.
+        }
+
+        public function update($new_instance, $old_instance): array
+        {
+            return $new_instance;
+        }
+
+        public function get_field_id(string $field_name): string
+        {
+            return 'widget-' . $this->id_base . '-' . $this->number . '-' . $field_name;
+        }
+
+        public function get_field_name(string $field_name): string
+        {
+            return 'widget-' . $this->id_base . '[' . $this->number . '][' . $field_name . ']';
+        }
+    }
+}
