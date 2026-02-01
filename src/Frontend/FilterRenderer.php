@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Config\Defaults;
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Constants;
 use SermonBrowser\Facades\Preacher;
 use SermonBrowser\Facades\Series;
@@ -93,8 +95,8 @@ class FilterRenderer
         if ($id === 'book') {
             $translateBook = true;
             $translatedBooks = array_combine(
-                sb_get_default('eng_bible_books'),
-                sb_get_default('bible_books')
+                Defaults::get('eng_bible_books'),
+                Defaults::get('bible_books')
             );
         }
 
@@ -115,7 +117,7 @@ class FilterRenderer
                 echo ", \r";
             }
 
-            $url = sb_build_url([$id => $result->$filterField], false);
+            $url = UrlBuilder::build([$id => $result->$filterField], false);
 
             if ($translateBook && isset($translatedBooks[stripslashes($result->$display)])) {
                 $displayValue = $translatedBooks[stripslashes($result->$display)];
@@ -190,7 +192,7 @@ class FilterRenderer
                 if ($count !== 0) {
                     $output .= '(' . $count . '), ';
                 }
-                $url = sb_build_url([
+                $url = UrlBuilder::build([
                     'date' => $date->year . '-' . $date->month . '-01',
                     'enddate' => $date->year . '-' . $date->month . '-31'
                 ], false);
@@ -224,7 +226,7 @@ class FilterRenderer
                 if ($count !== 0) {
                     $output .= '(' . $count . '), ';
                 }
-                $url = sb_build_url([
+                $url = UrlBuilder::build([
                     'date' => $date->year . '-01-01',
                     'enddate' => $date->year . '-12-31'
                 ], false);
@@ -259,10 +261,10 @@ class FilterRenderer
         }
 
         if (count($returnedQuery) > 0) {
-            return esc_url(sb_display_url() . sb_query_char() . implode('&', $returnedQuery));
+            return esc_url(PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . implode('&', $returnedQuery));
         }
 
-        return sb_display_url();
+        return PageResolver::getDisplayUrl();
     }
 
     /**
@@ -344,7 +346,7 @@ class FilterRenderer
         }
 
         // Get sermon data
-        $hideEmpty = sb_get_option('hide_no_attachments');
+        $hideEmpty = OptionsManager::get('hide_no_attachments');
         $sermons = sb_get_sermons($filter, [], 1, 99999, $hideEmpty);
         $ids = [];
         foreach ($sermons as $sermon) {
@@ -442,7 +444,7 @@ class FilterRenderer
 
         if (substr($date, 5, 2) === substr($endDate, 5, 2)) {
             $monthName = wp_date('F', strtotime($date));
-            $url = sb_build_url([
+            $url = UrlBuilder::build([
                 'date' => (int) substr($date, 0, 4) . '-01-01',
                 'enddate' => (int) substr($date, 0, 4) . '-12-31'
             ], false);
@@ -500,8 +502,8 @@ class FilterRenderer
     private static function renderDropdownFilter(bool $hideFilter, string $jsHide): void
     {
         $translatedBooks = array_combine(
-            sb_get_default('eng_bible_books'),
-            sb_get_default('bible_books')
+            Defaults::get('eng_bible_books'),
+            Defaults::get('bible_books')
         );
 
         $preachers = Preacher::findAllForFilter();
@@ -573,69 +575,47 @@ class FilterRenderer
         ?>
         <span class="inline_controls"><a href="#" id="show_hide_filter"></a></span>
         <div id="mainfilter">
-            <form method="post" id="sermon-filter" action="<?php echo esc_url(sb_display_url()); ?>">
+            <form method="post" id="sermon-filter" action="<?php echo esc_url(PageResolver::getDisplayUrl()); ?>">
                 <div style="clear:both">
                     <table class="sermonbrowser">
                         <tr>
-                            <td class="fieldname"><?php esc_html_e('Preacher', 'sermon-browser'); ?></td>
-                            <td class="field"><select name="preacher" id="preacher">
-                                    <option value="0" <?php echo (!isset($_REQUEST['preacher']) || $_REQUEST['preacher'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
-                                    <?php foreach ($preachers as $preacher) : ?>
-                                    <option value="<?php echo (int) $preacher->id; ?>" <?php echo isset($_REQUEST['preacher']) && $_REQUEST['preacher'] == $preacher->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($preacher->name) . ' (' . $preacher->count . ')'); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <th scope="row" class="fieldname"><?php esc_html_e('Preacher', 'sermon-browser'); ?></th>
+                            <td class="field">
+                                <?php self::renderEntitySelect('preacher', $preachers); ?>
                             </td>
-                            <td class="fieldname rightcolumn"><?php esc_html_e('Services', 'sermon-browser'); ?></td>
-                            <td class="field"><select name="service" id="service">
-                                    <option value="0" <?php echo (!isset($_REQUEST['service']) || $_REQUEST['service'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
-                                    <?php foreach ($services as $service) : ?>
-                                    <option value="<?php echo (int) $service->id; ?>" <?php echo isset($_REQUEST['service']) && $_REQUEST['service'] == $service->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($service->name) . ' (' . $service->count . ')'); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <th scope="row" class="fieldname rightcolumn"><?php esc_html_e('Services', 'sermon-browser'); ?></th>
+                            <td class="field">
+                                <?php self::renderEntitySelect('service', $services); ?>
                             </td>
                         </tr>
                         <tr>
-                            <td class="fieldname"><?php esc_html_e('Book', 'sermon-browser'); ?></td>
-                            <td class="field"><select name="book">
-                                    <option value=""><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
-                                    <?php foreach ($bookCount as $book) : ?>
-                                    <option value="<?php echo esc_attr($book->name); ?>" <?php echo isset($_REQUEST['book']) && $_REQUEST['book'] === $book->name ? Constants::SELECTED : ''; ?>><?php echo esc_html(($translatedBooks[stripslashes($book->name)] ?? stripslashes($book->name)) . ' (' . $book->count . ')'); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <th scope="row" class="fieldname"><?php esc_html_e('Book', 'sermon-browser'); ?></th>
+                            <td class="field">
+                                <?php self::renderBookSelect($bookCount, $translatedBooks); ?>
                             </td>
-                            <td class="fieldname rightcolumn"><?php esc_html_e('Series', 'sermon-browser'); ?></td>
-                            <td class="field"><select name="series" id="series">
-                                    <option value="0" <?php echo (!isset($_REQUEST['series']) || $_REQUEST['series'] == 0) ? Constants::SELECTED : ''; ?>><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
-                                    <?php foreach ($series as $item) : ?>
-                                    <option value="<?php echo (int) $item->id; ?>" <?php echo isset($_REQUEST['series']) && $_REQUEST['series'] == $item->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($item->name) . ' (' . $item->count . ')'); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <th scope="row" class="fieldname rightcolumn"><?php esc_html_e('Series', 'sermon-browser'); ?></th>
+                            <td class="field">
+                                <?php self::renderEntitySelect('series', $series); ?>
                             </td>
                         </tr>
                         <tr>
-                            <td class="fieldname"><?php esc_html_e('Start date', 'sermon-browser'); ?></td>
+                            <th scope="row" class="fieldname"><?php esc_html_e('Start date', 'sermon-browser'); ?></th>
                             <td class="field"><input type="text" name="date" id="date" value="<?php echo esc_attr($_REQUEST['date'] ?? ''); ?>" /></td>
-                            <td class="fieldname rightcolumn"><?php esc_html_e('End date', 'sermon-browser'); ?></td>
+                            <th scope="row" class="fieldname rightcolumn"><?php esc_html_e('End date', 'sermon-browser'); ?></th>
                             <td class="field"><input type="text" name="enddate" id="enddate" value="<?php echo esc_attr($_REQUEST['enddate'] ?? ''); ?>" /></td>
                         </tr>
                         <tr>
-                            <td class="fieldname"><?php esc_html_e('Keywords', 'sermon-browser'); ?></td>
+                            <th scope="row" class="fieldname"><?php esc_html_e('Keywords', 'sermon-browser'); ?></th>
                             <td class="field" colspan="3"><input style="width: 98.5%" type="text" id="title" name="title" value="<?php echo esc_attr($_REQUEST['title'] ?? ''); ?>" /></td>
                         </tr>
                         <tr>
-                            <td class="fieldname"><?php esc_html_e('Sort by', 'sermon-browser'); ?></td>
-                            <td class="field"><select name="sortby" id="sortby">
-                                    <?php foreach ($sortByOptions as $label => $value) : ?>
-                                    <option value="<?php echo esc_attr($value); ?>" <?php echo $currentSortBy === $value ? Constants::SELECTED : ''; ?>><?php esc_html_e($label, 'sermon-browser'); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <th scope="row" class="fieldname"><?php esc_html_e('Sort by', 'sermon-browser'); ?></th>
+                            <td class="field">
+                                <?php self::renderSortSelect($sortByOptions, $currentSortBy); ?>
                             </td>
-                            <td class="fieldname rightcolumn"><?php esc_html_e('Direction', 'sermon-browser'); ?></td>
-                            <td class="field"><select name="dir" id="dir">
-                                    <?php foreach ($directionOptions as $label => $value) : ?>
-                                    <option value="<?php echo esc_attr($value); ?>" <?php echo $currentDir === $value ? Constants::SELECTED : ''; ?>><?php echo esc_html($label); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <th scope="row" class="fieldname rightcolumn"><?php esc_html_e('Direction', 'sermon-browser'); ?></th>
+                            <td class="field">
+                                <?php self::renderDirectionSelect($directionOptions, $currentDir); ?>
                             </td>
                         </tr>
                         <tr>
@@ -647,6 +627,88 @@ class FilterRenderer
                 </div>
             </form>
         </div>
+        <?php
+    }
+
+    /**
+     * Render a select element for an entity (preacher, service, series).
+     *
+     * @param string $name The select name/id.
+     * @param array<object> $items The items to render as options.
+     * @return void
+     */
+    private static function renderEntitySelect(string $name, array $items): void
+    {
+        $currentValue = $_REQUEST[$name] ?? 0;
+        $isAllSelected = !isset($_REQUEST[$name]) || $_REQUEST[$name] == 0;
+        ?>
+        <select name="<?php echo esc_attr($name); ?>" id="<?php echo esc_attr($name); ?>">
+            <option value="0" <?php echo $isAllSelected ? Constants::SELECTED : ''; ?>><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
+            <?php foreach ($items as $item) : ?>
+            <option value="<?php echo (int) $item->id; ?>" <?php echo $currentValue == $item->id ? Constants::SELECTED : ''; ?>><?php echo esc_html(stripslashes($item->name) . ' (' . $item->count . ')'); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <?php
+    }
+
+    /**
+     * Render the book select element.
+     *
+     * @param array<object> $bookCount Book count data.
+     * @param array<string, string> $translatedBooks Book translations.
+     * @return void
+     */
+    private static function renderBookSelect(array $bookCount, array $translatedBooks): void
+    {
+        $currentBook = $_REQUEST['book'] ?? '';
+        ?>
+        <select name="book">
+            <option value=""><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>
+            <?php foreach ($bookCount as $book) : ?>
+                <?php
+                $bookName = stripslashes($book->name);
+                $displayName = $translatedBooks[$bookName] ?? $bookName;
+                $isSelected = isset($_REQUEST['book']) && $_REQUEST['book'] === $book->name;
+                ?>
+            <option value="<?php echo esc_attr($book->name); ?>" <?php echo $isSelected ? Constants::SELECTED : ''; ?>><?php echo esc_html($displayName . ' (' . $book->count . ')'); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <?php
+    }
+
+    /**
+     * Render the sort by select element.
+     *
+     * @param array<string, string> $sortByOptions Sort by options.
+     * @param string $currentSortBy Current sort by value.
+     * @return void
+     */
+    private static function renderSortSelect(array $sortByOptions, string $currentSortBy): void
+    {
+        ?>
+        <select name="sortby" id="sortby">
+            <?php foreach ($sortByOptions as $label => $value) : ?>
+            <option value="<?php echo esc_attr($value); ?>" <?php echo $currentSortBy === $value ? Constants::SELECTED : ''; ?>><?php esc_html_e($label, 'sermon-browser'); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <?php
+    }
+
+    /**
+     * Render the direction select element.
+     *
+     * @param array<string, string> $directionOptions Direction options.
+     * @param string $currentDir Current direction value.
+     * @return void
+     */
+    private static function renderDirectionSelect(array $directionOptions, string $currentDir): void
+    {
+        ?>
+        <select name="dir" id="dir">
+            <?php foreach ($directionOptions as $label => $value) : ?>
+            <option value="<?php echo esc_attr($value); ?>" <?php echo $currentDir === $value ? Constants::SELECTED : ''; ?>><?php echo esc_html($label); ?></option>
+            <?php endforeach; ?>
+        </select>
         <?php
     }
 
