@@ -30,6 +30,14 @@ use stdClass;
  *
  * Renders individual template tags for sermon browser templates.
  * Replaces the eval()-based dictionary.php approach with safe method calls.
+ *
+ * Note: Many render methods accept $context and $data parameters for consistent
+ * callback signatures, even when specific implementations don't use them.
+ * The underscore prefix indicates intentionally unused parameters.
+ *
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  */
 class TagRenderer
 {
