@@ -40,3 +40,11 @@ debug.log
 
 # Database backups (should not be in repo)
 *.sql
+
+# Claude Code artifacts
+thoughts/
+plans/
+.claude/
+.tldr/
+.tldrignore
+phpstan.neon
