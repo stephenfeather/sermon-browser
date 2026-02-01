@@ -17,6 +17,8 @@ use SermonBrowser\Facades\Service;
  * Modern WP_Widget class for displaying a list of recent sermons
  * in WordPress sidebars and widget areas.
  *
+ * @phpstan-type SermonObject object{id: int, title: string, start: string|null, end: string|null, preacher: string|null}
+ *
  * @extends WP_Widget<array{title?: string, limit?: int, preacher?: int, service?: int, series?: int, show_preacher?: bool, show_book?: bool, show_date?: bool}>
  *
  * @since 0.46.0
@@ -110,7 +112,7 @@ class SermonsWidget extends WP_Widget
     /**
      * Render a single sermon list item.
      *
-     * @param object $sermon Sermon object.
+     * @param SermonObject $sermon Sermon object.
      * @param array<string, mixed> $opts Display options.
      * @return void
      */
@@ -139,11 +141,14 @@ class SermonsWidget extends WP_Widget
     /**
      * Render the book passage span.
      *
-     * @param object $sermon Sermon object.
+     * @param SermonObject $sermon Sermon object.
      * @return void
      */
     private function renderBookPassage(object $sermon): void
     {
+        if ($sermon->start === null || $sermon->end === null) {
+            return;
+        }
         $startData = unserialize($sermon->start);
         $endData = unserialize($sermon->end);
         if ($startData && $endData) {
@@ -155,14 +160,14 @@ class SermonsWidget extends WP_Widget
     /**
      * Render the preacher link span.
      *
-     * @param object $sermon Sermon object.
+     * @param SermonObject $sermon Sermon object.
      * @return void
      */
     private function renderPreacherLink(object $sermon): void
     {
         echo ' <span class="sermon-preacher">' . esc_html__('by', 'sermon-browser') . ' <a href="';
         sb_print_preacher_link($sermon);
-        echo '">' . esc_html(stripslashes($sermon->preacher)) . '</a></span>';
+        echo '">' . esc_html(stripslashes($sermon->preacher ?? '')) . '</a></span>';
     }
 
     /**
