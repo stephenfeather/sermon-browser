@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Frontend\PageResolver;
+
 /**
  * URL Builder utility for Sermon Browser frontend links.
  *
@@ -56,10 +58,10 @@ final class UrlBuilder
         }
 
         if (!empty($queryParts)) {
-            return esc_url(sb_display_url() . sb_query_char() . implode('&', $queryParts));
+            return esc_url(PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . implode('&', $queryParts));
         }
 
-        return sb_display_url();
+        return PageResolver::getDisplayUrl();
     }
 
     /**

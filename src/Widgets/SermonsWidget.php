@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SermonBrowser\Widgets;
 
 use SermonBrowser\Constants;
+use SermonBrowser\Frontend\UrlBuilder;
 use WP_Widget;
 use SermonBrowser\Facades\Preacher;
 use SermonBrowser\Facades\Series;
@@ -114,7 +115,7 @@ class SermonsWidget extends WP_Widget
     private function renderSermonListItem(object $sermon, array $opts): void
     {
         echo '<li><span class="sermon-title">';
-        echo '<a href="' . esc_url(sb_build_url(['sermon_id' => $sermon->id], true)) . '">';
+        echo '<a href="' . esc_url(UrlBuilder::build(['sermon_id' => $sermon->id], true)) . '">';
         echo esc_html(stripslashes($sermon->title)) . '</a></span>';
 
         if ($opts['show_book'] && !empty($sermon->start) && !empty($sermon->end)) {

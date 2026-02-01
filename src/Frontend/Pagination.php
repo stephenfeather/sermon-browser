@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Config\OptionsManager;
+
 /**
  * Pagination utility for Sermon Browser.
  *
@@ -27,13 +29,13 @@ final class Pagination
         global $record_count;
 
         if ($limit === 0) {
-            $limit = (int) sb_get_option('sermons_per_page');
+            $limit = (int) OptionsManager::get('sermons_per_page');
         }
 
         $current = isset($_REQUEST['pagenum']) ? (int) $_REQUEST['pagenum'] : 1;
 
         if ($current < ceil($record_count / $limit)) {
-            $url = sb_build_url(['pagenum' => ++$current], false);
+            $url = UrlBuilder::build(['pagenum' => ++$current], false);
             echo '<a href="' . $url . '">' . __('Next page', 'sermon-browser') . ' &raquo;</a>';
         }
     }
@@ -50,13 +52,13 @@ final class Pagination
     public static function printPrevPageLink(int $limit = 0): void
     {
         if ($limit === 0) {
-            $limit = (int) sb_get_option('sermons_per_page');
+            $limit = (int) OptionsManager::get('sermons_per_page');
         }
 
         $current = isset($_REQUEST['pagenum']) ? (int) $_REQUEST['pagenum'] : 1;
 
         if ($current > 1) {
-            $url = sb_build_url(['pagenum' => --$current], false);
+            $url = UrlBuilder::build(['pagenum' => --$current], false);
             echo '<a href="' . $url . '">&laquo; ' . __('Previous page', 'sermon-browser') . '</a>';
         }
     }

@@ -124,7 +124,7 @@ try {
                 <div class="sb-single-sermon__media">
                     <?php foreach ($files as $file) : ?>
                         <?php
-                        $file_url = sb_get_option('upload_url') . $file;
+                        $file_url = \SermonBrowser\Config\OptionsManager::get('upload_url') . $file;
                         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                         ?>
                         <?php if (in_array($ext, ['mp3', 'wav', 'ogg', 'm4a'])) : ?>

@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Facades\Sermon;
 use SermonBrowser\Facades\Tag;
 
@@ -145,7 +146,7 @@ class TemplateHelper
     {
         if ($sermon->image) {
             echo "<img alt='" . stripslashes($sermon->preacher) . "' class='preacher' src='"
-                . trailingslashit(site_url()) . sb_get_option('upload_dir') . 'images/' . $sermon->image . "'>";
+                . trailingslashit(site_url()) . OptionsManager::get('upload_dir') . 'images/' . $sermon->image . "'>";
         }
     }
 

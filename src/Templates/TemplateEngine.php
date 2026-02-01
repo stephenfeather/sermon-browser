@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Templates;
 
+use SermonBrowser\Config\OptionsManager;
+
 /**
  * Class TemplateEngine
  *
@@ -107,7 +109,7 @@ class TemplateEngine
     private function loadTemplate(string $type): string
     {
         $optionName = self::TEMPLATE_OPTIONS[$type];
-        $template = sb_get_option($optionName);
+        $template = OptionsManager::get($optionName);
 
         return $template ?? '';
     }

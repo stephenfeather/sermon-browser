@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin;
 
+use SermonBrowser\Config\OptionsManager;
+use SermonBrowser\Frontend\PageResolver;
+
 /**
  * Class AdminNotices
  *
@@ -41,7 +44,7 @@ final class AdminNotices
      */
     private static function renderMp3ShortcodeAlert(): void
     {
-        $mp3Shortcode = sb_get_option('mp3_shortcode');
+        $mp3Shortcode = OptionsManager::get('mp3_shortcode');
 
         if (stripos($mp3Shortcode, '%SERMONURL%') === false) {
             echo '<div id="message" class="updated fade"><p><b>';
@@ -73,7 +76,7 @@ final class AdminNotices
      */
     private static function renderDisplayPageAlert(): void
     {
-        if (sb_display_url() === "") {
+        if (PageResolver::getDisplayUrl() === "") {
             $createPageUrl = admin_url('page-new.php');
             echo '<div id="message" class="updated"><p><b>' . __('Hint:', 'sermon-browser') . '</b> '
                 . sprintf(

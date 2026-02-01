@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Install;
 
+use SermonBrowser\Config\OptionsManager;
+
 /**
  * Handles uninstallation of Sermon Browser.
  *
@@ -57,7 +59,7 @@ class Uninstaller
      */
     public static function wipeUploadDirectory(): void
     {
-        $dir = SB_ABSPATH . sb_get_option('upload_dir');
+        $dir = SB_ABSPATH . OptionsManager::get('upload_dir');
 
         $handle = @opendir($dir);
         if ($handle) {

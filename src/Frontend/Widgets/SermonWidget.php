@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend\Widgets;
 
+use SermonBrowser\Config\OptionsManager;
+use SermonBrowser\Frontend\UrlBuilder;
+
 /**
  * Sermon Widget display functions.
  *
@@ -120,7 +123,7 @@ final class SermonWidget
         $widgetArgs = wp_parse_args($widgetArgs, ['number' => -1]);
         $number = $widgetArgs['number'] ?? -1;
 
-        $options = sb_get_option('sermons_widget_options');
+        $options = OptionsManager::get('sermons_widget_options');
         if (!isset($options[$number])) {
             return;
         }
@@ -179,7 +182,7 @@ final class SermonWidget
     private static function renderSermonItem(object $sermon, array $opts): void
     {
         echo "<li><span class=\"sermon-title\">";
-        echo '<a href="' . sb_build_url(['sermon_id' => $sermon->id], true) . '">';
+        echo '<a href="' . UrlBuilder::build(['sermon_id' => $sermon->id], true) . '">';
         echo stripslashes($sermon->title) . '</a></span>';
 
         if ($opts['book']) {

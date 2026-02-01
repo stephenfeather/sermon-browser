@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Config\Defaults;
+use SermonBrowser\Config\OptionsManager;
 use SimpleXMLElement;
 
 /**
@@ -63,8 +65,8 @@ class BibleText
         }
 
         $translatedBooks = array_combine(
-            sb_get_default('eng_bible_books'),
-            sb_get_default('bible_books')
+            Defaults::get('eng_bible_books'),
+            Defaults::get('bible_books')
         );
 
         $startBookTranslated = $translatedBooks[$startBook] ?? $startBook;
@@ -77,9 +79,9 @@ class BibleText
         $endVerse = isset($end['verse']) ? trim((string) $end['verse']) : '';
 
         if ($addLink) {
-            $startBookTranslated = '<a href="' . sb_get_book_link($startBook) . '">'
+            $startBookTranslated = '<a href="' . UrlBuilder::bookLink($startBook) . '">'
                 . $startBookTranslated . '</a>';
-            $endBookTranslated = '<a href="' . sb_get_book_link($endBook) . '">'
+            $endBookTranslated = '<a href="' . UrlBuilder::bookLink($endBook) . '">'
                 . $endBookTranslated . '</a>';
         }
 
@@ -151,7 +153,7 @@ class BibleText
      */
     public static function addEsvText(array $start, array $end): string
     {
-        $apiKey = sb_get_option('esv_api_key');
+        $apiKey = OptionsManager::get('esv_api_key');
 
         if ($apiKey) {
             $header = 'Token ' . $apiKey;

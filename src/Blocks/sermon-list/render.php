@@ -144,7 +144,7 @@ $wrapper_attributes = get_block_wrapper_attributes([
                     <li class="sb-sermon-list__item">
                         <article class="sb-sermon-list__sermon">
                             <h3 class="sb-sermon-list__sermon-title">
-                                <a href="<?php echo esc_url(sb_build_url(['sermon_id' => $sermon->id])); ?>">
+                                <a href="<?php echo esc_url(\SermonBrowser\Frontend\UrlBuilder::build(['sermon_id' => $sermon->id])); ?>">
                                     <?php echo esc_html($sermon->title); ?>
                                 </a>
                             </h3>

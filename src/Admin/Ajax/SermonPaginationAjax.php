@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Ajax;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Facades\Sermon;
 
 /**
@@ -55,7 +56,7 @@ class SermonPaginationAjax extends AjaxHandler
         $perPage = $this->getPostInt('per_page', 0);
 
         if ($perPage <= 0) {
-            $perPage = (int) sb_get_option('sermons_per_page', 10);
+            $perPage = (int) (OptionsManager::get('sermons_per_page') ?: 10);
         }
 
         $offset = ($page - 1) * $perPage;

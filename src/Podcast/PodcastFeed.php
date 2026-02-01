@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Podcast;
 
+use SermonBrowser\Config\OptionsManager;
+use SermonBrowser\Frontend\PageResolver;
+
 /**
  * Class PodcastFeed
  *
@@ -81,7 +84,7 @@ final class PodcastFeed
      */
     private static function renderChannel(array $sermons): void
     {
-        $podcastUrl = PodcastHelper::xmlEncode(sb_get_option('podcast_url'));
+        $podcastUrl = PodcastHelper::xmlEncode(OptionsManager::get('podcast_url'));
         $siteName = PodcastHelper::xmlEncode(get_bloginfo('name'));
         $siteDescription = PodcastHelper::xmlEncode(get_bloginfo('description'));
         $siteUrl = PodcastHelper::xmlEncode(site_url());
@@ -205,7 +208,7 @@ final class PodcastFeed
     {
         $fileUrl = PodcastHelper::getFileUrl($mediaName, $mediaType);
         $title = PodcastHelper::xmlEncode(stripslashes($sermon->title));
-        $link = sb_display_url() . sb_query_char() . 'sermon_id=' . $sermon->id;
+        $link = PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . 'sermon_id=' . $sermon->id;
         $author = PodcastHelper::xmlEncode(stripslashes($sermon->preacher));
         $service = PodcastHelper::xmlEncode(stripslashes($sermon->service));
         $pubDate = PodcastHelper::formatIsoDate($sermon);

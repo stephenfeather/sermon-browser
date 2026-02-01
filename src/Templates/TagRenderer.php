@@ -15,6 +15,14 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Templates;
 
+use SermonBrowser\Config\OptionsManager;
+use SermonBrowser\Frontend\BibleText;
+use SermonBrowser\Frontend\FileDisplay;
+use SermonBrowser\Frontend\FilterRenderer;
+use SermonBrowser\Frontend\Pagination;
+use SermonBrowser\Frontend\TemplateHelper;
+use SermonBrowser\Frontend\UrlBuilder;
+use SermonBrowser\Frontend\Widgets\PopularWidget;
 use stdClass;
 
 /**
@@ -123,7 +131,7 @@ class TagRenderer
         $title = esc_html($title);
 
         if ($context === 'search') {
-            $url = sb_build_url(['sermon_id' => $sermon->id], true);
+            $url = UrlBuilder::build(['sermon_id' => $sermon->id], true);
             return '<a href="' . esc_url($url) . '">' . $title . '</a>';
         }
 
@@ -167,7 +175,7 @@ class TagRenderer
         }
 
         $name = stripslashes((string) $sermon->preacher);
-        $url = sb_build_url(['preacher' => $sermon->pid], false);
+        $url = UrlBuilder::build(['preacher' => $sermon->pid], false);
 
         return '<a href="' . esc_url($url) . '">' . esc_html($name) . '</a>';
     }
@@ -208,7 +216,7 @@ class TagRenderer
             return '';
         }
 
-        $uploadDir = sb_get_option('upload_dir');
+        $uploadDir = OptionsManager::get('upload_dir');
         $siteUrl = trailingslashit(site_url());
         $imageSrc = $siteUrl . $uploadDir . 'images/' . $sermon->image;
         $alt = stripslashes((string) $sermon->preacher);
@@ -234,7 +242,7 @@ class TagRenderer
         }
 
         $name = stripslashes((string) $sermon->series);
-        $url = sb_build_url(['series' => $sermon->ssid], false);
+        $url = UrlBuilder::build(['series' => $sermon->ssid], false);
 
         return '<a href="' . esc_url($url) . '">' . esc_html($name) . '</a>';
     }
@@ -253,7 +261,7 @@ class TagRenderer
         }
 
         $name = stripslashes((string) $sermon->service);
-        $url = sb_build_url(['service' => $sermon->sid], false);
+        $url = UrlBuilder::build(['service' => $sermon->sid], false);
 
         return '<a href="' . esc_url($url) . '">' . esc_html($name) . '</a>';
     }
@@ -275,7 +283,7 @@ class TagRenderer
             return '';
         }
 
-        return sb_formatted_date($sermon);
+        return TemplateHelper::formattedDate($sermon);
     }
 
     /**
@@ -298,7 +306,7 @@ class TagRenderer
             return '';
         }
 
-        return sb_get_books($start[0], $end[0]);
+        return BibleText::getBooks($start[0], $end[0]);
     }
 
     // =========================================================================
@@ -317,7 +325,7 @@ class TagRenderer
     public function renderNextPage(mixed $_data, string $_context): string
     {
         ob_start();
-        sb_print_next_page_link();
+        Pagination::printNextPageLink();
         return ob_get_clean() ?: '';
     }
 
@@ -331,7 +339,7 @@ class TagRenderer
     public function renderPreviousPage(mixed $_data, string $_context): string
     {
         ob_start();
-        sb_print_prev_page_link();
+        Pagination::printPrevPageLink();
         return ob_get_clean() ?: '';
     }
 
@@ -348,7 +356,7 @@ class TagRenderer
      */
     public function renderPodcast(mixed $_data, string $_context): string
     {
-        return sb_get_option('podcast_url');
+        return OptionsManager::get('podcast_url');
     }
 
     /**
@@ -360,7 +368,7 @@ class TagRenderer
      */
     public function renderPodcastForSearch(mixed $_data, string $_context): string
     {
-        return sb_podcast_url();
+        return UrlBuilder::podcastUrl();
     }
 
     /**
@@ -372,7 +380,7 @@ class TagRenderer
      */
     public function renderItunesPodcast(mixed $_data, string $_context): string
     {
-        $url = sb_get_option('podcast_url');
+        $url = OptionsManager::get('podcast_url');
         return str_replace('http://', 'itpc://', $url);
     }
 
@@ -385,7 +393,7 @@ class TagRenderer
      */
     public function renderItunesPodcastForSearch(mixed $_data, string $_context): string
     {
-        $url = sb_podcast_url();
+        $url = UrlBuilder::podcastUrl();
         return str_replace('http://', 'itpc://', $url);
     }
 
@@ -451,7 +459,7 @@ class TagRenderer
         $id = $context === 'single' && isset($sermon->id) ? $sermon->id : ($sermon->id ?? 0);
 
         ob_start();
-        sb_edit_link($id);
+        TemplateHelper::editLink($id);
         return ob_get_clean() ?: '';
     }
 
@@ -477,7 +485,7 @@ class TagRenderer
         $output = [];
         foreach ($tags as $tag) {
             $tag = stripslashes((string) $tag);
-            $url = sb_build_url(['stag' => $tag], false);
+            $url = UrlBuilder::build(['stag' => $tag], false);
             $output[] = '<a href="' . esc_url($url) . '">' . esc_html($tag) . '</a>';
         }
 
@@ -502,7 +510,7 @@ class TagRenderer
         }
 
         ob_start();
-        sb_print_next_sermon_link($sermon);
+        TemplateHelper::printNextSermonLink($sermon);
         return ob_get_clean() ?: '';
     }
 
@@ -520,7 +528,7 @@ class TagRenderer
         }
 
         ob_start();
-        sb_print_prev_sermon_link($sermon);
+        TemplateHelper::printPrevSermonLink($sermon);
         return ob_get_clean() ?: '';
     }
 
@@ -538,7 +546,7 @@ class TagRenderer
         }
 
         ob_start();
-        sb_print_sameday_sermon_link($sermon);
+        TemplateHelper::printSamedaySermonLink($sermon);
         return ob_get_clean() ?: '';
     }
 
@@ -569,7 +577,7 @@ class TagRenderer
         $output = '';
         for ($i = 0; $i < count($start); $i++) {
             if (isset($start[$i]) && isset($end[$i])) {
-                $output .= sb_add_bible_text($start[$i], $end[$i], $version);
+                $output .= BibleText::addBibleText($start[$i], $end[$i], $version);
             }
         }
 
@@ -731,7 +739,7 @@ class TagRenderer
         ob_start();
         for ($i = 0; $i < count($start); $i++) {
             if (isset($start[$i]) && isset($end[$i])) {
-                sb_print_bible_passage($start[$i], $end[$i]);
+                BibleText::printBiblePassage($start[$i], $end[$i]);
             }
         }
         return ob_get_clean() ?: '';
@@ -855,7 +863,7 @@ class TagRenderer
         }
 
         ob_start();
-        sb_print_filters($atts);
+        FilterRenderer::render($atts);
         return ob_get_clean() ?: '';
     }
 
@@ -869,7 +877,7 @@ class TagRenderer
     public function renderMostPopular(mixed $_data, string $_context): string
     {
         ob_start();
-        sb_print_most_popular();
+        PopularWidget::printMostPopular();
         return ob_get_clean() ?: '';
     }
 
@@ -883,7 +891,7 @@ class TagRenderer
     public function renderTagCloud(mixed $_data, string $_context): string
     {
         ob_start();
-        sb_print_tag_clouds();
+        TemplateHelper::printTagClouds();
         return ob_get_clean() ?: '';
     }
 
@@ -917,7 +925,7 @@ class TagRenderer
         }
 
         ob_start();
-        sb_print_url((string) $mediaName);
+        FileDisplay::printUrl((string) $mediaName);
         return ob_get_clean() ?: '';
     }
 
@@ -935,7 +943,7 @@ class TagRenderer
         }
 
         ob_start();
-        sb_print_url_link((string) $mediaName);
+        FileDisplay::printUrlLink((string) $mediaName);
         return ob_get_clean() ?: '';
     }
 
@@ -969,6 +977,6 @@ class TagRenderer
      */
     public function renderPassage(array $start, array $end): string
     {
-        return sb_get_books($start, $end);
+        return BibleText::getBooks($start, $end);
     }
 }

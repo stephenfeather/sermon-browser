@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Constants;
+use SermonBrowser\Frontend\PageResolver;
 
 /**
  * File display utilities for Sermon Browser frontend.
@@ -55,11 +57,11 @@ final class FileDisplay
 
         // Build the display URL based on file type
         if (str_starts_with($url, Constants::HTTP) || str_starts_with($url, Constants::HTTPS)) {
-            $displayUrl = sb_display_url() . sb_query_char(false) . 'show&url=' . rawurlencode($url);
+            $displayUrl = PageResolver::getDisplayUrl() . PageResolver::getQueryChar(false) . 'show&url=' . rawurlencode($url);
         } elseif (strtolower($ext) === 'mp3') {
-            $displayUrl = sb_display_url() . sb_query_char(false) . 'show&file_name=' . rawurlencode($url);
+            $displayUrl = PageResolver::getDisplayUrl() . PageResolver::getQueryChar(false) . 'show&file_name=' . rawurlencode($url);
         } else {
-            $displayUrl = sb_display_url() . sb_query_char(false) . 'download&file_name=' . rawurlencode($url);
+            $displayUrl = PageResolver::getDisplayUrl() . PageResolver::getQueryChar(false) . 'download&file_name=' . rawurlencode($url);
         }
 
         // Determine the icon to use
@@ -74,7 +76,7 @@ final class FileDisplay
 
         // Handle MP3 shortcode
         if (strtolower($ext) === 'mp3') {
-            $mp3Shortcode = sb_get_option(Constants::OPT_MP3_SHORTCODE);
+            $mp3Shortcode = OptionsManager::get(Constants::OPT_MP3_SHORTCODE);
             if (do_shortcode($mp3Shortcode) !== $mp3Shortcode) {
                 echo do_shortcode(str_ireplace('%SERMONURL%', $displayUrl, $mp3Shortcode));
                 return;
@@ -117,7 +119,7 @@ final class FileDisplay
                 $param = 'file_name';
             }
             $encodedUrl = rawurlencode($url);
-            echo ' <a href="' . esc_url(sb_display_url() . sb_query_char() . 'download&' . $param . '=' . $encodedUrl)
+            echo ' <a href="' . esc_url(PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . 'download&' . $param . '=' . $encodedUrl)
                 . '">' . esc_html__('Download', 'sermon-browser') . '</a>';
         }
         echo '</div>';
@@ -168,7 +170,7 @@ final class FileDisplay
 
             if (str_starts_with($file, 'http://') || str_starts_with($file, 'https://')) {
                 if ($stats) {
-                    return sb_display_url() . sb_query_char() . 'show&amp;url=' . rawurlencode($file);
+                    return PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . 'show&amp;url=' . rawurlencode($file);
                 }
                 return $file;
             }
@@ -176,10 +178,10 @@ final class FileDisplay
             // Local file
             if (!$stats) {
                 return trailingslashit(site_url())
-                    . sb_get_option(Constants::OPT_UPLOAD_DIR)
+                    . OptionsManager::get(Constants::OPT_UPLOAD_DIR)
                     . rawurlencode($file);
             }
-            return sb_display_url() . sb_query_char() . 'show&amp;file_name=' . rawurlencode($file);
+            return PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . 'show&amp;file_name=' . rawurlencode($file);
         }
 
         return null;

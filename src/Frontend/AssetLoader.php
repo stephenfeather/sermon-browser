@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Config\OptionsManager;
+
 /**
  * Asset Loader for Sermon Browser frontend.
  *
@@ -31,7 +33,7 @@ final class AssetLoader
         }
 
         echo "<!-- Added by SermonBrowser (version " . SB_CURRENT_VERSION . ") - http://www.sermonbrowser.com/ -->\r";
-        echo '<link rel="alternate" type="application/rss+xml" title="' . __('Sermon podcast', 'sermon-browser') . '" href="' . sb_get_option('podcast_url') . "\" />\r";
+        echo '<link rel="alternate" type="application/rss+xml" title="' . __('Sermon podcast', 'sermon-browser') . '" href="' . OptionsManager::get('podcast_url') . "\" />\r";
 
         wp_enqueue_style('sb_style');
 
@@ -54,7 +56,7 @@ final class AssetLoader
     {
         global $post;
 
-        if (sb_get_option('filter_type') === 'dropdown') {
+        if (OptionsManager::get('filter_type') === 'dropdown') {
             wp_enqueue_script('jquery-ui-datepicker');
             wp_enqueue_style('jquery-ui-css', 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css', [], '1.13.2');
         }
@@ -69,7 +71,7 @@ final class AssetLoader
             || isset($_REQUEST['stag']);
 
         if ($hasFilterParams) {
-            echo '<link rel="alternate" type="application/rss+xml" title="' . __('Custom sermon podcast', 'sermon-browser') . '" href="' . sb_podcast_url() . "\" />\r";
+            echo '<link rel="alternate" type="application/rss+xml" title="' . __('Custom sermon podcast', 'sermon-browser') . '" href="' . UrlBuilder::podcastUrl() . "\" />\r";
         }
 
         wp_enqueue_script('jquery');

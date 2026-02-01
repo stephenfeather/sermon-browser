@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Ajax;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Facades\File;
 
 /**
@@ -43,7 +44,7 @@ class FileAjax extends AjaxHandler
      */
     private function getUploadDir(): string
     {
-        return sb_get_option('upload_dir');
+        return OptionsManager::get('upload_dir');
     }
 
     /**

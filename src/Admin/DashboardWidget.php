@@ -18,6 +18,7 @@ use SermonBrowser\Facades\Preacher;
 use SermonBrowser\Facades\Sermon;
 use SermonBrowser\Facades\Series;
 use SermonBrowser\Facades\Tag;
+use SermonBrowser\Frontend\PageResolver;
 
 /**
  * Class DashboardWidget
@@ -184,8 +185,9 @@ final class DashboardWidget
 
             $mostPopular = $stats['mostPopular'];
             if ($mostPopular) {
-                $mostPopularTitle = '<a href="' . sb_display_url() . sb_query_char(true) . 'sermon_id='
-                    . $mostPopular->sermon_id . '">' . stripslashes($mostPopular->title) . '</a>';
+                $sermonUrl = PageResolver::getDisplayUrl() . PageResolver::getQueryChar(true)
+                    . 'sermon_id=' . $mostPopular->sermon_id;
+                $mostPopularTitle = '<a href="' . $sermonUrl . '">' . stripslashes($mostPopular->title) . '</a>';
                 $output .= ". " . sprintf(
                     __('The most popular sermon is %s, which has been downloaded %s times'),
                     $mostPopularTitle,

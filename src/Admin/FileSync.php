@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Facades\File;
 
 /**
@@ -34,7 +35,7 @@ class FileSync
     {
         File::deleteEmptyUnlinked();
         $fileNames = File::findAllFileNames();
-        $dir = SB_ABSPATH . sb_get_option('upload_dir');
+        $dir = SB_ABSPATH . OptionsManager::get('upload_dir');
 
         foreach ($fileNames as $fileName) {
             if (!file_exists($dir . $fileName)) {

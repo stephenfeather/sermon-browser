@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Ajax;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Facades\File;
 
 /**
@@ -148,7 +149,7 @@ class FilePaginationAjax extends AjaxHandler
         $perPage = $this->getPostInt('per_page', 0);
 
         if ($perPage <= 0) {
-            $perPage = (int) sb_get_option('sermons_per_page', 10);
+            $perPage = (int) (OptionsManager::get('sermons_per_page') ?: 10);
         }
 
         return $perPage;
@@ -163,7 +164,7 @@ class FilePaginationAjax extends AjaxHandler
      */
     private function formatFiles(array $files, bool $isUnlinked): array
     {
-        $filetypes = sb_get_option('filetypes');
+        $filetypes = OptionsManager::get('filetypes');
 
         return array_map(function ($file) use ($isUnlinked, $filetypes) {
             $extension = pathinfo($file->name, PATHINFO_EXTENSION);

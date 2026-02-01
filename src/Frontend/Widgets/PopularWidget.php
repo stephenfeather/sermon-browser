@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend\Widgets;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Facades\File;
+use SermonBrowser\Frontend\UrlBuilder;
 
 /**
  * Popular Widget display functions.
@@ -31,7 +33,7 @@ final class PopularWidget
         $beforeTitle = $args['before_title'] ?? '';
         $afterTitle = $args['after_title'] ?? '';
         $suffix = $args['suffix'] ?? '_w';
-        $options = $args['options'] ?? sb_get_option('popular_widget_options');
+        $options = $args['options'] ?? OptionsManager::get('popular_widget_options');
 
         echo $beforeWidget;
         if ($options['title'] != '') {
@@ -85,7 +87,7 @@ final class PopularWidget
 
         $output['sermons'] = '<div class="popular-sermons' . $suffix . '"><ul>';
         foreach ($sermons as $sermon) {
-            $output['sermons'] .= '<li><a href="' . sb_build_url(['sermon_id' => $sermon->id], true) . '">';
+            $output['sermons'] .= '<li><a href="' . UrlBuilder::build(['sermon_id' => $sermon->id], true) . '">';
             $output['sermons'] .= $sermon->title . '</a></li>';
         }
         $output['sermons'] .= '</ul></div>';
@@ -114,7 +116,7 @@ final class PopularWidget
         if ($seriesList) {
             $output['series'] = '<div class="popular-series' . $suffix . '"><ul>';
             foreach ($seriesList as $series) {
-                $output['series'] .= '<li><a href="' . sb_build_url(['series' => $series->id], true) . '">';
+                $output['series'] .= '<li><a href="' . UrlBuilder::build(['series' => $series->id], true) . '">';
                 $output['series'] .= $series->name . '</a></li>';
             }
             $output['series'] .= '</ul></div>';
@@ -147,7 +149,7 @@ final class PopularWidget
 
         $output['preachers'] = '<div class="popular-preachers' . $suffix . '"><ul>';
         foreach ($preachersList as $preacher) {
-            $output['preachers'] .= '<li><a href="' . sb_build_url(['preacher' => $preacher->id], true) . '">';
+            $output['preachers'] .= '<li><a href="' . UrlBuilder::build(['preacher' => $preacher->id], true) . '">';
             $output['preachers'] .= $preacher->name . '</a></li>';
         }
         $output['preachers'] .= '</ul></div>';

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Config\OptionsManager;
+
 /**
  * Handles CSS style output for Sermon Browser.
  *
@@ -25,7 +27,7 @@ class StyleOutput
      */
     public static function getStyleContent(): string
     {
-        return (string) sb_get_option('css_style');
+        return (string) OptionsManager::get('css_style');
     }
 
     /**
@@ -35,7 +37,7 @@ class StyleOutput
      */
     public static function getLastModified(): int
     {
-        return (int) sb_get_option('style_date_modified');
+        return (int) OptionsManager::get('style_date_modified');
     }
 
     /**

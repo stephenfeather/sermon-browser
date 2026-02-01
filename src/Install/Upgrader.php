@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Install;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Constants;
 
 /**
@@ -66,7 +67,7 @@ class Upgrader
         foreach ($standardOptions as $option) {
             $old = get_option($option['old_option']);
             if ($old) {
-                sb_update_option($option['new_option'], $old);
+                OptionsManager::update($option['new_option'], $old);
                 delete_option($option['old_option']);
             }
         }
@@ -77,7 +78,7 @@ class Upgrader
             $old = get_option($option['old_option']);
             if ($old) {
                 $decoded = stripslashes(base64_decode($old));
-                sb_update_option($option['new_option'], $decoded);
+                OptionsManager::update($option['new_option'], $decoded);
                 delete_option($option['old_option']);
             }
         }
@@ -101,10 +102,10 @@ class Upgrader
         // $oldVersion reserved for future version-specific upgrade logic
         unset($oldVersion);
 
-        sb_update_option('code_version', $newVersion);
+        OptionsManager::update('code_version', $newVersion);
 
-        if (sb_get_option('filter_type') === '') {
-            sb_update_option('filter_type', 'dropdown');
+        if (OptionsManager::get('filter_type') === '') {
+            OptionsManager::update('filter_type', 'dropdown');
         }
 
         // Clear template cache so new template engine takes effect.
@@ -370,14 +371,14 @@ class Upgrader
             }
         }
 
-        sb_update_option('import_prompt', true);
-        sb_update_option('import_title', false);
-        sb_update_option('import_artist', false);
-        sb_update_option('import_album', false);
-        sb_update_option('import_comments', false);
-        sb_update_option('import_filename', 'none');
-        sb_update_option('hide_no_attachments', false);
-        sb_update_option('db_version', '1.6');
+        OptionsManager::update('import_prompt', true);
+        OptionsManager::update('import_title', false);
+        OptionsManager::update('import_artist', false);
+        OptionsManager::update('import_album', false);
+        OptionsManager::update('import_comments', false);
+        OptionsManager::update('import_filename', 'none');
+        OptionsManager::update('hide_no_attachments', false);
+        OptionsManager::update('db_version', '1.6');
     }
 
     /**
@@ -387,7 +388,7 @@ class Upgrader
      */
     private static function upgradeFrom16(): void
     {
-        sb_update_option('mp3_shortcode', '[audio mp3="%SERMONURL%"]');
-        sb_update_option('db_version', '1.7');
+        OptionsManager::update('mp3_shortcode', '[audio mp3="%SERMONURL%"]');
+        OptionsManager::update('db_version', '1.7');
     }
 }

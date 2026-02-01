@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Podcast;
 
+use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Constants;
 use SermonBrowser\Facades\File;
 
@@ -70,7 +71,7 @@ final class PodcastHelper
             return '';
         }
 
-        $filepath = SB_ABSPATH . sb_get_option('upload_dir') . $mediaName;
+        $filepath = SB_ABSPATH . OptionsManager::get('upload_dir') . $mediaName;
         $size = @filesize($filepath);
         return 'length="' . ($size ?: 0) . '"';
     }
@@ -100,7 +101,7 @@ final class PodcastHelper
         }
 
         $getID3 = new \getID3();
-        $filepath = SB_ABSPATH . sb_get_option('upload_dir') . $mediaName;
+        $filepath = SB_ABSPATH . OptionsManager::get('upload_dir') . $mediaName;
         $mediaFileInfo = $getID3->analyze($filepath);
         $duration = $mediaFileInfo['playtime_string'] ?? '';
 
@@ -159,7 +160,7 @@ final class PodcastHelper
         } else {
             if (!$stats) {
                 $mediaName = trailingslashit(site_url())
-                    . ltrim(sb_get_option('upload_dir'), '/')
+                    . ltrim(OptionsManager::get('upload_dir'), '/')
                     . rawurlencode($mediaName);
             } else {
                 $mediaName = sb_display_url() . sb_query_char() . 'show&amp;file_name=' . rawurlencode($mediaName);
