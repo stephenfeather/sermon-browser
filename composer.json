@@ -21,7 +21,6 @@
             "SermonBrowser\\": "src/"
         },
         "files": [
-            "sb-includes/functions-testable.php",
             "src/bootstrap.php"
         ]
     },

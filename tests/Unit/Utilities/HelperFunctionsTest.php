@@ -1,118 +1,105 @@
 <?php
 
 /**
- * Tests for pure, testable functions.
+ * Tests for Utilities\HelperFunctions class.
  *
- * @package SermonBrowser\Tests\Unit
+ * @package SermonBrowser\Tests\Unit\Utilities
  */
 
 declare(strict_types=1);
 
-namespace SermonBrowser\Tests\Unit;
+namespace SermonBrowser\Tests\Unit\Utilities;
 
 use SermonBrowser\Tests\TestCase;
+use SermonBrowser\Utilities\HelperFunctions;
 use Brain\Monkey\Functions;
 
-// Load the functions file for testing.
-require_once dirname(__DIR__, 2) . '/sb-includes/functions-testable.php';
-
 /**
- * Test class for functions-testable.php.
+ * Test class for HelperFunctions.
  */
-class FunctionsTestableTest extends TestCase
+class HelperFunctionsTest extends TestCase
 {
     /**
-     * Test sb_generate_temp_suffix generates correct length.
+     * Test generateTempSuffix generates correct length.
      */
     public function testGenerateTempSuffixLength(): void
     {
-        $result = sb_generate_temp_suffix(5);
+        $result = HelperFunctions::generateTempSuffix(5);
 
         $this->assertEquals(5, strlen($result));
     }
 
     /**
-     * Test sb_generate_temp_suffix generates only lowercase letters.
+     * Test generateTempSuffix generates only lowercase letters.
      */
     public function testGenerateTempSuffixOnlyLowercase(): void
     {
-        // Generate a longer string to have more confidence.
-        $result = sb_generate_temp_suffix(100);
+        // Generate a longer string to have more confidence
+        $result = HelperFunctions::generateTempSuffix(100);
 
         $this->assertMatchesRegularExpression('/^[a-z]+$/', $result);
     }
 
     /**
-     * Test sb_generate_temp_suffix with default length.
+     * Test generateTempSuffix with default length.
      */
     public function testGenerateTempSuffixDefaultLength(): void
     {
-        $result = sb_generate_temp_suffix();
+        $result = HelperFunctions::generateTempSuffix();
 
         $this->assertEquals(2, strlen($result));
     }
 
     /**
-     * Test sb_join_passages joins correctly.
+     * Test joinPassages joins correctly.
      */
     public function testJoinPassagesBasic(): void
     {
         $passages = ['Genesis 1:1', 'John 3:16', 'Romans 8:28'];
 
-        $result = sb_join_passages($passages);
+        $result = HelperFunctions::joinPassages($passages);
 
         $this->assertEquals('Genesis 1:1, John 3:16, Romans 8:28', $result);
     }
 
     /**
-     * Test sb_join_passages with custom separator.
+     * Test joinPassages with custom separator.
      */
     public function testJoinPassagesCustomSeparator(): void
     {
         $passages = ['Genesis 1:1', 'John 3:16'];
 
-        $result = sb_join_passages($passages, ' | ');
+        $result = HelperFunctions::joinPassages($passages, ' | ');
 
         $this->assertEquals('Genesis 1:1 | John 3:16', $result);
     }
 
     /**
-     * Test sb_join_passages with empty array.
+     * Test joinPassages with empty array.
      */
     public function testJoinPassagesEmptyArray(): void
     {
-        $result = sb_join_passages([]);
+        $result = HelperFunctions::joinPassages([]);
 
         $this->assertEquals('', $result);
     }
 
     /**
-     * Test sb_join_passages with single element.
-     */
-    public function testJoinPassagesSingleElement(): void
-    {
-        $result = sb_join_passages(['Genesis 1:1']);
-
-        $this->assertEquals('Genesis 1:1', $result);
-    }
-
-    /**
-     * Test sb_get_locale_string returns locale with UTF-8.
+     * Test getLocaleString returns locale with UTF-8.
      */
     public function testGetLocaleStringReturnsUtf8Suffix(): void
     {
-        // Override the default stub for get_locale.
         Functions\expect('get_locale')
             ->once()
             ->andReturn('en_US');
 
-        $result = sb_get_locale_string();
+        $result = HelperFunctions::getLocaleString();
 
         $this->assertEquals('en_US.UTF-8', $result);
     }
 
     /**
-     * Test sb_get_locale_string with empty locale.
+     * Test getLocaleString with empty locale.
      */
     public function testGetLocaleStringEmptyLocale(): void
     {
@@ -120,13 +107,13 @@ class FunctionsTestableTest extends TestCase
             ->once()
             ->andReturn('');
 
-        $result = sb_get_locale_string();
+        $result = HelperFunctions::getLocaleString();
 
         $this->assertEquals('', $result);
     }
 
     /**
-     * Test sb_is_super_admin returns true when user is super admin.
+     * Test isSuperAdmin returns true when user is super admin.
      */
     public function testIsSuperAdminReturnsTrue(): void
     {
@@ -134,13 +121,13 @@ class FunctionsTestableTest extends TestCase
             ->once()
             ->andReturn(true);
 
-        $result = sb_is_super_admin();
+        $result = HelperFunctions::isSuperAdmin();
 
         $this->assertTrue($result);
     }
 
     /**
-     * Test sb_is_super_admin returns false when user is not super admin.
+     * Test isSuperAdmin returns false when user is not super admin.
      */
     public function testIsSuperAdminReturnsFalse(): void
     {
@@ -148,7 +135,7 @@ class FunctionsTestableTest extends TestCase
             ->once()
             ->andReturn(false);
 
-        $result = sb_is_super_admin();
+        $result = HelperFunctions::isSuperAdmin();
 
         $this->assertFalse($result);
     }

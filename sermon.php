@@ -58,6 +58,45 @@ use SermonBrowser\Facades\File;
 use SermonBrowser\Facades\Tag;
 use SermonBrowser\Admin\Ajax\AjaxRegistry;
 use SermonBrowser\Templates\TemplateEngine;
+use SermonBrowser\Utilities\HelperFunctions;
+use SermonBrowser\Ajax\LegacyAjaxHandler;
+use SermonBrowser\Frontend\StyleOutput;
+use SermonBrowser\Podcast\PodcastFeed;
+use SermonBrowser\Podcast\PodcastHelper;
+use SermonBrowser\Install\Upgrader;
+use SermonBrowser\Install\Installer;
+use SermonBrowser\Install\DefaultTemplates;
+// Frontend classes
+use SermonBrowser\Frontend\Widgets\PopularWidget;
+use SermonBrowser\Frontend\Widgets\SermonWidget;
+use SermonBrowser\Frontend\Widgets\TagCloudWidget;
+use SermonBrowser\Frontend\BibleText;
+use SermonBrowser\Frontend\TemplateHelper;
+use SermonBrowser\Frontend\UrlBuilder;
+use SermonBrowser\Frontend\AssetLoader;
+use SermonBrowser\Frontend\FileDisplay;
+use SermonBrowser\Frontend\Pagination;
+use SermonBrowser\Frontend\PageTitle;
+use SermonBrowser\Frontend\FilterRenderer;
+// Admin classes
+use SermonBrowser\Admin\Pages\FilesPage;
+use SermonBrowser\Admin\Pages\HelpPage;
+use SermonBrowser\Admin\Pages\OptionsPage;
+use SermonBrowser\Admin\Pages\PreachersPage;
+use SermonBrowser\Admin\Pages\SeriesServicesPage;
+use SermonBrowser\Admin\Pages\SermonEditorPage;
+use SermonBrowser\Admin\Pages\SermonsPage;
+use SermonBrowser\Admin\Pages\TemplatesPage;
+use SermonBrowser\Admin\Pages\UninstallPage;
+use SermonBrowser\Admin\FileSync;
+use SermonBrowser\Admin\FormHelpers;
+use SermonBrowser\Admin\HelpTabs;
+use SermonBrowser\Admin\TagCleanup;
+use SermonBrowser\Admin\UploadHelper;
+use SermonBrowser\Admin\AdminAssets;
+use SermonBrowser\Admin\AdminNotices;
+use SermonBrowser\Admin\DashboardWidget;
+use SermonBrowser\Admin\AdminBarMenu;
 
 /**
 * Initialisation
@@ -73,8 +112,6 @@ sb_define_constants();
 // Load Composer autoloader for modern PSR-4 classes.
 require_once __DIR__ . '/vendor/autoload.php';
 
-// Load testable helper functions (Phase 1 modernization).
-require_once SB_INCLUDES_DIR . '/functions-testable.php';
 add_action('plugins_loaded', 'sb_hijack');
 add_action('init', 'sb_sermon_init');
 add_action('widgets_init', 'sb_widget_sermon_init');
@@ -149,10 +186,10 @@ function sb_hijack()
     wp_timezone_override_offset();
 
     if (isset($_POST['sermon']) && $_POST['sermon'] == 1) {
-        require SB_INCLUDES_DIR . '/ajax.php';
+        LegacyAjaxHandler::handle();
     }
     if (stripos($_SERVER['REQUEST_URI'], 'sb-style.css') !== false || isset($_GET['sb-style'])) {
-        require SB_INCLUDES_DIR . '/style.php';
+        StyleOutput::output();
     }
 
     //Forces sermon download of local file
@@ -260,7 +297,7 @@ function sb_sermon_init()
 
     //Display the podcast if that's what's requested
     if (isset($_GET['podcast'])) {
-        require SB_INCLUDES_DIR . '/podcast.php';
+        PodcastFeed::render();
     }
 
     // Register custom CSS and javascript files
@@ -305,16 +342,13 @@ function sb_sermon_init()
             $db_version = sb_get_option('db_version');
         }
         if ($db_version && $db_version != SB_DATABASE_VERSION) {
-            require_once SB_INCLUDES_DIR . '/upgrade.php';
-            sb_database_upgrade($db_version);
+            Upgrader::databaseUpgrade($db_version);
         } elseif (!$db_version) {
-            require SB_INCLUDES_DIR . '/sb-install.php';
-            sb_install();
+            Installer::run();
         }
         $sb_version = sb_get_option('code_version');
         if ($sb_version != SB_CURRENT_VERSION) {
-            require_once SB_INCLUDES_DIR . '/upgrade.php';
-            sb_version_upgrade($sb_version, SB_CURRENT_VERSION);
+            Upgrader::versionUpgrade($sb_version, SB_CURRENT_VERSION);
         }
 
         // Phase 6: Run template migration for existing installs upgrading to 0.6.0+.
@@ -332,7 +366,6 @@ function sb_sermon_init()
 
     // Check to see what functions are required, and only load what is needed
     if (!is_admin()) {
-        require_once SB_INCLUDES_DIR . '/frontend.php';
         add_action('wp_head', 'sb_add_headers', 0);
         add_action('wp_head', 'wp_print_styles', 9);
         add_action('admin_bar_menu', 'sb_admin_bar_menu', 45);
@@ -341,7 +374,6 @@ function sb_sermon_init()
             add_action('wp_footer', 'sb_footer_stats');
         }
     } else {
-        require SB_INCLUDES_DIR . '/admin.php';
         add_action('admin_menu', 'sb_add_pages');
         add_filter('dashboard_glance_items', 'sb_dashboard_glance');
         add_action('admin_enqueue_scripts', 'sb_add_admin_headers');
@@ -694,15 +726,10 @@ function sb_shortcode($atts, $content = null)
  */
 function sb_widget_sermon_init()
 {
-    // Include frontend.php for legacy widget functions used by WP_Widget classes
-    require_once SB_INCLUDES_DIR . '/frontend.php';
-    // Include widget classes
-    require_once SB_INCLUDES_DIR . '/widget.php';
-
-    // Register modern WP_Widget classes
-    register_widget('SB_Sermons_Widget');
-    register_widget('SB_Tag_Cloud_Widget');
-    register_widget('SB_Popular_Widget');
+    // Register modern WP_Widget classes (PSR-4 namespaced)
+    register_widget(\SermonBrowser\Widgets\SermonsWidget::class);
+    register_widget(\SermonBrowser\Widgets\TagCloudWidget::class);
+    register_widget(\SermonBrowser\Widgets\PopularWidget::class);
 }
 
 /**
@@ -778,7 +805,6 @@ add_action('admin_init', 'sb_migrate_widget_settings');
 */
 function sb_widget_sermon_wrapper($args, $widget_args = 1)
 {
-    require_once SB_INCLUDES_DIR . '/frontend.php';
     sb_widget_sermon($args, $widget_args);
 }
 
@@ -790,7 +816,6 @@ function sb_widget_sermon_wrapper($args, $widget_args = 1)
 */
 function sb_widget_tag_cloud_wrapper($args)
 {
-    require_once SB_INCLUDES_DIR . '/frontend.php';
     sb_widget_tag_cloud($args);
 }
 
@@ -802,7 +827,6 @@ function sb_widget_tag_cloud_wrapper($args)
 */
 function sb_widget_popular_wrapper($args)
 {
-    require_once SB_INCLUDES_DIR . '/frontend.php';
     sb_widget_popular($args);
 }
 
@@ -915,7 +939,6 @@ function sb_define_constants()
     }
     define('SB_PLUGIN_DIR', sb_sanitise_path(defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : ABSPATH . 'wp-content') . '/plugins');
     define('SB_WP_CONTENT_DIR', sb_sanitise_path(WP_CONTENT_DIR));
-    define('SB_INCLUDES_DIR', SB_PLUGIN_DIR . '/sermon-browser/sb-includes');
     define('SB_ABSPATH', sb_sanitise_path(ABSPATH));
 }
 
@@ -1135,4 +1158,998 @@ function sb_sanitise_path($path)
     $path = str_replace('\\', '/', $path);
     $path = preg_replace('|/+|', '/', $path);
     return $path;
+}
+
+/***************************************
+ ** Functions from functions-testable.php **
+ **************************************/
+
+/**
+ * Generate a random filename suffix for temporary files.
+ *
+ * @param int $length Number of random characters to generate.
+ * @return string Random lowercase letters.
+ */
+function sb_generate_temp_suffix(int $length = 2): string
+{
+    return HelperFunctions::generateTempSuffix($length);
+}
+
+/**
+ * Join an array of passages with a separator.
+ *
+ * @param array $passages Array of passage strings.
+ * @param string $separator Separator between passages.
+ * @return string Joined passages.
+ */
+function sb_join_passages(array $passages, string $separator = ', '): string
+{
+    return HelperFunctions::joinPassages($passages, $separator);
+}
+
+/**
+ * Get the locale string for setlocale().
+ *
+ * @return string Locale string with UTF-8 suffix, or empty if no locale.
+ */
+function sb_get_locale_string(): string
+{
+    return HelperFunctions::getLocaleString();
+}
+
+/**
+ * Check if current user has super admin privileges.
+ *
+ * @return bool True if user is super admin.
+ */
+function sb_is_super_admin(): bool
+{
+    return HelperFunctions::isSuperAdmin();
+}
+
+/***************************************
+ ** Functions from frontend.php       **
+ **************************************/
+
+/**
+ * Deprecated function - displays error message
+ *
+ * @deprecated Use sb_display_sermons() or the sermon browser widget instead
+ * @param array $options
+ */
+function display_sermons($_options = array())
+{
+    echo "This function is now deprecated. Use sb_display_sermons or the sermon browser widget, instead.";
+}
+
+/**
+ * Display sermons for template use.
+ *
+ * @param array $options Display options.
+ */
+function sb_display_sermons($options = array())
+{
+    SermonWidget::display((array) $options);
+}
+
+/**
+ * Display the sermon widget in sidebar.
+ *
+ * @param array     $args        Widget arguments.
+ * @param array|int $widget_args Widget instance arguments.
+ */
+function sb_widget_sermon($args, $widget_args = 1)
+{
+    SermonWidget::widget($args, $widget_args);
+}
+
+/**
+ * Display the tag cloud widget in sidebar.
+ *
+ * @param array $args Widget arguments.
+ */
+function sb_widget_tag_cloud($args)
+{
+    TagCloudWidget::widget($args);
+}
+
+/**
+ * Register admin bar menu.
+ */
+function sb_admin_bar_menu()
+{
+    AdminBarMenu::register();
+}
+
+/**
+ * Sorts an object by rank.
+ *
+ * @param object $a First object.
+ * @param object $b Second object.
+ * @return int Comparison result.
+ */
+function sb_sort_object($a, $b)
+{
+    if ($a->rank == $b->rank) {
+        return 0;
+    }
+    return ($a->rank < $b->rank) ? -1 : 1;
+}
+
+/**
+ * Display the most popular sermons widget in sidebar.
+ *
+ * @param array $args Widget arguments.
+ */
+function sb_widget_popular($args)
+{
+    PopularWidget::widget($args);
+}
+
+/**
+ * Print the most popular widget with default styling.
+ */
+function sb_print_most_popular()
+{
+    PopularWidget::printMostPopular();
+}
+
+/**
+ * Modify page title.
+ *
+ * @param string $title Current page title.
+ * @return string Modified title.
+ */
+function sb_page_title($title)
+{
+    return PageTitle::modify((string) $title);
+}
+
+/**
+ * Downloads external webpage. Used to add Bible passages to sermon page.
+ *
+ * @param string $page_url The URL to fetch.
+ * @param array|string $headers Optional headers.
+ * @return string|null The response body.
+ */
+function sb_download_page($page_url, $headers = array())
+{
+    return BibleText::downloadPage($page_url, $headers);
+}
+
+/**
+ * Returns human friendly Bible reference (e.g. John 3:1-16, not John 3:1-John 3:16).
+ *
+ * @param array $start Start reference with book, chapter, verse keys.
+ * @param array $end End reference with book, chapter, verse keys.
+ * @param bool $add_link Whether to add filter links to book names.
+ * @return string The formatted reference.
+ */
+function sb_tidy_reference($start, $end, $add_link = false)
+{
+    return BibleText::tidyReference($start, $end, $add_link);
+}
+
+/**
+ * Print unstyled bible passage.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @return void
+ */
+function sb_print_bible_passage($start, $end)
+{
+    BibleText::printBiblePassage($start, $end);
+}
+
+/**
+ * Returns human friendly Bible reference with link to filter.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @return string The formatted reference with links.
+ */
+function sb_get_books($start, $end)
+{
+    return BibleText::getBooks($start, $end);
+}
+
+/**
+ * Add Bible text to single sermon page.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @param string $version Bible version code.
+ * @return string The Bible text HTML.
+ */
+function sb_add_bible_text($start, $end, $version)
+{
+    return BibleText::addBibleText($start, $end, $version);
+}
+
+/**
+ * Returns ESV text.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @return string The ESV text HTML.
+ */
+function sb_add_esv_text($start, $end)
+{
+    return BibleText::addEsvText($start, $end);
+}
+
+/**
+ * Converts XML string to object.
+ *
+ * @param string $content The XML string.
+ * @return SimpleXMLElement The parsed XML object.
+ */
+function sb_get_xml($content)
+{
+    return BibleText::getXml($content);
+}
+
+/**
+ * Returns NET Bible text.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @return string The NET Bible text HTML.
+ */
+function sb_add_net_text($start, $end)
+{
+    return BibleText::addNetText($start, $end);
+}
+
+/**
+ * Returns Bible text using SermonBrowser's own API.
+ *
+ * @param array $start Start reference.
+ * @param array $end End reference.
+ * @param string $version Bible version code.
+ * @return string The Bible text HTML.
+ */
+function sb_add_other_bibles($start, $end, $version)
+{
+    return BibleText::addOtherBibles($start, $end, $version);
+}
+
+/**
+ * Adds edit sermon link if current user has edit rights.
+ *
+ * @param int $id Sermon ID.
+ */
+function sb_edit_link($id)
+{
+    TemplateHelper::editLink((int) $id);
+}
+
+/**
+ * Returns URL for search links.
+ *
+ * @param array $arr URL parameters.
+ * @param bool $clear Whether to clear existing parameters.
+ * @return string The built URL.
+ */
+function sb_build_url($arr, $clear = false)
+{
+    return UrlBuilder::build($arr, $clear);
+}
+
+/**
+ * Adds javascript and CSS where required.
+ */
+function sb_add_headers()
+{
+    AssetLoader::addHeaders();
+}
+
+/**
+ * Formats date into words.
+ *
+ * @param object $sermon Sermon object.
+ * @return string Formatted date.
+ */
+function sb_formatted_date($sermon)
+{
+    return TemplateHelper::formattedDate($sermon);
+}
+
+/**
+ * Returns podcast URL.
+ *
+ * @return string Podcast URL.
+ */
+function sb_podcast_url()
+{
+    return UrlBuilder::podcastUrl();
+}
+
+/**
+ * Prints sermon search URL.
+ *
+ * @param object $sermon Sermon object.
+ * @param bool $echo Whether to echo or return.
+ * @return string|void The URL if not echoed.
+ */
+function sb_print_sermon_link($sermon, $echo = true)
+{
+    $url = UrlBuilder::sermonLink($sermon);
+    if ($echo) {
+        echo $url;
+    } else {
+        return $url;
+    }
+}
+
+/**
+ * Prints preacher search URL.
+ *
+ * @param object $sermon Sermon object.
+ */
+function sb_print_preacher_link($sermon)
+{
+    echo UrlBuilder::preacherLink($sermon);
+}
+
+/**
+ * Prints series search URL.
+ *
+ * @param object $sermon Sermon object.
+ */
+function sb_print_series_link($sermon)
+{
+    echo UrlBuilder::seriesLink($sermon);
+}
+
+/**
+ * Prints service search URL.
+ *
+ * @param object $sermon Sermon object.
+ */
+function sb_print_service_link($sermon)
+{
+    echo UrlBuilder::serviceLink($sermon);
+}
+
+/**
+ * Prints bible book search URL.
+ *
+ * @param string $book_name Book name.
+ * @return string The book link.
+ */
+function sb_get_book_link($book_name)
+{
+    return UrlBuilder::bookLink($book_name);
+}
+
+/**
+ * Prints tag search URL.
+ *
+ * @param string $tag Tag name.
+ * @return string The tag link.
+ */
+function sb_get_tag_link($tag)
+{
+    return UrlBuilder::tagLink($tag);
+}
+
+/**
+ * Prints tags.
+ *
+ * @param array $tags Array of tags.
+ */
+function sb_print_tags($tags)
+{
+    TemplateHelper::printTags((array) $tags);
+}
+
+/**
+ * Prints tag cloud.
+ *
+ * @param int $minfont Minimum font size.
+ * @param int $maxfont Maximum font size.
+ */
+function sb_print_tag_clouds($minfont = 80, $maxfont = 150)
+{
+    TemplateHelper::printTagClouds((int) $minfont, (int) $maxfont);
+}
+
+/**
+ * Prints link to next page.
+ *
+ * @param int $limit Limit.
+ */
+function sb_print_next_page_link($limit = 0)
+{
+    Pagination::printNextPageLink((int) $limit);
+}
+
+/**
+ * Prints link to previous page.
+ *
+ * @param int $limit Limit.
+ */
+function sb_print_prev_page_link($limit = 0)
+{
+    Pagination::printPrevPageLink((int) $limit);
+}
+
+/**
+ * Print link to attached files.
+ *
+ * @param string $url File URL.
+ */
+function sb_print_url($url)
+{
+    FileDisplay::printUrl($url);
+}
+
+/**
+ * Print link to attached external URLs.
+ *
+ * @param string $url External URL.
+ */
+function sb_print_url_link($url)
+{
+    FileDisplay::printUrlLink($url);
+}
+
+/**
+ * Decode base64 encoded data.
+ *
+ * @param string $code Base64 encoded code.
+ */
+function sb_print_code($code)
+{
+    FileDisplay::printCode($code);
+}
+
+/**
+ * Prints preacher description.
+ *
+ * @param object $sermon Sermon object.
+ */
+function sb_print_preacher_description($sermon)
+{
+    TemplateHelper::printPreacherDescription($sermon);
+}
+
+/**
+ * Prints preacher image.
+ *
+ * @param object $sermon Sermon object.
+ */
+function sb_print_preacher_image($sermon)
+{
+    TemplateHelper::printPreacherImage($sermon);
+}
+
+/**
+ * Prints link to sermon preached next (but not today).
+ *
+ * @param object $sermon Sermon object.
+ */
+function sb_print_next_sermon_link($sermon)
+{
+    TemplateHelper::printNextSermonLink($sermon);
+}
+
+/**
+ * Prints link to sermon preached on previous days.
+ *
+ * @param object $sermon Sermon object.
+ */
+function sb_print_prev_sermon_link($sermon)
+{
+    TemplateHelper::printPrevSermonLink($sermon);
+}
+
+/**
+ * Prints links to other sermons preached on the same day.
+ *
+ * @param object $sermon Sermon object.
+ */
+function sb_print_sameday_sermon_link($sermon)
+{
+    TemplateHelper::printSamedaySermonLink($sermon);
+}
+
+/**
+ * Gets single sermon from the database.
+ *
+ * @param int $id Sermon ID.
+ * @return array|false Sermon data or false.
+ */
+function sb_get_single_sermon($id)
+{
+    $id = (int) $id;
+
+    // Get sermon with relations using Facade (includes preacher, service, series)
+    $sermon = Sermon::findForTemplate($id);
+
+    if (!$sermon) {
+        return false;
+    }
+
+    // Handle null series (series_id = 0)
+    if ($sermon->ssid === null) {
+        $sermon->ssid = 0;
+        $sermon->series = '';
+    }
+
+    // Get stuff (files and code) using Facade
+    $stuff = File::findBySermon($id);
+    $file = [];
+    $code = [];
+    foreach ($stuff as $cur) {
+        if ($cur->type === 'file') {
+            $file[] = $cur->name;
+        } elseif ($cur->type === 'code') {
+            $code[] = $cur->name;
+        }
+    }
+
+    // Get tags using Facade
+    $tagObjects = Tag::findBySermon($id);
+    $tags = [];
+    foreach ($tagObjects as $tag) {
+        $tags[] = $tag->name;
+    }
+
+    // Unserialize start/end passages
+    $sermon->start = unserialize($sermon->start);
+    $sermon->end = unserialize($sermon->end);
+
+    return [
+        'Sermon' => $sermon,
+        'Files' => $file,
+        'Code' => $code,
+        'Tags' => $tags,
+    ];
+}
+
+/**
+ * Prints the filter line for a given parameter.
+ *
+ * @param string $id Filter ID.
+ * @param array $results Results array.
+ * @param string $filter Filter type.
+ * @param string $display Display type.
+ * @param int $max_num Maximum number of items.
+ */
+function sb_print_filter_line($id, $results, $filter, $display, $max_num = 7)
+{
+    FilterRenderer::renderLine($id, $results, $filter, $display, $max_num);
+}
+
+/**
+ * Prints the filter line for the date parameter.
+ *
+ * @param array $dates Dates array.
+ */
+function sb_print_date_filter_line($dates)
+{
+    FilterRenderer::renderDateLine($dates);
+}
+
+/**
+ * Returns the filter URL minus a given parameter.
+ *
+ * @param string $param1 First parameter.
+ * @param string $param2 Second parameter.
+ * @return string URL without the parameter.
+ */
+function sb_url_minus_parameter($param1, $param2 = '')
+{
+    return FilterRenderer::urlMinusParameter($param1, $param2);
+}
+
+/**
+ * Displays the filter on sermon search page.
+ *
+ * @param array $filter Filter parameters.
+ */
+function sb_print_filters($filter)
+{
+    FilterRenderer::render($filter);
+}
+
+/**
+ * Returns the first MP3 file attached to a sermon.
+ * Stats have to be turned off for iTunes compatibility.
+ *
+ * @param object $sermon Sermon object.
+ * @param bool $stats Whether to include stats.
+ * @return string|null First MP3 URL or null.
+ */
+function sb_first_mp3($sermon, $stats = true)
+{
+    return FileDisplay::firstMp3($sermon, $stats);
+}
+
+/***************************************
+ ** Functions from admin.php          **
+ **************************************/
+
+/**
+ * Adds javascript and CSS where required in admin.
+ */
+function sb_add_admin_headers()
+{
+    AdminAssets::enqueue();
+}
+
+/**
+ * Display the options page and handle changes.
+ */
+function sb_options()
+{
+    $page = new OptionsPage();
+    $page->render();
+}
+
+/**
+ * Display uninstall screen and perform uninstall if requested.
+ */
+function sb_uninstall()
+{
+    $page = new UninstallPage();
+    $page->render();
+}
+
+/**
+ * Display the templates page and handle changes.
+ */
+function sb_templates()
+{
+    $page = new TemplatesPage();
+    $page->render();
+}
+
+/**
+ * Display the preachers page and handle changes.
+ */
+function sb_manage_preachers()
+{
+    $page = new PreachersPage();
+    $page->render();
+}
+
+/**
+ * Display services & series page and handle changes.
+ */
+function sb_manage_everything()
+{
+    $page = new SeriesServicesPage();
+    $page->render();
+}
+
+/**
+ * Display files page and handle changes.
+ */
+function sb_files()
+{
+    $page = new FilesPage();
+    $page->render();
+}
+
+/**
+ * Displays Sermons page.
+ */
+function sb_manage_sermons()
+{
+    $page = new SermonsPage();
+    $page->render();
+}
+
+/**
+ * Displays new/edit sermon page.
+ */
+function sb_new_sermon()
+{
+    $page = new SermonEditorPage();
+    $page->render();
+}
+
+/**
+ * Displays the help page.
+ */
+function sb_help()
+{
+    $page = new HelpPage();
+    $page->render();
+}
+
+/**
+ * Displays the Japan prayer page.
+ */
+function sb_japan()
+{
+    $page = new HelpPage();
+    $page->renderJapan();
+}
+
+/**
+ * Displays alerts in admin for new users.
+ */
+function sb_do_alerts()
+{
+    AdminNotices::render();
+}
+
+/**
+ * Show the textarea input.
+ *
+ * @param string $name Textarea name.
+ * @param string $html HTML content.
+ */
+function sb_build_textarea($name, $html)
+{
+    echo FormHelpers::textarea($name, $html);
+}
+
+/**
+ * Displays stats in the dashboard.
+ */
+function sb_rightnow()
+{
+    DashboardWidget::renderRightNow();
+}
+
+/**
+ * Displays sermon count in the "At a Glance" dashboard widget.
+ *
+ * @param array $items Existing glance items.
+ * @return array Modified glance items with sermon count.
+ */
+function sb_dashboard_glance($items)
+{
+    return DashboardWidget::glanceItems($items);
+}
+
+/**
+ * Find new files uploaded by FTP.
+ */
+function sb_scan_dir()
+{
+    FileSync::sync();
+}
+
+/**
+ * Check to see if upload folder is writeable.
+ *
+ * @param string $foldername Folder name.
+ * @return string 'writeable/unwriteable/notexist'
+ */
+function sb_checkSermonUploadable($foldername = "")
+{
+    return UploadHelper::checkUploadable($foldername);
+}
+
+/**
+ * Delete any unused tags.
+ */
+function sb_delete_unused_tags()
+{
+    TagCleanup::cleanup();
+}
+
+/**
+ * Returns true if any ID3 import options have been selected.
+ *
+ * @return boolean
+ */
+function sb_import_options_set()
+{
+    return UploadHelper::importOptionsSet();
+}
+
+/**
+ * Displays notice if ID3 import options have not been set.
+ *
+ * @param bool $long Whether to show long message.
+ */
+function sb_print_import_options_message($long = false)
+{
+    UploadHelper::renderImportMessage($long);
+}
+
+/**
+ * Echoes the upload form.
+ */
+function sb_print_upload_form()
+{
+    UploadHelper::renderForm();
+}
+
+/**
+ * Add help tabs to SermonBrowser admin pages.
+ *
+ * @param WP_Screen $screen Current screen object.
+ */
+function sb_add_help_tabs($screen)
+{
+    HelpTabs::register($screen);
+}
+
+/**
+ * Legacy contextual help function.
+ *
+ * @deprecated Use sb_add_help_tabs instead.
+ * @param string $help Help text.
+ * @return string Help text unchanged.
+ */
+function sb_add_contextual_help($help)
+{
+    _deprecated_function(__FUNCTION__, '0.46.0', 'sb_add_help_tabs');
+    return $help;
+}
+
+/***************************************
+ ** Functions from podcast.php        **
+ **************************************/
+
+/**
+ * Prints ISO date for podcast pubDate element.
+ *
+ * @param object|string|int $sermon The sermon object with datetime property, or a datetime string/timestamp.
+ * @return void Outputs the formatted date.
+ */
+function sb_print_iso_date($sermon)
+{
+    echo PodcastHelper::formatIsoDate($sermon);
+}
+
+/**
+ * Returns size attribute for enclosure element.
+ *
+ * @param string $media_name The filename or URL.
+ * @param string $media_type The type: 'Files' or 'URLs'.
+ * @return string Length attribute string.
+ */
+function sb_media_size($media_name, $media_type)
+{
+    return PodcastHelper::getMediaSize($media_name, $media_type);
+}
+
+/**
+ * Returns duration of .mp3 file.
+ *
+ * @param string $media_name The filename.
+ * @param string $media_type The type: 'Files' or 'URLs'.
+ * @return string Duration string or empty.
+ */
+function sb_mp3_duration($media_name, $media_type)
+{
+    return PodcastHelper::getMp3Duration($media_name, $media_type);
+}
+
+/**
+ * Replaces special characters with XML entities.
+ *
+ * @param string $string The string to encode.
+ * @return string The XML-safe encoded string.
+ */
+function sb_xml_entity_encode($string)
+{
+    return PodcastHelper::xmlEncode($string);
+}
+
+/**
+ * Convert filename to URL for podcast feed.
+ * Stats are disabled for iTunes compatibility.
+ *
+ * @param string $media_name The filename or URL.
+ * @param string $media_type The type: 'Files' or 'URLs'.
+ * @return string The podcast-ready URL.
+ */
+function sb_podcast_file_url($media_name, $media_type)
+{
+    return PodcastHelper::getFileUrl($media_name, $media_type);
+}
+
+/**
+ * Returns correct MIME type attribute for enclosure.
+ *
+ * @param string $media_name The filename.
+ * @return string Type attribute string or empty.
+ */
+function sb_mime_type($media_name)
+{
+    return PodcastHelper::getMimeType($media_name);
+}
+
+/***************************************
+ ** Functions from sb-install.php     **
+ **************************************/
+
+/**
+ * Run the Sermon Browser installation.
+ *
+ * Creates database tables and sets default options.
+ *
+ * @return void
+ */
+function sb_install()
+{
+    Installer::run();
+}
+
+/**
+ * Get the default template for search results (multi-sermon view).
+ *
+ * @return string The default multi-sermon template HTML.
+ */
+function sb_default_multi_template()
+{
+    return DefaultTemplates::multiTemplate();
+}
+
+/**
+ * Get the default template for single sermon pages.
+ *
+ * @return string The default single sermon template HTML.
+ */
+function sb_default_single_template()
+{
+    return DefaultTemplates::singleTemplate();
+}
+
+/**
+ * Get the default CSS styles.
+ *
+ * @return string The default CSS with plugin URL placeholder replaced.
+ */
+function sb_default_css()
+{
+    return DefaultTemplates::defaultCss();
+}
+
+/**
+ * Get the default template for sermon excerpts.
+ *
+ * @return string The default excerpt template HTML.
+ */
+function sb_default_excerpt_template()
+{
+    return DefaultTemplates::excerptTemplate();
+}
+
+/***************************************
+ ** Functions from upgrade.php        **
+ **************************************/
+
+/**
+ * Checks for old-style sermonbrowser options (prior to 0.43).
+ *
+ * @return void
+ */
+function sb_upgrade_options(): void
+{
+    Upgrader::upgradeOptions();
+}
+
+/**
+ * Runs the version upgrade procedures (add options added since last db update).
+ *
+ * @param string $oldVersion The previous version.
+ * @param string $newVersion The new version.
+ * @return void
+ */
+function sb_version_upgrade(string $oldVersion, string $newVersion): void
+{
+    Upgrader::versionUpgrade($oldVersion, $newVersion);
+}
+
+/**
+ * Runs the database upgrade procedures (modifies database structure).
+ *
+ * @param string $oldVersion The previous database version.
+ * @return void
+ */
+function sb_database_upgrade(string $oldVersion): void
+{
+    Upgrader::databaseUpgrade($oldVersion);
 }
