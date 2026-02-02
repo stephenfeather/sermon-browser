@@ -73,7 +73,7 @@ class SermonEditorPage
         $formData = $this->loadFormData();
 
         // Render the form.
-        $this->renderForm($formData, $id3_tags, $translated_books, $error);
+        $this->renderForm($formData, $id3_tags, $translated_books);
     }
 
     /**
@@ -700,22 +700,18 @@ class SermonEditorPage
                     </tr>
                     <tr id="passage" class="passage">
                         <td>
-                            <table role="presentation">
-                                <tr>
-                                    <td><?php $this->renderBooksDropdown('startbook', 'start[book][]', $books, $translated_books, 'start1', 'syncBook(this)'); ?></td>
-                                    <td><input type="text" style="width:60px;" name="start[chapter][]" value="" class="start2" /><br /></td>
-                                    <td><input type="text" style="width:60px;" name="start[verse][]" value="" class="start3" /><br /></td>
-                                </tr>
-                            </table>
+                            <div style="display: flex; gap: 0.5em; align-items: center;">
+                                <?php $this->renderBooksDropdown('startbook', 'start[book][]', $books, $translated_books, 'start1', 'syncBook(this)'); ?>
+                                <input type="text" style="width:60px;" name="start[chapter][]" value="" class="start2" />
+                                <input type="text" style="width:60px;" name="start[verse][]" value="" class="start3" />
+                            </div>
                         </td>
                         <td>
-                            <table role="presentation">
-                                <tr>
-                                    <td><?php $this->renderBooksDropdown('endbook', 'end[book][]', $books, $translated_books, 'end'); ?></td>
-                                    <td><input type="text" style="width:60px;" name="end[chapter][]" value="" class="end2" /><br /></td>
-                                    <td><input type="text" style="width:60px;" name="end[verse][]" value="" class="end3" /><br /></td>
-                                </tr>
-                            </table>
+                            <div style="display: flex; gap: 0.5em; align-items: center;">
+                                <?php $this->renderBooksDropdown('endbook', 'end[book][]', $books, $translated_books, 'end'); ?>
+                                <input type="text" style="width:60px;" name="end[chapter][]" value="" class="end2" />
+                                <input type="text" style="width:60px;" name="end[verse][]" value="" class="end3" />
+                            </div>
                         </td>
                     </tr>
                     <?php $this->renderAttachmentsRow($files); ?>
