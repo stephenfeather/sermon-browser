@@ -227,4 +227,106 @@ class PopularWidgetTest extends TestCase
 
         $this->assertSame('sb-popular-widget', $widget->widget_options['classname']);
     }
+
+    /**
+     * Test widget method calls sb_widget_popular with correct args.
+     */
+    public function testWidgetCallsSbWidgetPopularWithCorrectArgs(): void
+    {
+        $widget = new PopularWidget();
+
+        $capturedArgs = null;
+
+        Functions\expect('apply_filters')
+            ->once()
+            ->with('widget_title', 'Test Title', \Mockery::type('array'), 'sb_popular')
+            ->andReturn('Test Title');
+
+        Functions\expect('sb_widget_popular')
+            ->once()
+            ->andReturnUsing(function ($args) use (&$capturedArgs) {
+                $capturedArgs = $args;
+            });
+
+        $widget->widget(
+            [
+                'before_widget' => '<div>',
+                'after_widget' => '</div>',
+                'before_title' => '<h2>',
+                'after_title' => '</h2>',
+            ],
+            [
+                'title' => 'Test Title',
+                'limit' => 10,
+                'display_sermons' => true,
+                'display_series' => false,
+                'display_preachers' => true,
+            ]
+        );
+
+        $this->assertSame('<div>', $capturedArgs['before_widget']);
+        $this->assertSame('</div>', $capturedArgs['after_widget']);
+        $this->assertSame('<h2>', $capturedArgs['before_title']);
+        $this->assertSame('</h2>', $capturedArgs['after_title']);
+        $this->assertSame('Test Title', $capturedArgs['options']['title']);
+        $this->assertSame(10, $capturedArgs['options']['limit']);
+        $this->assertTrue($capturedArgs['options']['display_sermons']);
+        $this->assertFalse($capturedArgs['options']['display_series']);
+        $this->assertTrue($capturedArgs['options']['display_preachers']);
+    }
+
+    /**
+     * Test widget method uses default values when instance is empty.
+     */
+    public function testWidgetUsesDefaultValuesWhenInstanceEmpty(): void
+    {
+        $widget = new PopularWidget();
+
+        $capturedArgs = null;
+
+        Functions\expect('apply_filters')
+            ->once()
+            ->andReturn('');
+
+        Functions\expect('sb_widget_popular')
+            ->once()
+            ->andReturnUsing(function ($args) use (&$capturedArgs) {
+                $capturedArgs = $args;
+            });
+
+        $widget->widget([], []);
+
+        $this->assertSame('', $capturedArgs['options']['title']);
+        $this->assertSame(5, $capturedArgs['options']['limit']);
+        $this->assertTrue($capturedArgs['options']['display_sermons']);
+        $this->assertTrue($capturedArgs['options']['display_series']);
+        $this->assertTrue($capturedArgs['options']['display_preachers']);
+    }
+
+    /**
+     * Test widget method handles missing widget args gracefully.
+     */
+    public function testWidgetHandlesMissingArgsGracefully(): void
+    {
+        $widget = new PopularWidget();
+
+        $capturedArgs = null;
+
+        Functions\expect('apply_filters')
+            ->once()
+            ->andReturn('');
+
+        Functions\expect('sb_widget_popular')
+            ->once()
+            ->andReturnUsing(function ($args) use (&$capturedArgs) {
+                $capturedArgs = $args;
+            });
+
+        $widget->widget([], []);
+
+        $this->assertSame('', $capturedArgs['before_widget']);
+        $this->assertSame('', $capturedArgs['after_widget']);
+        $this->assertSame('', $capturedArgs['before_title']);
+        $this->assertSame('', $capturedArgs['after_title']);
+    }
 }
