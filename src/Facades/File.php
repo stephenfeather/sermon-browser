@@ -52,10 +52,6 @@ use SermonBrowser\Repositories\FileRepository;
  * @method static array findLinkedWithTitle(int $limit = 0, int $offset = 0)
  * @method static array searchByName(string $search, int $limit = 0, int $offset = 0)
  * @method static int countBySearch(string $search)
- * @method static object|null getMostPopularSermon()
- * @method static array getPopularSermons(int $limit)
- * @method static array getPopularSeries(int $limit)
- * @method static array getPopularPreachers(int $limit)
  * @method static string|null getFileDuration(string $name)
  * @method static bool setFileDuration(string $name, string $duration)
  */

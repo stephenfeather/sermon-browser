@@ -19,6 +19,7 @@ use SermonBrowser\Facades\Sermon;
 use SermonBrowser\Facades\Series;
 use SermonBrowser\Facades\Tag;
 use SermonBrowser\Frontend\PageResolver;
+use SermonBrowser\Repositories\PopularityService;
 
 /**
  * Class DashboardWidget
@@ -90,7 +91,7 @@ final class DashboardWidget
             'seriesCount'     => Series::count(),
             'tagCount'        => Tag::countNonEmpty(),
             'downloadCount'   => File::getTotalDownloads(),
-            'mostPopular'     => File::getMostPopularSermon(),
+            'mostPopular'     => (new PopularityService())->getMostPopularSermon(),
         ];
     }
 

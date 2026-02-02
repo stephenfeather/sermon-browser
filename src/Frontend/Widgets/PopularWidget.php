@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SermonBrowser\Frontend\Widgets;
 
 use SermonBrowser\Config\OptionsManager;
-use SermonBrowser\Facades\File;
 use SermonBrowser\Frontend\UrlBuilder;
+use SermonBrowser\Repositories\PopularityService;
 
 /**
  * Popular Widget display functions.
@@ -90,7 +90,7 @@ final class PopularWidget
         array &$trigger,
         string &$jscript
     ): void {
-        $sermons = File::getPopularSermons((int) $options['limit']);
+        $sermons = (new PopularityService())->getPopularSermons((int) $options['limit']);
         if (!$sermons) {
             return;
         }
@@ -122,7 +122,7 @@ final class PopularWidget
         array &$trigger,
         string &$jscript
     ): void {
-        $seriesList = File::getPopularSeries((int) $options['limit']);
+        $seriesList = (new PopularityService())->getPopularSeries((int) $options['limit']);
         if ($seriesList) {
             $output['series'] = '<div class="popular-series' . $suffix . '"><ul>';
             foreach ($seriesList as $series) {
@@ -152,7 +152,7 @@ final class PopularWidget
         array &$trigger,
         string &$jscript
     ): void {
-        $preachersList = File::getPopularPreachers((int) $options['limit']);
+        $preachersList = (new PopularityService())->getPopularPreachers((int) $options['limit']);
         if (!$preachersList) {
             return;
         }
