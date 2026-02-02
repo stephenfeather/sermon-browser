@@ -162,7 +162,7 @@ class UploadHelper
                             echo count($files) == 0 ? '<option value="0">No files found</option>' : '<option value="0"></option>';
                         foreach ($files as $file) {
                             ?>
-                                <option value="<?php echo $file->id; ?>"><?php echo $file->name; ?></option>
+                                <option value="<?php echo (int) $file->id; ?>"><?php echo esc_html($file->name); ?></option>
                         <?php } ?>
                     </select>
                 </td>
