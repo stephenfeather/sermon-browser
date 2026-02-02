@@ -32,54 +32,48 @@ class PageResolver
             return self::$pageId;
         }
 
-        $foundId = 0;
+        // Try pages first, then any post type
+        $foundId = self::findShortcodePost('page', 1);
 
-        // Try 1: Look for pages with [sermons] or [sermon] shortcode
-        $query = new \WP_Query([
-            'post_type' => 'page',
-            'post_status' => ['publish', 'private'],
-            's' => '[sermon',
-            'orderby' => 'date',
-            'order' => 'ASC',
-            'posts_per_page' => 1,
-            'fields' => 'ids',
-        ]);
-
-        if ($query->have_posts()) {
-            foreach ($query->posts as $post_id) {
-                $content = get_post_field('post_content', $post_id);
-                if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
-                    $foundId = (int) $post_id;
-                    break;
-                }
-            }
-        }
-
-        // Try 2: Look in any post type
         if ($foundId === 0) {
-            $query = new \WP_Query([
-                'post_type' => 'any',
-                'post_status' => ['publish', 'private'],
-                's' => '[sermon',
-                'orderby' => 'date',
-                'order' => 'ASC',
-                'posts_per_page' => 10,
-                'fields' => 'ids',
-            ]);
-
-            if ($query->have_posts()) {
-                foreach ($query->posts as $post_id) {
-                    $content = get_post_field('post_content', $post_id);
-                    if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
-                        $foundId = (int) $post_id;
-                        break;
-                    }
-                }
-            }
+            $foundId = self::findShortcodePost('any', 10);
         }
 
         self::$pageId = $foundId;
         return self::$pageId;
+    }
+
+    /**
+     * Find a post containing the sermon shortcode.
+     *
+     * @param string $postType Post type to search ('page' or 'any').
+     * @param int $limit Maximum number of posts to check.
+     * @return int Post ID or 0 if not found.
+     */
+    private static function findShortcodePost(string $postType, int $limit): int
+    {
+        $query = new \WP_Query([
+            'post_type' => $postType,
+            'post_status' => ['publish', 'private'],
+            's' => '[sermon',
+            'orderby' => 'date',
+            'order' => 'ASC',
+            'posts_per_page' => $limit,
+            'fields' => 'ids',
+        ]);
+
+        if (!$query->have_posts()) {
+            return 0;
+        }
+
+        foreach ($query->posts as $post_id) {
+            $content = get_post_field('post_content', $post_id);
+            if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
+                return (int) $post_id;
+            }
+        }
+
+        return 0;
     }
 
     /**
