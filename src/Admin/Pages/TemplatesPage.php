@@ -93,26 +93,26 @@ class TemplatesPage
         <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>" /></a>
         <h2><?php _e('Templates', 'sermon-browser'); ?></h2>
         <br/>
-        <table border="0" class="widefat" role="presentation">
-            <tr>
-                <td style="text-align:right"><?php _e('Search results page', 'sermon-browser'); ?>: </td>
-                <td>
+        <div class="widefat" style="background: #fff; border: 1px solid #c3c4c7; padding: 1em;">
+            <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+                <label style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Search results page', 'sermon-browser'); ?>:</label>
+                <div style="flex: 1;">
                     <?php sb_build_textarea('multi', sb_get_option('search_template')); ?>
-                </td>
-            </tr>
-            <tr>
-                <td style="text-align:right"><?php _e('Sermon page', 'sermon-browser'); ?>: </td>
-                <td>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+                <label style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Sermon page', 'sermon-browser'); ?>:</label>
+                <div style="flex: 1;">
                     <?php sb_build_textarea('single', sb_get_option('single_template')); ?>
-                </td>
-            </tr>
-            <tr>
-                <td style="text-align:right"><?php _e('Style', 'sermon-browser'); ?>: </td>
-                <td>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1em;">
+                <label style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Style', 'sermon-browser'); ?>:</label>
+                <div style="flex: 1;">
                     <?php sb_build_textarea('style', sb_get_option('css_style')); ?>
-                </td>
-            </tr>
-        </table>
+                </div>
+            </div>
+        </div>
         <p class="submit"><input type="submit" name="save" value="<?php _e('Save', 'sermon-browser'); ?> &raquo;" /> <input type="submit" name="resetdefault" value="<?php _e('Reset to defaults', 'sermon-browser'); ?>"  /></p>
     </div>
         <?php wp_nonce_field('sermon_template_edit', 'sermon_template_edit_nonce'); ?>
