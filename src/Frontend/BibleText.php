@@ -85,18 +85,18 @@ class BibleText
                 . $endBookTranslated . '</a>';
         }
 
-        if ($startBookTranslated === $endBookTranslated) {
-            if ($startChapter === $endChapter) {
-                if ($startVerse === $endVerse) {
-                    return "{$startBookTranslated} {$startChapter}:{$startVerse}";
-                }
-                return "{$startBookTranslated} {$startChapter}:{$startVerse}-{$endVerse}";
-            }
-            return "{$startBookTranslated} {$startChapter}:{$startVerse}-{$endChapter}:{$endVerse}";
+        // Build reference based on book/chapter/verse relationships
+        $reference = "{$startBookTranslated} {$startChapter}:{$startVerse}";
+
+        if ($startBookTranslated !== $endBookTranslated) {
+            $reference .= " - {$endBookTranslated} {$endChapter}:{$endVerse}";
+        } elseif ($startChapter !== $endChapter) {
+            $reference .= "-{$endChapter}:{$endVerse}";
+        } elseif ($startVerse !== $endVerse) {
+            $reference .= "-{$endVerse}";
         }
 
-        return "{$startBookTranslated} {$startChapter}:{$startVerse} - "
-            . "{$endBookTranslated} {$endChapter}:{$endVerse}";
+        return $reference;
     }
 
     /**
