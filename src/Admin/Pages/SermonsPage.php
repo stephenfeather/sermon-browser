@@ -126,7 +126,7 @@ class SermonsPage
      */
     private function renderPage(int $cnt, array $sermons, array $preachers, array $series): void
     {
-        $this->renderScript($cnt);
+        $this->renderScript();
         $this->renderFilterForm($preachers, $series);
         $this->renderSermonsTable($sermons);
         $this->renderNavigation($cnt);
@@ -135,10 +135,9 @@ class SermonsPage
     /**
      * Render JavaScript for AJAX pagination using SBAdmin module.
      *
-     * @param int $cnt Total sermon count.
      * @return void
      */
-    private function renderScript(int $_cnt): void
+    private function renderScript(): void
     {
         ?>
     <script>
