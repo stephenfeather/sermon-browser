@@ -110,10 +110,12 @@ use SermonBrowser\Frontend\PageResolver;
 
 define('SB_CURRENT_VERSION', '0.5.1-dev');
 define('SB_DATABASE_VERSION', '1.7');
-sb_define_constants();
 
 // Load Composer autoloader for modern PSR-4 classes.
+// Must be loaded before sb_define_constants() which uses HelperFunctions.
 require_once __DIR__ . '/vendor/autoload.php';
+
+sb_define_constants();
 
 add_action('plugins_loaded', 'sb_hijack');
 add_action('init', 'sb_sermon_init');

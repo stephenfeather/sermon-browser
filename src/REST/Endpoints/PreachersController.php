@@ -33,7 +33,7 @@ class PreachersController extends RestController
      *
      * @var string
      */
-    protected string $rest_base = 'preachers';
+    protected $rest_base = 'preachers';
 
     /**
      * Register the routes for this controller.

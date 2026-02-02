@@ -35,7 +35,7 @@ class TagsController extends RestController
      *
      * @var string
      */
-    protected string $rest_base = 'tags';
+    protected $rest_base = 'tags';
 
     /**
      * Register the routes for this controller.

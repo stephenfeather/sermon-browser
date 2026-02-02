@@ -34,7 +34,7 @@ class SeriesController extends RestController
      *
      * @var string
      */
-    protected string $rest_base = 'series';
+    protected $rest_base = 'series';
 
     /**
      * Register the routes for this controller.

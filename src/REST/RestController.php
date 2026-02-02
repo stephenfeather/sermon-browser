@@ -32,7 +32,7 @@ abstract class RestController extends WP_REST_Controller
      *
      * @var string
      */
-    protected string $namespace = Constants::REST_NAMESPACE;
+    protected $namespace = Constants::REST_NAMESPACE;
 
     /**
      * Check if the current user has admin permissions.
@@ -65,7 +65,7 @@ abstract class RestController extends WP_REST_Controller
      *
      * @return array<string, array<string, mixed>> Collection parameters.
      */
-    protected function get_collection_params(): array
+    public function get_collection_params(): array
     {
         return [
             'page' => [

@@ -203,15 +203,23 @@ if (!class_exists('WP_REST_Request')) {
 if (!class_exists('WP_REST_Controller')) {
     /**
      * Stub for WordPress WP_REST_Controller base class.
+     *
+     * Note: Properties are untyped to match WordPress 6.4 which doesn't use
+     * typed properties on WP_REST_Controller.
      */
     abstract class WP_REST_Controller
     {
-        protected string $namespace = '';
-        protected string $rest_base = '';
+        protected $namespace = '';
+        protected $rest_base = '';
 
         public function register_routes(): void
         {
             // To be implemented by child classes.
+        }
+
+        public function get_collection_params(): array
+        {
+            return [];
         }
 
         public function get_items_permissions_check($request): bool|WP_Error

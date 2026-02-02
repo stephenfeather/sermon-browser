@@ -30,7 +30,7 @@ class SearchController extends RestController
      *
      * @var string
      */
-    protected string $rest_base = 'search';
+    protected $rest_base = 'search';
 
     /**
      * Register the routes for this controller.

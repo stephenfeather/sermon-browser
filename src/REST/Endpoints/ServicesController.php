@@ -33,7 +33,7 @@ class ServicesController extends RestController
      *
      * @var string
      */
-    protected string $rest_base = 'services';
+    protected $rest_base = 'services';
 
     /**
      * Register the routes for this controller.

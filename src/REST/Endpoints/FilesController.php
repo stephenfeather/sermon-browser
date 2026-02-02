@@ -34,7 +34,7 @@ class FilesController extends RestController
      *
      * @var string
      */
-    protected string $rest_base = 'files';
+    protected $rest_base = 'files';
 
     /**
      * Register the routes for this controller.
