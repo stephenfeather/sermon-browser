@@ -55,11 +55,38 @@ class FileDownloadHandler
     private static function sendHeaders(string $fileName, string $filePath): void
     {
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+
+        // Sanitize filename for Content-Disposition header to prevent header injection.
+        $safeFileName = self::sanitizeFilenameForHeader($fileName);
+        header('Content-Disposition: attachment; ' . $safeFileName);
 
         $fileSize = @filesize($filePath);
         if ($fileSize !== false && $fileSize > 0) {
             header('Content-Length: ' . $fileSize);
         }
+    }
+
+    /**
+     * Sanitize a filename for use in Content-Disposition header.
+     *
+     * Prevents header injection by sanitizing the filename and using
+     * RFC 5987 encoding for non-ASCII characters.
+     *
+     * @param string $fileName The original filename.
+     * @return string The sanitized filename parameter for Content-Disposition.
+     */
+    private static function sanitizeFilenameForHeader(string $fileName): string
+    {
+        // Remove any characters that could be used for header injection.
+        $sanitized = preg_replace('/[\r\n\t]/', '', $fileName);
+
+        // ASCII-only filename (fallback for old clients).
+        $asciiName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $sanitized);
+
+        // RFC 5987 encoded filename for modern clients (supports UTF-8).
+        $encodedName = rawurlencode($sanitized);
+
+        // Return both for maximum compatibility.
+        return 'filename="' . $asciiName . '"; filename*=UTF-8\'\'' . $encodedName;
     }
 }

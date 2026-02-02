@@ -30,6 +30,18 @@ class FileActionHandler
      */
     public function handleUrlImport(): void
     {
+        // Security: Verify nonce to prevent CSRF attacks.
+        if (
+            !isset($_POST['sb_file_import_nonce']) ||
+            !wp_verify_nonce($_POST['sb_file_import_nonce'], 'sb_file_import')
+        ) {
+            wp_die(
+                esc_html__('Security check failed. Please refresh the page and try again.', 'sermon-browser'),
+                esc_html__('Security Error', 'sermon-browser'),
+                ['response' => 403]
+            );
+        }
+
         $url = esc_url($_POST['url']);
 
         // Validate URL scheme to prevent SSRF attacks.
@@ -129,6 +141,18 @@ class FileActionHandler
      */
     public function handleFileUpload(): void
     {
+        // Security: Verify nonce to prevent CSRF attacks.
+        if (
+            !isset($_POST['sb_file_upload_nonce']) ||
+            !wp_verify_nonce($_POST['sb_file_upload_nonce'], 'sb_file_upload')
+        ) {
+            wp_die(
+                esc_html__('Security check failed. Please refresh the page and try again.', 'sermon-browser'),
+                esc_html__('Security Error', 'sermon-browser'),
+                ['response' => 403]
+            );
+        }
+
         if ($_FILES['upload']['error'] !== UPLOAD_ERR_OK) {
             return;
         }
