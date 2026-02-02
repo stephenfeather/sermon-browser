@@ -18,6 +18,16 @@ use SermonBrowser\Frontend\UrlBuilder;
 final class PopularWidget
 {
     /**
+     * jQuery selector prefix for popular type triggers.
+     */
+    private const JS_POPULAR_SELECTOR = 'jQuery("#popular_';
+
+    /**
+     * jQuery selector prefix for wrapper element.
+     */
+    private const JS_WRAPPER_SELECTOR = 'jQuery("#sb_popular_wrapper';
+
+    /**
      * Display the most popular sermons widget in sidebar.
      *
      * Renders tabbed content showing popular sermons, series, and preachers.
@@ -172,14 +182,14 @@ final class PopularWidget
         array $otherTypes,
         string $content
     ): string {
-        $js = 'jQuery("#popular_' . $type . '_trigger' . $suffix . '").click(function() {';
+        $js = self::JS_POPULAR_SELECTOR . $type . '_trigger' . $suffix . '").click(function() {';
         $js .= 'jQuery(this).attr("style", "font-weight:bold");';
         foreach ($otherTypes as $other) {
-            $js .= 'jQuery("#popular_' . $other . '_trigger' . $suffix . '").removeAttr("style");';
+            $js .= self::JS_POPULAR_SELECTOR . $other . '_trigger' . $suffix . '").removeAttr("style");';
         }
         $js .= 'jQuery.setSbCookie("' . $type . '");';
-        $js .= 'jQuery("#sb_popular_wrapper' . $suffix . '").fadeOut("slow", function() {';
-        $js .= 'jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($content) . '").fadeIn("slow");';
+        $js .= self::JS_WRAPPER_SELECTOR . $suffix . '").fadeOut("slow", function() {';
+        $js .= self::JS_WRAPPER_SELECTOR . $suffix . '").html("' . addslashes($content) . '").fadeIn("slow");';
         $js .= '});';
         $js .= 'return false;';
         $js .= '});';
@@ -199,8 +209,8 @@ final class PopularWidget
         $types = ['preachers', 'series', 'sermons'];
         foreach ($types as $type) {
             $js .= 'if (jQuery.getSbCookie() == "' . $type . '") { ';
-            $js .= 'jQuery("#popular_' . $type . '_trigger' . $suffix . '").attr("style", "font-weight:bold"); ';
-            $js .= 'jQuery("#sb_popular_wrapper' . $suffix . '").html("' . addslashes($output[$type] ?? '') . '")};';
+            $js .= self::JS_POPULAR_SELECTOR . $type . '_trigger' . $suffix . '").attr("style", "font-weight:bold"); ';
+            $js .= self::JS_WRAPPER_SELECTOR . $suffix . '").html("' . addslashes($output[$type] ?? '') . '")};';
         }
         return $js;
     }

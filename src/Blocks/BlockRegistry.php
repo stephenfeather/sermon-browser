@@ -51,6 +51,11 @@ class BlockRegistry
     private const FRONTEND_STYLE_FILE = '/style-index.css';
 
     /**
+     * Build path for blocks (relative to plugin directory).
+     */
+    private const BUILD_BLOCKS_PATH = '/sermon-browser/build/blocks';
+
+    /**
      * Cached asset data from index.asset.php.
      *
      * @var array{dependencies: array<string>, version: string}|null
@@ -108,7 +113,7 @@ class BlockRegistry
     public function register(): void
     {
         foreach ($this->blocks as $block) {
-            $path = SB_PLUGIN_DIR . '/sermon-browser/build/blocks/Blocks/' . $block;
+            $path = SB_PLUGIN_DIR . self::BUILD_BLOCKS_PATH . '/Blocks/' . $block;
             if (file_exists($path . '/block.json')) {
                 register_block_type($path);
             }
@@ -122,7 +127,7 @@ class BlockRegistry
      */
     public function enqueueEditorAssets(): void
     {
-        $build_path = SB_PLUGIN_DIR . '/sermon-browser/build/blocks';
+        $build_path = SB_PLUGIN_DIR . self::BUILD_BLOCKS_PATH;
         $build_url = SB_PLUGIN_URL . '/build/blocks';
 
         // Check if build files exist.
@@ -164,7 +169,7 @@ class BlockRegistry
             return;
         }
 
-        $build_path = SB_PLUGIN_DIR . '/sermon-browser/build/blocks';
+        $build_path = SB_PLUGIN_DIR . self::BUILD_BLOCKS_PATH;
         $build_url = SB_PLUGIN_URL . '/build/blocks';
 
         if (file_exists($build_path . self::FRONTEND_STYLE_FILE)) {
@@ -190,7 +195,7 @@ class BlockRegistry
             return $this->cachedAsset;
         }
 
-        $build_path = SB_PLUGIN_DIR . '/sermon-browser/build/blocks';
+        $build_path = SB_PLUGIN_DIR . self::BUILD_BLOCKS_PATH;
         $asset_file = $build_path . '/index.asset.php';
 
         $this->cachedAsset = file_exists($asset_file)

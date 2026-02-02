@@ -39,7 +39,7 @@ class OptionsPage
     {
         // Security check.
         if (!current_user_can('manage_options')) {
-            wp_die(__("You do not have the correct permissions to edit the SermonBrowser options", 'sermon-browser'));
+            wp_die(__(Constants::ERR_NO_PERMISSION, 'sermon-browser'));
         }
 
         // Handle form submissions.
@@ -78,7 +78,7 @@ class OptionsPage
             !isset($_POST['sermon_options_save_reset_nonce']) ||
             !wp_verify_nonce($_POST['sermon_options_save_reset_nonce'], 'sermon_options_save_reset')
         ) {
-            wp_die(__("You do not have the correct permissions to edit the SermonBrowser options", 'sermon-browser'));
+            wp_die(__(Constants::ERR_NO_PERMISSION, 'sermon-browser'));
         }
 
         $dir = sb_get_default('sermon_path');
@@ -123,7 +123,7 @@ class OptionsPage
             !isset($_POST['sermon_options_save_reset_nonce']) ||
             !wp_verify_nonce($_POST['sermon_options_save_reset_nonce'], 'sermon_options_save_reset')
         ) {
-            wp_die(__("You do not have the correct permissions to edit the SermonBrowser options", 'sermon-browser'));
+            wp_die(__(Constants::ERR_NO_PERMISSION, 'sermon-browser'));
         }
 
         $dir = rtrim(str_replace("\\", "/", sanitize_text_field(stripslashes($_POST['dir']))), "/") . "/";

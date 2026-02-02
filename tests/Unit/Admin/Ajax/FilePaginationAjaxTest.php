@@ -474,7 +474,8 @@ class FilePaginationAjaxTest extends TestCase
         try {
             $this->handler->search();
         } catch (RuntimeException) {
-            // Expected
+            // Expected - wp_send_json_error was called
+            $this->addToAssertionCount(1);
         }
     }
 

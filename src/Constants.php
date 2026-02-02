@@ -36,6 +36,7 @@ class Constants
 
     // Admin URLs (relative)
     public const SERMON_PAGE = 'admin.php?page=sermon-browser/sermon.php';
+    public const NEW_SERMON_PAGE = 'sermon-browser/new_sermon.php';
     public const NEW_SERMON_GETID3 = 'admin.php?page=sermon-browser/new_sermon.php&getid3=';
 
     // REST API namespace
@@ -58,6 +59,7 @@ class Constants
     public const DESC_PREACHER_ID = 'Unique identifier for the preacher.';
     public const DESC_SERIES_ID = 'Unique identifier for the series.';
     public const DESC_SERVICE_ID = 'Unique identifier for the service.';
+    public const DESC_FILE_ID = 'Unique identifier for the file.';
 
     // SQL fragments
     public const SQL_LIMIT = ' LIMIT %d';

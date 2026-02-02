@@ -99,6 +99,7 @@ use SermonBrowser\Admin\DashboardWidget;
 use SermonBrowser\Admin\AdminBarMenu;
 use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Config\Defaults;
+use SermonBrowser\Constants;
 use SermonBrowser\Frontend\PageResolver;
 
 /**
@@ -354,10 +355,10 @@ function sb_add_pages()
 {
     add_menu_page(__('Sermons', 'sermon-browser'), __('Sermons', 'sermon-browser'), 'publish_posts', __FILE__, 'sb_manage_sermons', SB_PLUGIN_URL . '/assets/images/sb-icon.png');
     add_submenu_page(__FILE__, __('Sermons', 'sermon-browser'), __('Sermons', 'sermon-browser'), 'publish_posts', __FILE__, 'sb_manage_sermons');
-    if (isset($_REQUEST['page']) && $_REQUEST['page'] == 'sermon-browser/new_sermon.php' && isset($_REQUEST['mid'])) {
-        add_submenu_page(__FILE__, __('Edit Sermon', 'sermon-browser'), __('Edit Sermon', 'sermon-browser'), 'publish_posts', 'sermon-browser/new_sermon.php', 'sb_new_sermon');
+    if (isset($_REQUEST['page']) && $_REQUEST['page'] == Constants::NEW_SERMON_PAGE && isset($_REQUEST['mid'])) {
+        add_submenu_page(__FILE__, __('Edit Sermon', 'sermon-browser'), __('Edit Sermon', 'sermon-browser'), 'publish_posts', Constants::NEW_SERMON_PAGE, 'sb_new_sermon');
     } else {
-        add_submenu_page(__FILE__, __('Add Sermon', 'sermon-browser'), __('Add Sermon', 'sermon-browser'), 'publish_posts', 'sermon-browser/new_sermon.php', 'sb_new_sermon');
+        add_submenu_page(__FILE__, __('Add Sermon', 'sermon-browser'), __('Add Sermon', 'sermon-browser'), 'publish_posts', Constants::NEW_SERMON_PAGE, 'sb_new_sermon');
     }
     add_submenu_page(__FILE__, __('Files', 'sermon-browser'), __('Files', 'sermon-browser'), 'upload_files', 'sermon-browser/files.php', 'sb_files');
     add_submenu_page(__FILE__, __('Preachers', 'sermon-browser'), __('Preachers', 'sermon-browser'), 'manage_categories', 'sermon-browser/preachers.php', 'sb_manage_preachers');
@@ -492,7 +493,7 @@ function sb_query_char($return_entity = true)
 * @param string $content
 * @return string
 */
-function sb_shortcode($atts, $content = null)
+function sb_shortcode($atts, $_content = null)
 {
     ob_start();
     $atts = shortcode_atts(sb_get_shortcode_defaults(), $atts);
