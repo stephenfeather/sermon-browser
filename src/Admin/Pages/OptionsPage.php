@@ -193,18 +193,12 @@ class OptionsPage
      */
     private function isValidUploadDirectory(string $dir): bool
     {
-        // Reject paths with directory traversal sequences.
-        if (strpos($dir, '..') !== false) {
-            return false;
-        }
+        // Reject paths with directory traversal, absolute paths, or null bytes.
+        $hasTraversal = strpos($dir, '..') !== false;
+        $isAbsolute = strpos($dir, '/') === 0;
+        $hasNullByte = strpos($dir, "\0") !== false;
 
-        // Reject absolute paths (starting with /).
-        if (strpos($dir, '/') === 0) {
-            return false;
-        }
-
-        // Reject paths with null bytes.
-        if (strpos($dir, "\0") !== false) {
+        if ($hasTraversal || $isAbsolute || $hasNullByte) {
             return false;
         }
 
