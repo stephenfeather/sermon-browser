@@ -758,7 +758,7 @@ class SermonEditorPage
         $pageTitle = $mid !== null ? __('Edit Sermon', 'sermon-browser') : __('Add Sermon', 'sermon-browser');
         ?>
         <div class="wrap">
-            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>" /></a>
             <h2><?php echo esc_html($pageTitle); ?></h2>
         <?php
     }

@@ -9,16 +9,19 @@ status: active
 
 ## Ledger
 <!-- This section is extracted by SessionStart hook for quick resume -->
-**Updated:** 2026-01-31T18:00:00Z
+**Updated:** 2026-02-01T15:30:00Z
 **Goal:** Update Sermon Browser plugin for modern WordPress compatibility
 **Branch:** develop (main = release only)
-**Test:** `docker-compose up -d` then http://localhost:8080
+**Test:** `composer test` (590 tests, 1565 assertions)
 
 ### Now
-[✓] **sermon.php $wpdb cleanup COMPLETE** - 20→13 references (debug + deprecated only remain)
-- Handoff: `2026-01-31_18-00_sermon-php-wpdb-cleanup.yaml`
-- Converted sb_get_page_id() to WP_Query API
-- 396 tests passing, 1037 assertions
+[~] **Cognitive Complexity Refactoring** - Reducing complexity across plugin
+- Previous: sermon.php - extracted 15 helper functions (CLOSED in SonarQube)
+- Current session:
+  - SermonEditorPage.php:83 `handlePost()` - extracted 8 helper functions (complexity 25→~8)
+  - SermonEditorPage.php:505 `renderFormHtml()` - extracted 5 helper functions (complexity 59→~25)
+  - FilesPage.php:313 `renderPage()` - extracted 12 helper functions (complexity 23→~6)
+- 685 tests passing, phpcs clean
 
 ### Active Handoffs
 - **Phase 2 Worktree:** `feature/phase2-admin-split` branch
@@ -112,10 +115,13 @@ status: active
   - Created YAML handoff with priority order and rule breakdown
 
 ### Next
+- [ ] Run SonarQube analysis to verify all fixes
 - [ ] Merge Phase 2 worktree → develop when ready
 - [ ] Merge develop → main
+- [ ] Create GitHub release tag v0.6.0-alpha2
 - [x] Create GitHub release tag v0.5.0
 - [x] ~~Fix JavaScript SonarQube issues~~ - RESOLVED by file deletion (commit `e3f92d3`)
+- [x] ~~SonarQube quality issues~~ - RESOLVED (2026-02-01)
 
 ### Decisions
 - Workflow: Research → Plan → Build (phased approach)
@@ -155,22 +161,18 @@ All Phase 1 and Phase 2 deprecations have been fixed.
 - Run local analysis: `composer sonar` (includes coverage reports)
 - Requires: `SONAR_TOKEN` environment variable
 
-**Current SonarQube Status (2026-02-01):**
-| Category | Count |
-|----------|-------|
-| Total Issues | 1,489 |
-| Code Smells | 226 |
-| Bugs | 26 |
-| Vulnerabilities | 7 |
-| Security Hotspots | 0 |
+**Current SonarQube Status (2026-02-01 post-cleanup):**
+| Category | Count | Notes |
+|----------|-------|-------|
+| Cognitive Complexity | ✓ Fixed | LegacyAjaxHandler, Upgrader, PodcastFeed |
+| Method Count | ✓ Fixed | SermonId3Importer extracted |
+| Return Statements | ✓ Fixed | HelpTabs.getHelpContent |
+| Unreachable Code | ✓ Fixed | UploadHelper.checkUploadable |
+| Unused Parameters | ✓ Suppressed | Upgrader.versionUpgrade ($oldVersion kept for future) |
 
-| Severity | Count |
-|----------|-------|
-| Blocker | 4 |
-| Critical | 59 |
-| Major | 147 |
-| Minor | 49 |
-| Total Violations | 259 |
+**Remaining low-priority (by design):**
+- DefaultTemplates.php tabs (inside heredocs - HTML output, not code)
+- defaultCss() length (228 lines of CSS data, not logic)
 
 **Historical exports:**
 - `sonarqube_base_issues.csv` - Issues from old codebase (baseline)
@@ -214,15 +216,24 @@ max_retries: 3
 #### Validation State
 ```json
 {
-  "test_count": 17,
-  "tests_passing": 17,
+  "test_count": 590,
+  "tests_passing": 590,
+  "assertions": 1565,
   "files_modified": [
     "sermon.php",
     "sb-includes/admin.php",
     "sb-includes/ajax.php",
     "sb-includes/frontend.php",
     "sb-includes/dictionary.php",
-    "sb-includes/widget.php"
+    "sb-includes/widget.php",
+    "src/Ajax/LegacyAjaxHandler.php",
+    "src/Install/Upgrader.php",
+    "src/Podcast/PodcastFeed.php",
+    "src/Podcast/PodcastHelper.php",
+    "src/Admin/UploadHelper.php",
+    "src/Admin/HelpTabs.php",
+    "src/Admin/Pages/SermonEditorPage.php",
+    "src/Admin/Pages/SermonId3Importer.php"
   ],
   "phase1_fixes": [
     "preg_replace /e → sb_generate_temp_suffix()",
@@ -266,12 +277,16 @@ max_retries: 3
 ```
 
 #### Resume Context
-- Current focus: v0.5.0 RELEASED - Ready to merge to main
-- Next action: Merge develop → main, create release tag
+- Current focus: Cognitive complexity reduction across plugin files
+- Completed this session:
+  - SermonEditorPage.php: handlePost() refactored with 8 new helpers (verifyNonce, collectFormInput, processBiblePassages, isValidPassage, processSermonDate, getTimeOffset, filterDescription)
+  - SermonEditorPage.php: renderExistingDataInit() refactored with 3 new helpers (loadAssociatedFiles, addId3File, renderFileArrayInit)
+  - FilesPage.php: renderPage() refactored with 12 new helpers (renderPageScripts, renderUploadSection, renderImportOptionsWarning, renderUnlinkedFilesSection, renderUnlinkedFileRows, renderLinkedFilesSection, renderLinkedFileRows, renderSearchSection, renderPaginationScripts, renderCleanupSection, getFileTypeName, getFileBasename)
+- Previous session (sermon.php): 15 helpers extracted (sb_register_styles, sb_configure_php_ini, sb_check_admin_upgrades, etc.)
+- Remaining: sermon.php lines 285/535/648 still have complexity >15 but are lower priority
 - Blockers: (none)
 - Branch: develop
-- Release commit: 16e0037
-- Test command: `composer test` (17 tests passing)
+- Test command: `composer test` (685 tests passing, 1793 assertions)
 
 ---
 
@@ -316,23 +331,25 @@ sermon-browser/
 ```
 
 ### Version Info
-- Current version: 0.45.22 (August 2018)
-- Requires WordPress: 3.6+
-- Tested up to: WordPress 4.9.8
+- Current version: 0.6.0-alpha1 (development)
+- Requires WordPress: 6.0+
+- Requires PHP: 8.0+
+- Tested up to: WordPress 6.4
 - License: GPLv3
 
 ### Tech Stack
-- PHP (WordPress plugin architecture)
-- WordPress APIs (widgets, shortcodes, admin menus)
-- jQuery (admin interface)
+- PHP 8.0+ (WordPress plugin architecture)
+- WordPress APIs (widgets, shortcodes, admin menus, REST API)
+- jQuery 3.x (admin interface)
 - External Bible APIs (ESV, NET, etc.)
+- PHPUnit + Mockery + BrainMonkey (testing)
 
 ### Recent Changes (from git log)
-- 297ef9f: Updating language files
-- 167de1d: Updating readme.txt
-- 3bcf5d7: 0.45.22 - Fixed sermons not deleting, podcasts not downloading on iOS
-- cccc896: Updating language files
-- 5e5f135: Updating readme.txt
+- 74c494b: fix: suppress unused parameter warning in versionUpgrade
+- f187474: test: add unit tests for podcast classes
+- f4410ed: refactor: reduce method count and return statements
+- 7dcc2fe: fix: remove unreachable code and use require_once
+- 71fe3af: refactor: reduce cognitive complexity in Ajax, Upgrader, and Podcast classes
 
 ---
 

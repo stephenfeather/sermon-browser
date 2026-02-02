@@ -1,8 +1,10 @@
 # SonarQube Issues Breakdown
 
 **Project:** stephenfeather_sermon-browser
-**Date:** 2026-02-01
-**Source:** SonarCloud MCP API
+**Date:** 2026-02-01 (Updated 19:30)
+**Source:** SonarCloud API
+
+> **Note:** Local fixes committed but not yet pushed. SonarQube will update after push + re-analysis.
 
 ---
 
@@ -10,180 +12,217 @@
 
 | Category | Count |
 |----------|-------|
-| **Total Issues** | 1,489 |
-| Code Smells | 226 |
-| Bugs | 26 |
+| **Total Open Issues** | 214 |
+| Code Smells | 186 |
+| Bugs | 21 |
 | Vulnerabilities | 7 |
-| Security Hotspots | 0 |
 
 | Severity | Count |
 |----------|-------|
-| Blocker | 4 |
-| Critical | 59 |
-| Major | 147 |
-| Minor | 49 |
+| Blocker | 1 |
+| Critical | 30 |
+| Major | 140 |
+| Minor | 43 |
 | Info | 0 |
-| **Total Violations** | 259 |
 
 ---
 
-## BLOCKER Issues (4 total) - FIXED 2026-02-01
+## BLOCKER Issues (1 total)
 
-All 4 were in `tests/Unit/Install/UpgraderTest.php` - test cases missing assertions.
-
-| Line | Rule | Message | Status |
-|------|------|---------|--------|
-| 25 | php:S2699 | Add at least one assertion to this test case | FIXED |
-| 50 | php:S2699 | Add at least one assertion to this test case | FIXED |
-| 75 | php:S2699 | Add at least one assertion to this test case | FIXED |
-| 99 | php:S2699 | Add at least one assertion to this test case | FIXED |
-
-**Fix:** Added `$this->assertTrue(true, '...')` after Brain\Monkey expectation-based tests.
+| File | Line | Rule | Message | Status |
+|------|------|------|---------|--------|
+| ~~`tests/Unit/Admin/Ajax/FilePaginationAjaxTest.php`~~ | ~~440~~ | ~~php:S2699~~ | ~~Add at least one assertion to this test case~~ | **FIXED** (pending) |
 
 ---
 
-## CRITICAL Issues (59 total) - OPEN
+## CRITICAL Issues (30 total)
 
-### Cognitive Complexity (php:S3776) - Refactor needed
+### Cognitive Complexity (php:S3776) - 8 issues (was 9)
 
 Functions exceeding the allowed complexity of 15:
 
-| File | Line | Function | Complexity |
-|------|------|----------|------------|
-| `src/Admin/Pages/SermonEditorPage.php` | 670 | render() inner | 88 |
-| `sermon.php` | 282 | sb_display_sermons() | 42 |
-| `sermon.php` | 629 | sb_shortcode() | 41 |
-| `sermon.php` | 742 | sb_create_multi_sermon_query() | 31 |
-| `src/Frontend/FilterRenderer.php` | 149 | renderDropdownFilters() | 30 |
-| `src/Frontend/FilterRenderer.php` | 532 | renderDynamicFilters() | 28 |
-| `sermon.php` | 180 | sb_sermon_init() | 26 |
-| `src/Frontend/Widgets/SermonWidget.php` | 110 | widget() | 26 |
-| `src/Admin/Pages/SermonEditorPage.php` | 81 | handleFormSubmission() | 25 |
-| `src/Frontend/Widgets/PopularWidget.php` | 27 | widget() | 25 |
-| `src/Admin/Pages/FilesPage.php` | 312 | renderFilesTab() | 23 |
-| `src/Widgets/SermonsWidget.php` | 49 | widget() | 22 |
-| `src/Ajax/LegacyAjaxHandler.php` | 267 | handleFileUpload() | 22 |
-| `src/Frontend/BibleText.php` | 194 | getBibleText() | 22 |
-| `src/Podcast/PodcastFeed.php` | 127 | generateFeed() | 19 |
-| `src/Install/Upgrader.php` | 240 | upgradeDatabaseSchema() | 18 |
-| `src/Ajax/LegacyAjaxHandler.php` | 154 | handleSermonSave() | 16 |
-| `src/Repositories/SermonRepository.php` | 606 | buildQuery() | 16 |
+| File | Line | Complexity | Status |
+|------|------|------------|--------|
+| `src/Admin/Pages/SermonEditorPage.php` | 505 | 59 | |
+| `sermon.php` | 285 | 42 | |
+| `sermon.php` | 535 | 41 | |
+| `sermon.php` | 648 | 31 | |
+| ~~`src/Frontend/FilterRenderer.php`~~ | ~~562~~ | ~~28~~ | **FIXED** (ccf1450) |
+| `sermon.php` | 183 | 26 | |
+| `src/Admin/Pages/SermonEditorPage.php` | 83 | 25 | |
+| `src/Admin/Pages/FilesPage.php` | 313 | 23 | |
+| `src/Repositories/SermonRepository.php` | 606 | 16 | |
 
-### Duplicate String Literals (php:S1192) - Define constants
+### Duplicate String Literals (php:S1192) - 17 issues
 
-| File | String | Occurrences | Line |
-|------|--------|-------------|------|
-| `src/Frontend/FilterRenderer.php` | `selected="selected"` | 9x | 552 |
-| `src/Admin/Pages/OptionsPage.php` | `checked="checked"` | 8x | 547 |
+| File | String | Count | Line |
+|------|--------|-------|------|
 | `src/Admin/Pages/PreachersPage.php` | `images/` | 7x | 105 |
-| `src/Frontend/Widgets/PopularWidget.php` | `").html("` | 6x | 63 |
+| `src/REST/Endpoints/SeriesController.php` | `Unique identifier for the series.` | 4x | 78 |
 | `src/Blocks/BlockRegistry.php` | `/style-index.css` | 4x | 136 |
-| `src/Frontend/FilterRenderer.php` | `[All]` | 4x | 552 |
-| `src/REST/Endpoints/SeriesController.php` | `Unique identifier for the series.` | 4x | 77 |
-| `src/REST/Endpoints/SeriesController.php` | `Series not found.` | 4x | 327 |
-| `src/Admin/Pages/OptionsPage.php` | Permission error message | 3x | 41 |
-| `src/Admin/Pages/FilesPage.php` | `admin.php?page=sermon-browser/new_sermon.php&getid3=` | 3x | 131 |
-| `src/Admin/Pages/FilesPage.php` | `File name` | 3x | 429 |
-| `src/Admin/Pages/FilesPage.php` | `File type` | 3x | 430 |
-| `src/Admin/Pages/SermonEditorPage.php` | `admin.php?page=sermon-browser/sermon.php` | 3x | 696 |
-| `src/Admin/Pages/SermonEditorPage.php` | `selected="selected"` | 3x | 850 |
-| `src/Install/Upgrader.php` | `00:00` | 3x | 316 |
-| `src/Podcast/PodcastHelper.php` | `D, d M Y H:i:s O` | 3x | 43 |
-| `src/Widgets/SermonsWidget.php` | `[All]` | 3x | 199 |
-| `src/Widgets/TagCloudWidget.php` | `Sermon Browser Tags` | 3x | 28 |
-| `src/Frontend/FileDisplay.php` | `http://` | 3x | 57 |
-| `src/Frontend/FileDisplay.php` | `https://` | 3x | 57 |
-| `src/Frontend/Widgets/PopularWidget.php` | jQuery selector string | 3x | 123-124 |
+| `src/Admin/Pages/OptionsPage.php` | Permission error message | 3x | 42 |
+| `src/Admin/Pages/FilesPage.php` | `admin.php?page=sermon-browser/new_sermon.php&getid3=` | 3x | 132 |
+| `src/Admin/Pages/SermonEditorPage.php` | `selected="selected"` | 3x | 578 |
+| `src/Admin/Pages/SermonEditorPage.php` | `admin.php?page=sermon-browser/sermon.php` | 3x | 753 |
+| `src/Frontend/Widgets/PopularWidget.php` | `jQuery("#popular_` | 3x | 173 |
+| `src/Frontend/Widgets/PopularWidget.php` | `jQuery("#sb_popular_wrapper` | 3x | 179 |
+| `src/REST/Endpoints/PreachersController.php` | `Unique identifier for the preacher.` | 3x | 77 |
+| `src/REST/Endpoints/SermonsController.php` | `Unique identifier for the sermon.` | 3x | 76 |
+| `src/REST/Endpoints/ServicesController.php` | `Unique identifier for the service.` | 3x | 77 |
 | `src/Repositories/FileRepository.php` | ` LIMIT %d` | 3x | 189 |
 | `src/Repositories/FileRepository.php` | ` LIMIT %d OFFSET %d` | 3x | 547 |
-| `src/REST/Endpoints/FilesController.php` | `File not found.` | 3x | 275 |
-| `src/REST/Endpoints/PreachersController.php` | `Unique identifier for the preacher.` | 3x | 76 |
-| `src/REST/Endpoints/PreachersController.php` | `Preacher not found.` | 3x | 321 |
-| `src/REST/Endpoints/SermonsController.php` | `Unique identifier for the sermon.` | 3x | 75 |
-| `src/REST/Endpoints/SermonsController.php` | `Sermon not found.` | 3x | 376 |
-| `src/REST/Endpoints/ServicesController.php` | `Unique identifier for the service.` | 3x | 76 |
-| `src/REST/Endpoints/ServicesController.php` | `Service not found.` | 3x | 276 |
-| `sermon.php` | `0.6.0` | 3x | 355 |
+| `sermon.php` | `not found` | 3x | 214 |
+| `sermon.php` | `sermon-browser/new_sermon.php` | 3x | 397 |
 
-### Duplicate HTML IDs (Web:S7930) - Accessibility bugs
+### Duplicate HTML IDs (Web:S7930) - 3 issues
 
 | File | Issue | Lines |
 |------|-------|-------|
-| `src/Admin/Pages/FilesPage.php` | Duplicate id "search" | 499, 503 |
-| `src/Admin/Pages/FilesPage.php` | Duplicate id "file<?php echo $file->id ?>" | 437, 472 |
-| `src/Admin/Pages/FilesPage.php` | Duplicate id "<?php echo $file->id ?>" | 439, 474 |
-| `src/Admin/Pages/FilesPage.php` | Duplicate id "link<?php echo $file->id; ?>" | 443, 486 |
+| `src/Admin/Pages/FilesPage.php` | Duplicate id `file<?php echo $file->id ?>` | 438, 473 |
+| `src/Admin/Pages/FilesPage.php` | Duplicate id `<?php echo $file->id ?>` | 440, 475 |
+| `src/Admin/Pages/FilesPage.php` | Duplicate id `link<?php echo $file->id; ?>` | 444, 487 |
+
+### Other Critical Issues
+
+| File | Line | Rule | Message | Status |
+|------|------|------|---------|--------|
+| ~~`sermon.php`~~ | ~~508~~ | ~~php:S6600~~ | ~~Remove the parentheses from this "echo" call~~ | **FIXED** (pending) |
+| ~~`src/Utilities/HelperFunctions.php`~~ | ~~98~~ | ~~php:S131~~ | ~~Add a "case default" clause to this "switch" statement~~ | **FIXED** (pending) |
+
+---
+
+## BUGS (21 total)
+
+### Function Argument Mismatches (php:S930) - 3 issues
+
+| File | Line | Message |
+|------|------|---------|
+| `sermon.php` | 449 | `sb_display_url` expects 0 arguments, but 1 was provided |
+| `src/Admin/Ajax/FilePaginationAjax.php` | 151 | `sb_get_option` expects 1 argument, but 2 were provided |
+| `src/Admin/Ajax/SermonPaginationAjax.php` | 58 | `sb_get_option` expects 1 argument, but 2 were provided |
+
+### Replace require with require_once (php:S2003) - 5 issues
+
+| File | Line | Status |
+|------|------|--------|
+| ~~`src/Admin/Pages/TemplatesPage.php`~~ | ~~63~~ | **FIXED** (pending) |
+| ~~`src/Admin/Pages/UninstallPage.php`~~ | ~~57~~ | **FIXED** (pending) |
+| ~~`src/Blocks/BlockRegistry.php`~~ | ~~124~~ | **FIXED** (pending) - refactored to cached helper |
+| ~~`src/Blocks/BlockRegistry.php`~~ | ~~164~~ | **FIXED** (pending) - refactored to cached helper |
+| ~~`src/Frontend/FileDisplay.php`~~ | ~~203~~ | **FIXED** (pending) |
+
+### Missing Table Headers (Web:S5256) - 7 issues (was 8)
+
+| File | Line | Status |
+|------|------|--------|
+| `src/Admin/Pages/OptionsPage.php` | 352 | |
+| `src/Admin/Pages/OptionsPage.php` | 376 | |
+| `src/Admin/Pages/PreachersPage.php` | 234 | |
+| `src/Admin/Pages/SermonEditorPage.php` | 663 | |
+| `src/Admin/Pages/SermonEditorPage.php` | 679 | |
+| `src/Admin/Pages/TemplatesPage.php` | 96 | |
+| `src/Admin/Pages/UninstallPage.php` | 97 | |
+| ~~`src/Frontend/FilterRenderer.php`~~ | ~~578~~ | **FIXED** (ccf1450) |
+
+### Duplicate HTML IDs (Web:S7930) - 3 issues
+
+(Same as Critical section - counted in both BUG and CRITICAL)
+
+### Other Bugs
+
+| File | Line | Rule | Message | Status |
+|------|------|------|---------|--------|
+| `sermon.php` | 622 | php:S1226 | Introduce a new variable instead of reusing parameter `$content` | |
+| ~~`src/Admin/Pages/HelpPage.php`~~ | ~~176~~ | ~~Web:FrameWithoutTitleCheck~~ | ~~Add a "title" attribute to this `<iframe>` tag~~ | **FIXED** (pending) |
+
+---
+
+## VULNERABILITIES (7 total) - ✅ ALL REVIEWED
+
+All are permission safety checks (php:S2612) - chmod operations. **VERIFIED CORRECT** on 2026-02-01:
+- Directories use 0755 (WordPress recommended)
+- Files use 0644 (WordPress recommended)
+
+| File | Line | Permission | Status |
+|------|------|------------|--------|
+| ~~`src/Admin/Pages/OptionsPage.php`~~ | ~~180~~ | 0755 (dir) | **REVIEWED** - Correct |
+| ~~`src/Admin/Pages/OptionsPage.php`~~ | ~~184~~ | 0755 (dir) | **REVIEWED** - Correct |
+| ~~`src/Admin/Pages/PreachersPage.php`~~ | ~~154~~ | 0755 (dir) | **REVIEWED** - Correct |
+| ~~`src/Admin/Pages/PreachersPage.php`~~ | ~~166~~ | 0755 (dir) | **REVIEWED** - Correct |
+| ~~`src/Admin/Pages/PreachersPage.php`~~ | ~~296~~ | 0755 (dir) | **REVIEWED** - Correct |
+| ~~`src/Install/Upgrader.php`~~ | ~~172~~ | 0644 (file) | **REVIEWED** - Correct |
+| ~~`src/Install/Upgrader.php`~~ | ~~202~~ | 0755 (dir) | **REVIEWED** - Correct |
 
 ---
 
 ## Priority Fix Order
 
-### Quick Wins (1-2 hours)
-1. ~~**UpgraderTest.php** - Add assertions to 4 tests~~ DONE
-2. **FilesPage.php** - Fix duplicate HTML IDs (accessibility)
-3. **Constants class** - Create `src/Constants.php` for repeated strings
+### Immediate (Blockers + High-Impact Bugs)
 
-### Medium Effort (1-2 days)
-4. **FilterRenderer.php** - Split large functions, extract constants
-5. **SermonEditorPage.php** - Major refactoring of render() method
-6. **REST Controllers** - Create shared message constants
+1. **FilePaginationAjaxTest.php:440** - Add assertion to test (BLOCKER)
+2. **sermon.php:449** - Fix `sb_display_url` argument mismatch
+3. **FilePaginationAjax.php:151** - Fix `sb_get_option` argument mismatch
+4. **SermonPaginationAjax.php:58** - Fix `sb_get_option` argument mismatch
 
-### Larger Refactoring (ongoing)
-7. **sermon.php** - Break down sb_display_sermons(), sb_shortcode()
-8. **Widget classes** - Reduce complexity in widget() methods
-9. **LegacyAjaxHandler** - Consider splitting into smaller handlers
+### Quick Wins (Easy Fixes)
+
+5. **require → require_once** - 5 files (mechanical change)
+6. **echo parentheses** - sermon.php:508 (remove parens)
+7. **switch default** - HelperFunctions.php:98 (add default case)
+8. **iframe title** - HelpPage.php:176 (add title attribute)
+
+### Medium Effort (HTML/Accessibility)
+
+9. **Duplicate HTML IDs** - FilesPage.php (rename IDs in orphan/trash tables)
+10. **Missing table headers** - 8 tables across multiple files
+
+### Larger Refactoring
+
+11. **Cognitive complexity** - 9 functions need splitting
+    - SermonEditorPage.php:505 (59 → <15) - largest
+    - sermon.php has 4 functions needing refactoring
+12. **Duplicate literals** - Create Constants class for 17+ repeated strings
 
 ---
 
-## Suggested Constants Class
+## Progress Since Initial Scan
 
-```php
-<?php
-namespace SermonBrowser;
+| Metric | Initial | Current | Change |
+|--------|---------|---------|--------|
+| Total Issues | 1,489 | 214 | -1,275 (85% reduction) |
+| Blockers | 4 | 1 | -3 |
+| Critical | 59 | 30 | -29 |
+| Major | 147 | 140 | -7 |
+| Minor | 49 | 43 | -6 |
 
-class Constants
-{
-    // HTML attributes
-    public const SELECTED = 'selected="selected"';
-    public const CHECKED = 'checked="checked"';
+Major reduction due to:
+- Deletion of legacy `sb-includes/` directory
+- Refactoring work completed in previous sessions
+- UpgraderTest.php blocker fixes
 
-    // UI strings
-    public const ALL_FILTER = '[All]';
+---
 
-    // Date formats
-    public const RFC822_DATE = 'D, d M Y H:i:s O';
-    public const DEFAULT_TIME = '00:00';
+## Fixes This Session (Pending Push)
 
-    // Paths
-    public const IMAGES_PATH = 'images/';
-    public const STYLE_INDEX_CSS = '/style-index.css';
+| Commit | File | Issues Fixed |
+|--------|------|--------------|
+| ccf1450 | `src/Frontend/FilterRenderer.php` | php:S3776 (complexity 28→<15), Web:S5256 (missing th) |
+| pending | `tests/Unit/Admin/Ajax/FilePaginationAjaxTest.php` | php:S2699 (missing assertion) - BLOCKER |
+| pending | `sermon.php` | php:S6600 (echo parentheses) |
+| pending | `src/Utilities/HelperFunctions.php` | php:S131 (missing switch default) |
+| pending | `src/Admin/Pages/HelpPage.php` | Web:FrameWithoutTitleCheck (iframe title) |
+| pending | `src/Admin/Pages/TemplatesPage.php` | php:S2003 (require → require_once) |
+| pending | `src/Admin/Pages/UninstallPage.php` | php:S2003 (require → require_once) |
+| pending | `src/Blocks/BlockRegistry.php` | php:S2003 x2 (refactored to cached helper) |
+| pending | `src/Frontend/FileDisplay.php` | php:S2003 (require → require_once) |
 
-    // Admin URLs
-    public const SERMON_PAGE_URL = 'admin.php?page=sermon-browser/sermon.php';
-    public const NEW_SERMON_GETID3_URL = 'admin.php?page=sermon-browser/new_sermon.php&getid3=';
-
-    // Error messages
-    public const SERMON_NOT_FOUND = 'Sermon not found.';
-    public const PREACHER_NOT_FOUND = 'Preacher not found.';
-    public const SERIES_NOT_FOUND = 'Series not found.';
-    public const SERVICE_NOT_FOUND = 'Service not found.';
-    public const FILE_NOT_FOUND = 'File not found.';
-    public const NO_PERMISSION = 'You do not have the correct permissions to edit the SermonBrowser options';
-
-    // REST API descriptions
-    public const SERMON_ID_DESC = 'Unique identifier for the sermon.';
-    public const PREACHER_ID_DESC = 'Unique identifier for the preacher.';
-    public const SERIES_ID_DESC = 'Unique identifier for the series.';
-    public const SERVICE_ID_DESC = 'Unique identifier for the service.';
-}
-```
+**Expected reduction after push:** -11 issues (1 blocker, 2 critical, 8 bugs)
 
 ---
 
 ## Notes
 
-- SonarQube counts include both OPEN and CLOSED issues in totals
-- Many CLOSED issues are from deleted legacy files (sb-includes/)
-- The 259 "violations" metric counts only OPEN issues by severity
-- Cognitive complexity > 15 indicates functions need refactoring
-- Duplicate strings > 3 occurrences should become constants
+- Line numbers may shift as other agents make changes
+- Vulnerability issues (php:S2612) are "security hotspot" style - need manual review, not necessarily bugs
+- Duplicate HTML IDs in FilesPage.php are caused by having two tables (main files + orphan/trash) with similar structure
+- sermon.php cognitive complexity issues will be addressed during ongoing refactoring work

@@ -344,7 +344,8 @@ class OptionsPage
             <a href="http://www.sermonbrowser.com/">
                 <img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png"
                      width="191" height="35"
-                     style="margin: 1em 2em; float: right;"/>
+                     style="margin: 1em 2em; float: right;"
+                     alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>"/>
             </a>
             <form method="post">
                 <h2><?php _e('Basic Options', 'sermon-browser') ?></h2>
