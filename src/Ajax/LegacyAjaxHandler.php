@@ -84,7 +84,7 @@ class LegacyAjaxHandler
                 break;
         }
 
-        die();
+        wp_die();
     }
 
     /**
@@ -149,12 +149,12 @@ class LegacyAjaxHandler
                 Preacher::update($pid, ['name' => $pname]);
             }
             echo 'done';
-            die();
+            wp_die();
         }
 
         $newId = Preacher::create(['name' => $pname, 'description' => '', 'image' => '']);
         echo $newId;
-        die();
+        wp_die();
     }
 
     /**
@@ -175,12 +175,12 @@ class LegacyAjaxHandler
                 Service::updateWithTimeShift($sid, $sname, $stime);
             }
             echo 'done';
-            die();
+            wp_die();
         }
 
         $newId = Service::create(['name' => $sname, 'time' => $stime]);
         echo $newId;
-        die();
+        wp_die();
     }
 
     /**
@@ -198,12 +198,12 @@ class LegacyAjaxHandler
                 Series::update($ssid, ['name' => $ssname]);
             }
             echo 'done';
-            die();
+            wp_die();
         }
 
         $newId = Series::create(['name' => $ssname, 'page_id' => 0]);
         echo $newId;
-        die();
+        wp_die();
     }
 
     /**
@@ -240,10 +240,10 @@ class LegacyAjaxHandler
         if (!file_exists($filePath) || unlink($filePath)) {
             File::delete($fid);
             echo 'deleted';
-            die();
+            wp_die();
         }
         echo 'failed';
-        die();
+        wp_die();
     }
 
     /**
@@ -257,7 +257,7 @@ class LegacyAjaxHandler
     {
         if (!self::isFileExtensionAllowed($fname)) {
             echo 'forbidden';
-            die();
+            wp_die();
         }
 
         $uploadDir = sb_get_option('upload_dir');
@@ -268,11 +268,11 @@ class LegacyAjaxHandler
         ) {
             File::update($fid, ['name' => $fname]);
             echo 'renamed';
-            die();
+            wp_die();
         }
 
         echo 'failed';
-        die();
+        wp_die();
     }
 
     /**
@@ -349,7 +349,7 @@ class LegacyAjaxHandler
         <?php endif ?>
         </script>
         <?php
-        die();
+        wp_die();
     }
 
     /**
@@ -362,7 +362,7 @@ class LegacyAjaxHandler
 
         if (count($files) === 0) {
             echo '<tr><td>' . esc_html__('No results', 'sermon-browser') . '</td></tr>';
-            die();
+            wp_die();
         }
 
         $i = 0;
@@ -371,7 +371,7 @@ class LegacyAjaxHandler
             self::renderFileRow($file, $i, $isUnlinked);
         }
 
-        die();
+        wp_die();
     }
 
     /**
