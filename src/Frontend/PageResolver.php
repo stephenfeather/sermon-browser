@@ -32,6 +32,8 @@ class PageResolver
             return self::$pageId;
         }
 
+        $foundId = 0;
+
         // Try 1: Look for pages with [sermons] or [sermon] shortcode
         $query = new \WP_Query([
             'post_type' => 'page',
@@ -47,35 +49,37 @@ class PageResolver
             foreach ($query->posts as $post_id) {
                 $content = get_post_field('post_content', $post_id);
                 if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
-                    self::$pageId = (int) $post_id;
-                    return self::$pageId;
+                    $foundId = (int) $post_id;
+                    break;
                 }
             }
         }
 
         // Try 2: Look in any post type
-        $query = new \WP_Query([
-            'post_type' => 'any',
-            'post_status' => ['publish', 'private'],
-            's' => '[sermon',
-            'orderby' => 'date',
-            'order' => 'ASC',
-            'posts_per_page' => 10,
-            'fields' => 'ids',
-        ]);
+        if ($foundId === 0) {
+            $query = new \WP_Query([
+                'post_type' => 'any',
+                'post_status' => ['publish', 'private'],
+                's' => '[sermon',
+                'orderby' => 'date',
+                'order' => 'ASC',
+                'posts_per_page' => 10,
+                'fields' => 'ids',
+            ]);
 
-        if ($query->have_posts()) {
-            foreach ($query->posts as $post_id) {
-                $content = get_post_field('post_content', $post_id);
-                if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
-                    self::$pageId = (int) $post_id;
-                    return self::$pageId;
+            if ($query->have_posts()) {
+                foreach ($query->posts as $post_id) {
+                    $content = get_post_field('post_content', $post_id);
+                    if (preg_match('/\[sermons?\s*[\]\s]/', $content)) {
+                        $foundId = (int) $post_id;
+                        break;
+                    }
                 }
             }
         }
 
-        self::$pageId = 0;
-        return 0;
+        self::$pageId = $foundId;
+        return self::$pageId;
     }
 
     /**
@@ -100,24 +104,22 @@ class PageResolver
         }
 
         $pageid = self::getPageId();
+
         if ($pageid === 0) {
             self::$displayUrl = '';
-            return '';
-        }
-
-        if (defined('SB_AJAX') && SB_AJAX) {
+        } elseif (defined('SB_AJAX') && SB_AJAX) {
             self::$displayUrl = site_url() . '/?page_id=' . $pageid;
-            return self::$displayUrl;
+        } else {
+            $url = get_permalink($pageid);
+
+            // Hack to force true permalink even if page used for front page
+            if ($url === site_url() || $url === '' || $url === false) {
+                $url = site_url() . '/?page_id=' . $pageid;
+            }
+
+            self::$displayUrl = $url;
         }
 
-        $url = get_permalink($pageid);
-
-        // Hack to force true permalink even if page used for front page
-        if ($url === site_url() || $url === '' || $url === false) {
-            $url = site_url() . '/?page_id=' . $pageid;
-        }
-
-        self::$displayUrl = $url;
         return self::$displayUrl;
     }
 
