@@ -152,7 +152,20 @@ HERE;
      */
     public static function defaultCss(): string
     {
-        $css = <<<'HERE'
+        $css = self::getBaseStyles()
+            . self::getPodcastStyles()
+            . self::getResultsStyles()
+            . self::getWidgetStyles();
+
+        return str_replace('**SB_PATH**', SB_PLUGIN_URL, $css);
+    }
+
+    /**
+     * Get base sermon browser styles.
+     */
+    private static function getBaseStyles(): string
+    {
+        return <<<'CSS'
 .sermon-browser h2 {
     clear: both;
 }
@@ -238,6 +251,15 @@ img.sermon-icon , img.site-icon {
     border: none;
 }
 
+CSS;
+    }
+
+    /**
+     * Get podcast-related styles.
+     */
+    private static function getPodcastStyles(): string
+    {
+        return <<<'CSS'
 table.podcast {
     margin: 0 0 1em 0;
 }
@@ -276,6 +298,15 @@ div.filter {
     font-weight: bold;
 }
 
+CSS;
+    }
+
+    /**
+     * Get sermon results page styles.
+     */
+    private static function getResultsStyles(): string
+    {
+        return <<<'CSS'
 div.sermon-browser-results span.preacher {
     font-size: 120%;
 }
@@ -349,6 +380,15 @@ table.nearby-sermons td {
     vertical-align: top;
 }
 
+CSS;
+    }
+
+    /**
+     * Get widget and utility styles.
+     */
+    private static function getWidgetStyles(): string
+    {
+        return <<<'CSS'
 ul.sermon-widget {
     list-style-type:none;
     margin:0;
@@ -375,7 +415,6 @@ h2 div.sb_edit_link {
 .sb-clear {
     clear:both;
 }
-HERE;
-        return str_replace('**SB_PATH**', SB_PLUGIN_URL, $css);
+CSS;
     }
 }
