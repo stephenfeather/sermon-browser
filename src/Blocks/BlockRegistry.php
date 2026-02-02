@@ -46,6 +46,11 @@ class BlockRegistry
     private const FRONTEND_STYLE_HANDLE = 'sermon-browser-blocks-style';
 
     /**
+     * Frontend style filename.
+     */
+    private const FRONTEND_STYLE_FILE = '/style-index.css';
+
+    /**
      * Cached asset data from index.asset.php.
      *
      * @var array{dependencies: array<string>, version: string}|null
@@ -137,10 +142,10 @@ class BlockRegistry
         );
 
         // Enqueue editor styles if they exist.
-        if (file_exists($build_path . '/style-index.css')) {
+        if (file_exists($build_path . self::FRONTEND_STYLE_FILE)) {
             wp_enqueue_style(
                 self::FRONTEND_STYLE_HANDLE,
-                $build_url . '/style-index.css',
+                $build_url . self::FRONTEND_STYLE_FILE,
                 [],
                 $asset['version']
             );
@@ -162,12 +167,12 @@ class BlockRegistry
         $build_path = SB_PLUGIN_DIR . '/sermon-browser/build/blocks';
         $build_url = SB_PLUGIN_URL . '/build/blocks';
 
-        if (file_exists($build_path . '/style-index.css')) {
+        if (file_exists($build_path . self::FRONTEND_STYLE_FILE)) {
             $asset = $this->getAssetData();
 
             wp_enqueue_style(
                 self::FRONTEND_STYLE_HANDLE,
-                $build_url . '/style-index.css',
+                $build_url . self::FRONTEND_STYLE_FILE,
                 [],
                 $asset['version']
             );
