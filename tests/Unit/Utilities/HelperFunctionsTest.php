@@ -139,4 +139,124 @@ class HelperFunctionsTest extends TestCase
 
         $this->assertFalse($result);
     }
+
+    /**
+     * Test returnKbytes with megabytes.
+     */
+    public function testReturnKbytesWithMegabytes(): void
+    {
+        $result = HelperFunctions::returnKbytes('15M');
+
+        $this->assertSame(15360, $result); // 15 * 1024
+    }
+
+    /**
+     * Test returnKbytes with lowercase megabytes.
+     */
+    public function testReturnKbytesWithLowercaseMegabytes(): void
+    {
+        $result = HelperFunctions::returnKbytes('15m');
+
+        $this->assertSame(15360, $result);
+    }
+
+    /**
+     * Test returnKbytes with gigabytes.
+     */
+    public function testReturnKbytesWithGigabytes(): void
+    {
+        $result = HelperFunctions::returnKbytes('1G');
+
+        $this->assertSame(1048576, $result); // 1 * 1024 * 1024
+    }
+
+    /**
+     * Test returnKbytes with lowercase gigabytes.
+     */
+    public function testReturnKbytesWithLowercaseGigabytes(): void
+    {
+        $result = HelperFunctions::returnKbytes('2g');
+
+        $this->assertSame(2097152, $result); // 2 * 1024 * 1024
+    }
+
+    /**
+     * Test returnKbytes with plain number (no suffix).
+     */
+    public function testReturnKbytesWithNoSuffix(): void
+    {
+        $result = HelperFunctions::returnKbytes('1024');
+
+        $this->assertSame(1024, $result);
+    }
+
+    /**
+     * Test returnKbytes with empty string.
+     */
+    public function testReturnKbytesWithEmptyString(): void
+    {
+        $result = HelperFunctions::returnKbytes('');
+
+        $this->assertSame(0, $result);
+    }
+
+    /**
+     * Test returnKbytes with whitespace.
+     */
+    public function testReturnKbytesTrimsWhitespace(): void
+    {
+        $result = HelperFunctions::returnKbytes('  15M  ');
+
+        $this->assertSame(15360, $result);
+    }
+
+    /**
+     * Test sanitisePath converts backslashes to forward slashes.
+     */
+    public function testSanitisePathConvertsBackslashes(): void
+    {
+        $result = HelperFunctions::sanitisePath('C:\\Users\\test\\file.txt');
+
+        $this->assertSame('C:/Users/test/file.txt', $result);
+    }
+
+    /**
+     * Test sanitisePath removes duplicate slashes.
+     */
+    public function testSanitisePathRemovesDuplicateSlashes(): void
+    {
+        $result = HelperFunctions::sanitisePath('/var//www///html/file.txt');
+
+        $this->assertSame('/var/www/html/file.txt', $result);
+    }
+
+    /**
+     * Test sanitisePath handles mixed slashes.
+     */
+    public function testSanitisePathHandlesMixedSlashes(): void
+    {
+        $result = HelperFunctions::sanitisePath('C:\\Users//test\\\\file.txt');
+
+        $this->assertSame('C:/Users/test/file.txt', $result);
+    }
+
+    /**
+     * Test sanitisePath with already clean path.
+     */
+    public function testSanitisePathWithCleanPath(): void
+    {
+        $result = HelperFunctions::sanitisePath('/var/www/html/file.txt');
+
+        $this->assertSame('/var/www/html/file.txt', $result);
+    }
+
+    /**
+     * Test sanitisePath with empty string.
+     */
+    public function testSanitisePathWithEmptyString(): void
+    {
+        $result = HelperFunctions::sanitisePath('');
+
+        $this->assertSame('', $result);
+    }
 }
