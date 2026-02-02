@@ -547,27 +547,15 @@ class FilterRenderer
     /**
      * Render the dropdown filter HTML form.
      *
-     * @param array<object> $preachers Preacher data.
-     * @param array<object> $series Series data.
-     * @param array<object> $services Service data.
-     * @param array<object> $bookCount Book count data.
-     * @param array<string, string> $translatedBooks Book translations.
-     * @param array<string, string> $sortByOptions Sort by options.
-     * @param array<string, string> $directionOptions Direction options.
-     * @param string $currentSortBy Current sort by value.
-     * @param string $currentDir Current direction value.
+     * @param array{preachers: array<object>, series: array<object>, services: array<object>} $entities Entity data.
+     * @param array{count: array<object>, translations: array<string, string>} $books Book data.
+     * @param array{byOptions: array<string, string>, dirOptions: array<string, string>, currentBy: string, currentDir: string} $sorting Sorting options.
      * @return void
      */
     private static function renderDropdownHtml(
-        array $preachers,
-        array $series,
-        array $services,
-        array $bookCount,
-        array $translatedBooks,
-        array $sortByOptions,
-        array $directionOptions,
-        string $currentSortBy,
-        string $currentDir
+        array $entities,
+        array $books,
+        array $sorting
     ): void {
         ?>
         <span class="inline_controls"><button type="button" id="show_hide_filter" class="button-link" aria-label="<?php esc_attr_e('Toggle filter', 'sermon-browser'); ?>"></button></span>
@@ -578,21 +566,21 @@ class FilterRenderer
                         <tr>
                             <th scope="row" class="fieldname"><?php esc_html_e('Preacher', 'sermon-browser'); ?></th>
                             <td class="field">
-                                <?php self::renderEntitySelect('preacher', $preachers); ?>
+                                <?php self::renderEntitySelect('preacher', $entities['preachers']); ?>
                             </td>
                             <th scope="row" class="fieldname rightcolumn"><?php esc_html_e('Services', 'sermon-browser'); ?></th>
                             <td class="field">
-                                <?php self::renderEntitySelect('service', $services); ?>
+                                <?php self::renderEntitySelect('service', $entities['services']); ?>
                             </td>
                         </tr>
                         <tr>
                             <th scope="row" class="fieldname"><?php esc_html_e('Book', 'sermon-browser'); ?></th>
                             <td class="field">
-                                <?php self::renderBookSelect($bookCount, $translatedBooks); ?>
+                                <?php self::renderBookSelect($books['count'], $books['translations']); ?>
                             </td>
                             <th scope="row" class="fieldname rightcolumn"><?php esc_html_e('Series', 'sermon-browser'); ?></th>
                             <td class="field">
-                                <?php self::renderEntitySelect('series', $series); ?>
+                                <?php self::renderEntitySelect('series', $entities['series']); ?>
                             </td>
                         </tr>
                         <tr>
@@ -608,11 +596,11 @@ class FilterRenderer
                         <tr>
                             <th scope="row" class="fieldname"><?php esc_html_e('Sort by', 'sermon-browser'); ?></th>
                             <td class="field">
-                                <?php self::renderSortSelect($sortByOptions, $currentSortBy); ?>
+                                <?php self::renderSortSelect($sorting['byOptions'], $sorting['currentBy']); ?>
                             </td>
                             <th scope="row" class="fieldname rightcolumn"><?php esc_html_e('Direction', 'sermon-browser'); ?></th>
                             <td class="field">
-                                <?php self::renderDirectionSelect($directionOptions, $currentDir); ?>
+                                <?php self::renderDirectionSelect($sorting['dirOptions'], $sorting['currentDir']); ?>
                             </td>
                         </tr>
                         <tr>
