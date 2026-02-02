@@ -151,7 +151,7 @@ class PreachersPage
 
         // Create images directory if needed.
         if (!is_dir($imagesDir) && sb_mkdir($imagesDir)) {
-            @chmod($imagesDir, 0755);
+            @chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
         }
 
         $dest = $imagesDir . '/' . $filename;
@@ -163,7 +163,7 @@ class PreachersPage
         $error = true;
         echo '<div id="message" class="updated fade"><p><b>' .
             __('Could not save uploaded file. Please try again.', 'sermon-browser') . '</b></div>';
-        @chmod($imagesDir, 0755);
+        @chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
 
         return '';
     }
@@ -293,7 +293,7 @@ class PreachersPage
 
         if ($checkSermonUpload === 'notexist') {
             if (!is_dir($imagesDir) && mkdir($imagesDir)) {
-                chmod($imagesDir, 0755);
+                chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
             }
             $checkSermonUpload = sb_checkSermonUploadable('images/');
         }

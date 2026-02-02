@@ -177,11 +177,11 @@ class OptionsPage
     private function createUploadDirectories(string $dir): void
     {
         if (!is_dir(SB_ABSPATH . $dir) && sb_mkdir(SB_ABSPATH . $dir)) {
-            @chmod(SB_ABSPATH . $dir, 0755);
+            @chmod(SB_ABSPATH . $dir, 0755); // NOSONAR - WordPress standard directory permission
         }
 
         if (!is_dir(SB_ABSPATH . $dir . 'images') && sb_mkdir(SB_ABSPATH . $dir . 'images')) {
-            @chmod(SB_ABSPATH . $dir . 'images', 0755);
+            @chmod(SB_ABSPATH . $dir . 'images', 0755); // NOSONAR - WordPress standard directory permission
         }
     }
 

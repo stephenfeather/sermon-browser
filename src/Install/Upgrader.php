@@ -170,7 +170,7 @@ class Upgrader
         );
 
         foreach ((array) $files as $file) {
-            @chmod(SB_ABSPATH . $oldSermonPath . $file->name, 0644);
+            @chmod(SB_ABSPATH . $oldSermonPath . $file->name, 0644); // NOSONAR - WordPress standard file permission
             @rename(
                 SB_ABSPATH . $oldSermonPath . $file->name,
                 SB_ABSPATH . $sermonUploadDir . $file->name
@@ -200,7 +200,7 @@ class Upgrader
 
         $imagesDir = SB_ABSPATH . $sermonUploadDir . 'images';
         if (!is_dir($imagesDir) && sb_mkdir($imagesDir)) {
-            @chmod($imagesDir, 0755);
+            @chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
         }
 
         update_option('sb_sermon_db_version', '1.2');
