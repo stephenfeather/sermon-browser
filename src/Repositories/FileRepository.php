@@ -186,7 +186,7 @@ class FileRepository extends AbstractRepository
         $sql .= ' ORDER BY s.datetime DESC';
 
         if ($limit > 0) {
-            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+            $sql .= $this->db->prepare(Constants::SQL_LIMIT, $limit);
         }
 
         $results = $this->db->get_results($sql);
@@ -246,7 +246,7 @@ class FileRepository extends AbstractRepository
         $sql = "SELECT * FROM {$table} WHERE sermon_id = 0 AND type = 'file' ORDER BY name ASC";
 
         if ($limit > 0) {
-            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+            $sql .= $this->db->prepare(Constants::SQL_LIMIT, $limit);
         }
 
         $results = $this->db->get_results($sql);
@@ -271,7 +271,7 @@ class FileRepository extends AbstractRepository
                 ORDER BY f.name ASC";
 
         if ($limit > 0) {
-            $sql .= $this->db->prepare(' LIMIT %d', $limit);
+            $sql .= $this->db->prepare(Constants::SQL_LIMIT, $limit);
         }
 
         $results = $this->db->get_results($sql);
@@ -544,7 +544,7 @@ class FileRepository extends AbstractRepository
                 ORDER BY f.name ASC";
 
         if ($limit > 0) {
-            $sql .= $this->db->prepare(' LIMIT %d OFFSET %d', $limit, $offset);
+            $sql .= $this->db->prepare(Constants::SQL_LIMIT_OFFSET, $limit, $offset);
         }
 
         $results = $this->db->get_results($sql);
@@ -570,7 +570,7 @@ class FileRepository extends AbstractRepository
                 ORDER BY f.name ASC";
 
         if ($limit > 0) {
-            $sql .= $this->db->prepare(' LIMIT %d OFFSET %d', $limit, $offset);
+            $sql .= $this->db->prepare(Constants::SQL_LIMIT_OFFSET, $limit, $offset);
         }
 
         $results = $this->db->get_results($sql);
@@ -600,7 +600,7 @@ class FileRepository extends AbstractRepository
         );
 
         if ($limit > 0) {
-            $sql .= $this->db->prepare(' LIMIT %d OFFSET %d', $limit, $offset);
+            $sql .= $this->db->prepare(Constants::SQL_LIMIT_OFFSET, $limit, $offset);
         }
 
         $results = $this->db->get_results($sql);

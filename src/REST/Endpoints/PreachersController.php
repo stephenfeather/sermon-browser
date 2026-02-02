@@ -74,7 +74,7 @@ class PreachersController extends RestController
                     'permission_callback' => [$this, 'get_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the preacher.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_PREACHER_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -93,7 +93,7 @@ class PreachersController extends RestController
                     'permission_callback' => [$this, 'delete_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the preacher.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_PREACHER_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -158,7 +158,7 @@ class PreachersController extends RestController
     {
         $args = [
             'id' => [
-                'description' => __('Unique identifier for the preacher.', 'sermon-browser'),
+                'description' => __(Constants::DESC_PREACHER_ID, 'sermon-browser'),
                 'type' => 'integer',
                 'required' => true,
                 'sanitize_callback' => 'absint',
@@ -198,7 +198,7 @@ class PreachersController extends RestController
      */
     public function get_item_permissions_check($request): bool
     {
-        return true;
+        return $this->get_items_permissions_check($request);
     }
 
     /**
@@ -371,9 +371,7 @@ class PreachersController extends RestController
         $preacher = Preacher::find($id);
         $responseData = $this->prepare_preacher_for_response($preacher);
 
-        $response = new WP_REST_Response($responseData, 201);
-
-        return $response;
+        return new WP_REST_Response($responseData, 201);
     }
 
     /**

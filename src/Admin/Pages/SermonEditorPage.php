@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace SermonBrowser\Admin\Pages;
 
 use SermonBrowser\Admin\Pages\SermonId3Importer;
+use SermonBrowser\Constants;
 use SermonBrowser\Facades\Service;
 use SermonBrowser\Facades\File;
 use SermonBrowser\Facades\Series;
@@ -123,7 +124,7 @@ class SermonEditorPage
 
         // Redirect on success.
         if (!$error) {
-            echo "<script>document.location = '" . admin_url('admin.php?page=sermon-browser/sermon.php&saved=true') . "';</script>";
+            echo "<script>document.location = '" . admin_url(Constants::SERMON_PAGE . '&saved=true') . "';</script>";
             die();
         }
 
@@ -632,7 +633,7 @@ class SermonEditorPage
                 <table class="widefat" role="presentation">
                     <thead>
                         <tr>
-                            <th scope="col" colspan="2"><?php _e('Enter sermon details', 'sermon-browser') ?></th>
+                            <td colspan="2"><strong><?php _e('Enter sermon details', 'sermon-browser') ?></strong></td>
                         </tr>
                     </thead>
                     <tr>
@@ -699,7 +700,7 @@ class SermonEditorPage
                     </tr>
                     <tr id="passage" class="passage">
                         <td>
-                            <table>
+                            <table role="presentation">
                                 <tr>
                                     <td><?php $this->renderBooksDropdown('startbook', 'start[book][]', $books, $translated_books, 'start1', 'syncBook(this)'); ?></td>
                                     <td><input type="text" style="width:60px;" name="start[chapter][]" value="" class="start2" /><br /></td>
@@ -708,7 +709,7 @@ class SermonEditorPage
                             </table>
                         </td>
                         <td>
-                            <table>
+                            <table role="presentation">
                                 <tr>
                                     <td><?php $this->renderBooksDropdown('endbook', 'end[book][]', $books, $translated_books, 'end'); ?></td>
                                     <td><input type="text" style="width:60px;" name="end[chapter][]" value="" class="end2" /><br /></td>
@@ -811,7 +812,7 @@ class SermonEditorPage
                                     </th>
                                     <td class="filelist">
                                         <select id="file" name="file[]">
-                                        <?php echo count($files) === 0 ? '<option value="0">No files found</option>' : '<option value="0"></option>'; ?>
+                                        <?php echo empty($files) ? '<option value="0">No files found</option>' : '<option value="0"></option>'; ?>
                                         <?php foreach ($files as $file) : ?>
                                             <option value="<?php echo esc_attr((string) $file->id); ?>"><?php echo esc_html($file->name); ?></option>
                                         <?php endforeach; ?>
@@ -843,7 +844,7 @@ class SermonEditorPage
                 if (jQuery('#preacher')[0].value != 'newPreacher') return;
                 var p = prompt("<?php _e("New preacher's name?", 'sermon-browser')?>", "<?php _e("Preacher's name", 'sermon-browser')?>");
                 if (p != null) {
-                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {pname: p, sermon: 1}, function(r) {
+                    jQuery.post('<?php echo admin_url(Constants::SERMON_PAGE); ?>', {pname: p, sermon: 1}, function(r) {
                         if (r) {
                             jQuery('#preacher option:first').before('<option value="' + r + '">' + p + '</option>');
                             jQuery("#preacher option[value='" + r + "']").prop('selected', true);
@@ -864,7 +865,7 @@ class SermonEditorPage
                     if (s == null) { break; }
                 }
                 if (s != null) {
-                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {sname: s, sermon: 1}, function(r) {
+                    jQuery.post('<?php echo admin_url(Constants::SERMON_PAGE); ?>', {sname: s, sermon: 1}, function(r) {
                         if (r) {
                             jQuery('#service option:first').before('<option value="' + r + '">' + s.match(/(.*?)@/)[1] + '</option>');
                             jQuery("#service option[value='" + r + "']").prop('selected', true);
@@ -877,7 +878,7 @@ class SermonEditorPage
                 if (jQuery('#series')[0].value != 'newSeries') return;
                 var ss = prompt("<?php _e("New series' name?", 'sermon-browser')?>", "<?php _e("Series' name", 'sermon-browser')?>");
                 if (ss != null) {
-                    jQuery.post('<?php echo admin_url('admin.php?page=sermon-browser/sermon.php'); ?>', {ssname: ss, sermon: 1}, function(r) {
+                    jQuery.post('<?php echo admin_url(Constants::SERMON_PAGE); ?>', {ssname: ss, sermon: 1}, function(r) {
                         if (r) {
                             jQuery('#series option:first').before('<option value="' + r + '">' + ss + '</option>');
                             jQuery("#series option[value='" + r + "']").prop('selected', true);
@@ -1212,7 +1213,7 @@ class SermonEditorPage
         $onChangeAttr = $onChange ? ' onchange="' . esc_attr($onChange) . '"' : '';
         echo '<select id="' . esc_attr($id) . '" name="' . esc_attr($name) . '"' . $onChangeAttr . '>';
 
-        if (count($items) === 0) {
+        if (empty($items)) {
             echo '<option value="" selected="selected"></option>';
         } else {
             foreach ($items as $item) {

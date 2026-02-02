@@ -73,7 +73,7 @@ class SermonsController extends RestController
                     'permission_callback' => [$this, 'get_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the sermon.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERMON_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -92,7 +92,7 @@ class SermonsController extends RestController
                     'permission_callback' => [$this, 'delete_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the sermon.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERMON_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -190,7 +190,7 @@ class SermonsController extends RestController
     {
         $args = [
             'id' => [
-                'description' => __('Unique identifier for the sermon.', 'sermon-browser'),
+                'description' => __(Constants::DESC_SERMON_ID, 'sermon-browser'),
                 'type' => 'integer',
                 'required' => true,
                 'sanitize_callback' => 'absint',
@@ -230,7 +230,7 @@ class SermonsController extends RestController
      */
     public function get_item_permissions_check($request): bool
     {
-        return true;
+        return $this->get_items_permissions_check($request);
     }
 
     /**
@@ -426,9 +426,7 @@ class SermonsController extends RestController
         $sermon = Sermon::findWithRelations($id);
         $responseData = $this->prepare_sermon_for_response($sermon);
 
-        $response = new WP_REST_Response($responseData, 201);
-
-        return $response;
+        return new WP_REST_Response($responseData, 201);
     }
 
     /**

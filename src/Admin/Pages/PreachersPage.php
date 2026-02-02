@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Constants;
 use SermonBrowser\Facades\Preacher;
 
 /**
@@ -102,7 +103,7 @@ class PreachersPage
         // Handle remove checkbox.
         if (isset($_POST['remove'])) {
             Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => '']);
-            @unlink(SB_ABSPATH . sb_get_option('upload_dir') . 'images/' . sanitize_file_name($_POST['old']));
+            @unlink(SB_ABSPATH . sb_get_option('upload_dir') . Constants::IMAGES_PATH . sanitize_file_name($_POST['old']));
         } elseif ($pid === 0) {
             // Insert new preacher.
             Preacher::create(['name' => $name, 'description' => $description, 'image' => $filename]);
@@ -112,7 +113,7 @@ class PreachersPage
 
             // Delete old image if changed.
             if ($_POST['old'] !== $filename) {
-                @unlink(SB_ABSPATH . sb_get_option('upload_dir') . 'images/' . sanitize_file_name($_POST['old']));
+                @unlink(SB_ABSPATH . sb_get_option('upload_dir') . Constants::IMAGES_PATH . sanitize_file_name($_POST['old']));
             }
         }
 
@@ -192,7 +193,7 @@ class PreachersPage
         // Get and delete image.
         $p = Preacher::find($pid);
         if ($p && $p->image) {
-            @unlink(SB_ABSPATH . sb_get_option('upload_dir') . 'images/' . $p->image);
+            @unlink(SB_ABSPATH . sb_get_option('upload_dir') . Constants::IMAGES_PATH . $p->image);
         }
 
         // Delete preacher.
@@ -218,7 +219,8 @@ class PreachersPage
         <div class="wrap">
             <a href="http://www.sermonbrowser.com/">
                 <img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png"
-                     width="191" height="35" style="margin: 1em 2em; float: right;"/>
+                     width="191" height="35" style="margin: 1em 2em; float: right;"
+                     alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>"/>
             </a>
             <h2>
                 <?php echo $isEdit ? __('Edit', 'sermon-browser') : __('Add', 'sermon-browser'); ?>
@@ -256,7 +258,7 @@ class PreachersPage
                             <td>
                                 <?php if ($isEdit && $preacher && $preacher->image) : ?>
                                     <div>
-                                        <img src="<?php echo esc_url(trailingslashit(site_url()) . sb_get_option('upload_dir') . 'images/' . $preacher->image); ?>">
+                                        <img src="<?php echo esc_url(trailingslashit(site_url()) . sb_get_option('upload_dir') . Constants::IMAGES_PATH . $preacher->image); ?>" alt="<?php echo esc_attr($preacher->name); ?>">
                                     </div>
                                     <input type="hidden" name="old" value="<?php echo esc_attr($preacher->image); ?>">
                                 <?php endif; ?>
@@ -289,13 +291,13 @@ class PreachersPage
     private function checkImagesFolder(): void
     {
         $imagesDir = SB_ABSPATH . $this->uploadDir . 'images';
-        $checkSermonUpload = sb_checkSermonUploadable('images/');
+        $checkSermonUpload = sb_checkSermonUploadable(Constants::IMAGES_PATH);
 
         if ($checkSermonUpload === 'notexist') {
             if (!is_dir($imagesDir) && mkdir($imagesDir)) {
                 chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
             }
-            $checkSermonUpload = sb_checkSermonUploadable('images/');
+            $checkSermonUpload = sb_checkSermonUploadable(Constants::IMAGES_PATH);
         }
 
         if ($checkSermonUpload !== 'writeable') {
@@ -317,7 +319,8 @@ class PreachersPage
         <div class="wrap">
             <a href="http://www.sermonbrowser.com/">
                 <img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png"
-                     width="191" height="35" style="margin: 1em 2em; float: right;"/>
+                     width="191" height="35" style="margin: 1em 2em; float: right;"
+                     alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>"/>
             </a>
             <h2>
                 <?php _e('Preachers', 'sermon-browser'); ?>
@@ -347,7 +350,7 @@ class PreachersPage
                         <td><?php echo esc_html(stripslashes($preacher->name)); ?></td>
                         <td style="text-align:center">
                             <?php if ($preacher->image) : ?>
-                                <img src="<?php echo esc_url(trailingslashit(site_url()) . sb_get_option('upload_dir') . 'images/' . $preacher->image); ?>">
+                                <img src="<?php echo esc_url(trailingslashit(site_url()) . sb_get_option('upload_dir') . Constants::IMAGES_PATH . $preacher->image); ?>" alt="<?php echo esc_attr($preacher->name); ?>">
                             <?php endif; ?>
                         </td>
                         <td style="text-align:center"><?php echo (int) $preacher->sermon_count; ?></td>

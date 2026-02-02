@@ -75,7 +75,7 @@ class SeriesController extends RestController
                     'permission_callback' => [$this, 'get_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the series.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERIES_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -94,7 +94,7 @@ class SeriesController extends RestController
                     'permission_callback' => [$this, 'delete_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the series.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERIES_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -115,7 +115,7 @@ class SeriesController extends RestController
                     'permission_callback' => [$this, 'get_sermons_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the series.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERIES_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -173,7 +173,7 @@ class SeriesController extends RestController
     {
         $args = [
             'id' => [
-                'description' => __('Unique identifier for the series.', 'sermon-browser'),
+                'description' => __(Constants::DESC_SERIES_ID, 'sermon-browser'),
                 'type' => 'integer',
                 'required' => true,
                 'sanitize_callback' => 'absint',
@@ -213,7 +213,7 @@ class SeriesController extends RestController
      */
     public function get_item_permissions_check($request): bool
     {
-        return true;
+        return $this->get_items_permissions_check($request);
     }
 
     /**
@@ -226,7 +226,7 @@ class SeriesController extends RestController
      */
     public function get_sermons_permissions_check($_request): bool
     {
-        return true;
+        return $this->get_items_permissions_check($_request);
     }
 
     /**

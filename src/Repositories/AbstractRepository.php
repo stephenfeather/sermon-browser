@@ -263,7 +263,7 @@ abstract class AbstractRepository implements RepositoryInterface
     protected function sanitizeColumnName(string $column): ?string
     {
         // Remove any non-alphanumeric characters except underscore
-        $column = preg_replace('/[^a-zA-Z0-9_]/', '', $column);
+        $column = preg_replace('/\W/', '', $column);
 
         if (empty($column)) {
             return null;

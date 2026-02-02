@@ -68,7 +68,7 @@ class FilesController extends RestController
                     'permission_callback' => [$this, 'get_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the file.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_FILE_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -81,7 +81,7 @@ class FilesController extends RestController
                     'permission_callback' => [$this, 'delete_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the file.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_FILE_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -102,7 +102,7 @@ class FilesController extends RestController
                     'permission_callback' => [$this, 'get_sermon_files_permissions_check'],
                     'args' => [
                         'sermon_id' => [
-                            'description' => __('Unique identifier for the sermon.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERMON_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -115,7 +115,7 @@ class FilesController extends RestController
                     'permission_callback' => [$this, 'attach_file_permissions_check'],
                     'args' => [
                         'sermon_id' => [
-                            'description' => __('Unique identifier for the sermon.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERMON_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -173,7 +173,7 @@ class FilesController extends RestController
      */
     public function get_item_permissions_check($request): bool
     {
-        return true;
+        return $this->get_items_permissions_check($request);
     }
 
     /**
@@ -186,7 +186,7 @@ class FilesController extends RestController
      */
     public function get_sermon_files_permissions_check($_request): bool
     {
-        return true;
+        return $this->get_items_permissions_check($_request);
     }
 
     /**

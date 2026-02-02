@@ -129,7 +129,7 @@ class FilesPage
                 'ccount' => 0,
             ]);
             echo "<script>document.location = '" .
-                admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $fileId) .
+                admin_url(Constants::NEW_SERMON_GETID3 . $fileId) .
                 "';</script>";
             die();
         }
@@ -174,7 +174,7 @@ class FilesPage
             ]);
 
             echo "<script>document.location = '" .
-                admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $fileId) .
+                admin_url(Constants::NEW_SERMON_GETID3 . $fileId) .
                 "';</script>";
         }
     }
@@ -236,7 +236,7 @@ class FilesPage
 
             if (sb_import_options_set()) {
                 echo "<script>document.location = '" .
-                    admin_url('admin.php?page=sermon-browser/new_sermon.php&getid3=' . $fileId) .
+                    admin_url(Constants::NEW_SERMON_GETID3 . $fileId) .
                     "';</script>";
             } else {
                 echo '<div id="message" class="updated fade"><p><b>' .
@@ -428,7 +428,7 @@ class FilesPage
     {
         ?>
         <div class="wrap" id="top">
-            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height="35" style="margin: 1em 2em; float: right;" alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>" /></a>
             <h2><?php _e('Upload Files', 'sermon-browser') ?></h2>
             <?php $this->renderImportOptionsWarning(); ?>
             <br style="clear:both">
@@ -459,7 +459,7 @@ class FilesPage
      * @param int $count Total count.
      * @return void
      */
-    private function renderUnlinkedFilesSection(array $unlinked, int $count): void
+    private function renderUnlinkedFilesSection(array $unlinked, int $_count): void
     {
         ?>
         <div class="wrap">
@@ -520,7 +520,7 @@ class FilesPage
      * @param int $count Total count.
      * @return void
      */
-    private function renderLinkedFilesSection(array $linked, int $count): void
+    private function renderLinkedFilesSection(array $linked, int $_count): void
     {
         ?>
         <div class="wrap" id="linked">

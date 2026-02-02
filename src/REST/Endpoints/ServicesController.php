@@ -74,7 +74,7 @@ class ServicesController extends RestController
                     'permission_callback' => [$this, 'get_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the service.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERVICE_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -93,7 +93,7 @@ class ServicesController extends RestController
                     'permission_callback' => [$this, 'delete_item_permissions_check'],
                     'args' => [
                         'id' => [
-                            'description' => __('Unique identifier for the service.', 'sermon-browser'),
+                            'description' => __(Constants::DESC_SERVICE_ID, 'sermon-browser'),
                             'type' => 'integer',
                             'required' => true,
                             'sanitize_callback' => 'absint',
@@ -135,7 +135,7 @@ class ServicesController extends RestController
     {
         $args = [
             'id' => [
-                'description' => __('Unique identifier for the service.', 'sermon-browser'),
+                'description' => __(Constants::DESC_SERVICE_ID, 'sermon-browser'),
                 'type' => 'integer',
                 'required' => true,
                 'sanitize_callback' => 'absint',
@@ -175,7 +175,7 @@ class ServicesController extends RestController
      */
     public function get_item_permissions_check($request): bool
     {
-        return true;
+        return $this->get_items_permissions_check($request);
     }
 
     /**
@@ -323,9 +323,7 @@ class ServicesController extends RestController
         $service = Service::find($id);
         $responseData = $this->prepare_service_for_response($service);
 
-        $response = new WP_REST_Response($responseData, 201);
-
-        return $response;
+        return new WP_REST_Response($responseData, 201);
     }
 
     /**

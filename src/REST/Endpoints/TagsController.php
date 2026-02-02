@@ -121,7 +121,7 @@ class TagsController extends RestController
      */
     public function get_sermons_by_tag_permissions_check($_request): bool
     {
-        return true;
+        return $this->get_items_permissions_check($_request);
     }
 
     /**
