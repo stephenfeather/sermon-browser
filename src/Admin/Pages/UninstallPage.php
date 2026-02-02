@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Install\Uninstaller;
+
 /**
  * Class UninstallPage
  *
@@ -54,7 +56,8 @@ class UninstallPage
             wp_die(__("You do not have the correct permissions to Uninstall SermonBrowser", 'sermon-browser'));
         }
 
-        require_once SB_INCLUDES_DIR . '/uninstall.php';
+        $wipeFiles = isset($_POST['wipe']) && $_POST['wipe'] === '1';
+        Uninstaller::run($wipeFiles);
     }
 
     /**

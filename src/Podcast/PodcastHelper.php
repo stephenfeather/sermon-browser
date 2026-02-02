@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Podcast;
 
+use SermonBrowser\Config\FileTypes;
 use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Constants;
 use SermonBrowser\Facades\File;
@@ -201,10 +202,7 @@ final class PodcastHelper
             return;
         }
 
-        require_once SB_INCLUDES_DIR . '/filetypes.php';
-
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Variables from included file
-        self::$filetypes = $filetypes ?? [];
+        self::$filetypes = FileTypes::getTypes();
     }
 
     // =========================================================================

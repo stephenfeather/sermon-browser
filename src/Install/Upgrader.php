@@ -123,7 +123,7 @@ class Upgrader
      */
     public static function databaseUpgrade(string $oldVersion): void
     {
-        require_once SB_INCLUDES_DIR . '/admin.php';
+        // Note: sb_get_default() wrapper is available from sermon.php.
 
         global $wpdb;
         $sermonUploadDir = sb_get_default('sermon_path');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Frontend;
 
+use SermonBrowser\Config\FileTypes;
 use SermonBrowser\Config\OptionsManager;
 use SermonBrowser\Constants;
 use SermonBrowser\Frontend\PageResolver;
@@ -188,10 +189,10 @@ final class FileDisplay
     }
 
     /**
-     * Load filetypes configuration from filetypes.php.
+     * Load filetypes configuration from FileTypes class.
      *
      * This method loads and caches the filetypes, siteicons, and default icon
-     * variables from the filetypes.php configuration file.
+     * from the PSR-4 FileTypes configuration class.
      *
      * @return void
      */
@@ -201,15 +202,9 @@ final class FileDisplay
             return;
         }
 
-        // Include filetypes.php which defines these variables
-        require_once SB_INCLUDES_DIR . '/filetypes.php';
-
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Variables from included file
-        self::$filetypes = $filetypes ?? [];
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Variables from included file
-        self::$siteIcons = $siteicons ?? [];
-        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Variables from included file
-        self::$defaultSiteIcon = $default_site_icon ?? 'url.png';
+        self::$filetypes = FileTypes::getTypes();
+        self::$siteIcons = FileTypes::getSiteIcons();
+        self::$defaultSiteIcon = FileTypes::getDefaultSiteIcon();
     }
 
     // =========================================================================

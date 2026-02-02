@@ -74,7 +74,7 @@ class SetupTest extends TestCase
     {
         $this->assertTrue(defined('SB_CURRENT_VERSION'));
         $this->assertTrue(defined('SB_PLUGIN_DIR'));
-        $this->assertTrue(defined('SB_INCLUDES_DIR'));
+        // Note: SB_INCLUDES_DIR removed - sb-includes/ directory deleted in Phase 7.
         $this->assertTrue(defined('ABSPATH'));
     }
 

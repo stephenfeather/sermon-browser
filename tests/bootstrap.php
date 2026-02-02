@@ -40,9 +40,7 @@ if (!defined('SB_PLUGIN_DIR')) {
     define('SB_PLUGIN_DIR', dirname(__DIR__));
 }
 
-if (!defined('SB_INCLUDES_DIR')) {
-    define('SB_INCLUDES_DIR', dirname(__DIR__) . '/sb-includes');
-}
+// Note: SB_INCLUDES_DIR removed - sb-includes/ directory deleted in Phase 7.
 
 if (!defined('SB_ABSPATH')) {
     define('SB_ABSPATH', '/var/www/html/');

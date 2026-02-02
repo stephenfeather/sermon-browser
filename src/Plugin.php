@@ -87,8 +87,7 @@ class Plugin
         // Define legacy constants for backward compatibility.
         $this->defineConstants();
 
-        // Load testable helper functions (Phase 1 modernization).
-        require_once SB_INCLUDES_DIR . '/functions-testable.php';
+        // Note: HelperFunctions class is PSR-4 autoloaded, wrappers in sermon.php.
 
         // Register early hooks.
         add_action('plugins_loaded', 'sb_hijack');
@@ -106,7 +105,7 @@ class Plugin
      * Define version constants.
      *
      * Maintains backward compatibility with existing code.
-     * Note: Path constants (SB_INCLUDES_DIR, etc.) must be defined
+     * Note: Path constants (SB_PLUGIN_DIR, etc.) must be defined
      * by sermon.php before calling Plugin::boot().
      *
      * @return void
