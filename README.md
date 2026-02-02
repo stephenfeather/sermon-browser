@@ -14,6 +14,19 @@
 >
 > **Action required:** If you have customized your Sermon Browser templates, please back them up before upgrading to v1.0.0. Migration documentation will be provided with the release.
 
+## Releases
+
+### Stable Release
+
+- **[v0.5.0](https://github.com/feather-design-works/developer-sermon-browser/releases/tag/v0.5.0)** - Modernized for WordPress 6.x and PHP 8.x compatibility
+
+### Alpha Releases
+
+- **[v0.6.0-alpha-2](https://github.com/feather-design-works/developer-sermon-browser/releases/tag/v0.6.0-alpha-2)** - Latest alpha with Gutenberg blocks and architecture refactoring
+- **[v0.6.0-alpha-1](https://github.com/feather-design-works/developer-sermon-browser/releases/tag/v0.6.0-alpha-1)** - Initial alpha with modernized codebase
+
+---
+
 Upload sermons to your website, where they can be searched, listened to, and downloaded. Easy to use with comprehensive help and tutorials.
 
 ## Modernization
