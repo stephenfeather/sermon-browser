@@ -315,8 +315,8 @@ class FilesPage
         sb_do_alerts();
         $this->renderPageScripts();
         $this->renderUploadSection();
-        $this->renderUnlinkedFilesSection($data['unlinked'], $data['cntu']);
-        $this->renderLinkedFilesSection($data['linked'], $data['cntl']);
+        $this->renderUnlinkedFilesSection($data['unlinked']);
+        $this->renderLinkedFilesSection($data['linked']);
         $this->renderSearchSection();
         $this->renderPaginationScripts($data['cntu'], $data['cntl']);
         $this->renderCleanupSection();
@@ -456,10 +456,9 @@ class FilesPage
      * Render the unlinked files section.
      *
      * @param array<object> $unlinked Unlinked files.
-     * @param int $count Total count.
      * @return void
      */
-    private function renderUnlinkedFilesSection(array $unlinked, int $_count): void
+    private function renderUnlinkedFilesSection(array $unlinked): void
     {
         ?>
         <div class="wrap">
@@ -517,10 +516,9 @@ class FilesPage
      * Render the linked files section.
      *
      * @param array<object> $linked Linked files.
-     * @param int $count Total count.
      * @return void
      */
-    private function renderLinkedFilesSection(array $linked, int $_count): void
+    private function renderLinkedFilesSection(array $linked): void
     {
         ?>
         <div class="wrap" id="linked">
