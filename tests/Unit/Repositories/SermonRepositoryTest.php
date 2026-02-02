@@ -223,56 +223,47 @@ class SermonRepositoryTest extends TestCase
     }
 
     /**
-     * Test findPrevious returns previous sermon.
+     * Test findPreviousByDate returns previous sermon.
      */
-    public function testFindPrevious(): void
+    public function testFindPreviousByDate(): void
     {
-        $currentSermon = (object) [
-            'id' => 5,
-            'datetime' => '2024-01-15 10:00:00',
-        ];
-
         $previousSermon = (object) [
             'id' => 4,
-            'datetime' => '2024-01-08 10:00:00',
+            'title' => 'Previous Sermon',
         ];
 
-        // First call to find current sermon
         $this->wpdb->shouldReceive('prepare')
+            ->once()
             ->andReturn('SELECT...');
 
         $this->wpdb->shouldReceive('get_row')
-            ->twice()
-            ->andReturn($currentSermon, $previousSermon);
+            ->once()
+            ->andReturn($previousSermon);
 
-        $result = $this->repository->findPrevious(5);
+        $result = $this->repository->findPreviousByDate('2024-01-15 10:00:00', 5);
 
         $this->assertSame(4, $result->id);
     }
 
     /**
-     * Test findNext returns next sermon.
+     * Test findNextByDate returns next sermon.
      */
-    public function testFindNext(): void
+    public function testFindNextByDate(): void
     {
-        $currentSermon = (object) [
-            'id' => 5,
-            'datetime' => '2024-01-15 10:00:00',
-        ];
-
         $nextSermon = (object) [
             'id' => 6,
-            'datetime' => '2024-01-22 10:00:00',
+            'title' => 'Next Sermon',
         ];
 
         $this->wpdb->shouldReceive('prepare')
+            ->once()
             ->andReturn('SELECT...');
 
         $this->wpdb->shouldReceive('get_row')
-            ->twice()
-            ->andReturn($currentSermon, $nextSermon);
+            ->once()
+            ->andReturn($nextSermon);
 
-        $result = $this->repository->findNext(5);
+        $result = $this->repository->findNextByDate('2024-01-15 10:00:00', 5);
 
         $this->assertSame(6, $result->id);
     }
