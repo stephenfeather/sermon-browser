@@ -516,14 +516,14 @@ class OptionsPage
     private function renderSermonsPerPageField(): void
     {
         ?>
-        <tr>
-            <td style="text-align:right;vertical-align:middle">
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Sermons per page', 'sermon-browser') ?>:
-            </td>
-            <td>
+            </label>
+            <div style="flex: 1;">
                 <input type="text" name="perpage" value="<?php echo sb_get_option('sermons_per_page') ?>"/>
-            </td>
-        </tr>
+            </div>
+        </div>
         <?php
     }
 
