@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0-beta-1] - 2026-02-02
+
+### Security
+- **CSRF Protection**: Added nonce verification to LegacyAjaxHandler for all AJAX operations
+- **CSRF Protection**: Added nonce verification to FileActionHandler for file upload/import
+- **CSRF Protection**: Added wp_nonce_field() to UploadHelper form
+- **XSS Prevention**: Escaped all output in LegacyAjaxHandler with esc_html(), esc_url(), esc_js()
+- **XSS Prevention**: Escaped JavaScript-injected values in FilesPage with esc_js()
+- **XSS Prevention**: Escaped file dropdown in UploadHelper with esc_html()
+- **XSS Prevention**: Escaped widget output in PopularWidget (titles, series, preachers)
+- **Header Injection**: Sanitized filenames in FileDownloadHandler with RFC 5987 encoding
+
+### Changed
+- LegacyAjaxHandler refactored to use operation-specific nonces matching frontend JavaScript
+- All admin AJAX operations now require valid nonces
+
+### Fixed
+- Filter support wired to admin sermons page
+- Multiple SonarQube code quality issues (S1448, S3776, S1142)
+- Accessibility improvements (Web:S6853, Web:S5257)
+
 ## [0.6.0-alpha-1] - 2026-02-01
 
 ### Added
@@ -65,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial tagged release with basic functionality.
 
-[Unreleased]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-alpha-1...HEAD
+[Unreleased]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-beta-1...HEAD
+[0.6.0-beta-1]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-alpha-1...v0.6.0-beta-1
 [0.6.0-alpha-1]: https://github.com/stephenfeather/sermon-browser/compare/v0.5.0...v0.6.0-alpha-1
 [0.5.0]: https://github.com/stephenfeather/sermon-browser/releases/tag/v0.5.0
