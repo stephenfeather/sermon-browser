@@ -196,7 +196,8 @@ class SeriesServicesPage
             <?php if ($type === 'Series') : ?>
                 <a href="http://www.sermonbrowser.com/">
                     <img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png"
-                         width="191" height="35" style="margin: 1em 2em; float: right;"/>
+                         width="191" height="35" style="margin: 1em 2em; float: right;"
+                         alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>"/>
                 </a>
             <?php endif; ?>
 

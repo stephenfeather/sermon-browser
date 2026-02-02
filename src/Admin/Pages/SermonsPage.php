@@ -177,7 +177,7 @@ class SermonsPage
     {
         ?>
     <div class="wrap">
-            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
+            <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>" /></a>
             <h2>Filter</h2>
             <form id="searchform" name="searchform">
             <fieldset style="float:left; margin-right: 1em">

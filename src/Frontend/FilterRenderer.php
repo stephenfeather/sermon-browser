@@ -407,18 +407,16 @@ class FilterRenderer
         $output = '';
 
         foreach (self::$filterOptions as $filterOption) {
-            if (isset($_REQUEST[$filterOption])) {
-                if ($filterOption !== 'enddate') {
-                    if ($output !== '') {
-                        $output .= "\r, ";
-                    }
+            if (isset($_REQUEST[$filterOption]) && $filterOption !== 'enddate') {
+                if ($output !== '') {
+                    $output .= "\r, ";
+                }
 
-                    if ($filterOption === 'date') {
-                        $output .= self::buildDateFilterOutput();
-                    } else {
-                        $output .= '<strong>' . esc_html__(ucwords($filterOption), 'sermon-browser') . '</strong>:&nbsp;*' . $filterOption . '*';
-                        $output .= '&nbsp;(<a href="' . esc_url(self::urlMinusParameter($filterOption)) . '">x</a>)';
-                    }
+                if ($filterOption === 'date') {
+                    $output .= self::buildDateFilterOutput();
+                } else {
+                    $output .= '<strong>' . esc_html__(ucwords($filterOption), 'sermon-browser') . '</strong>:&nbsp;*' . $filterOption . '*';
+                    $output .= '&nbsp;(<a href="' . esc_url(self::urlMinusParameter($filterOption)) . '">x</a>)';
                 }
             }
         }
