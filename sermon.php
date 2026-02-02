@@ -490,10 +490,9 @@ function sb_query_char($return_entity = true)
 * Standard shortcode handler that inserts the sermonbrowser output into the post/page
 *
 * @param array $atts
-* @param string $content
 * @return string
 */
-function sb_shortcode($atts, $_content = null)
+function sb_shortcode($atts)
 {
     ob_start();
     $atts = shortcode_atts(sb_get_shortcode_defaults(), $atts);

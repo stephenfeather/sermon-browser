@@ -233,46 +233,40 @@ class PreachersPage
             <form method="post" enctype="multipart/form-data">
                 <input type="hidden" name="pid" value="<?php echo $pid; ?>">
                 <fieldset>
-                    <table class="widefat" role="presentation">
-                        <tr>
-                            <td>
-                                <strong><?php _e('Name', 'sermon-browser'); ?></strong>
+                    <div class="widefat" style="background: #fff; border: 1px solid #c3c4c7; padding: 1em;">
+                        <div style="margin-bottom: 1em;">
+                            <strong><?php _e('Name', 'sermon-browser'); ?></strong>
+                            <div>
+                                <input type="text"
+                                       value="<?php echo isset($preacher->name) ? esc_attr(stripslashes($preacher->name)) : ''; ?>"
+                                       name="name" size="60" style="width:400px;"/>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1em;">
+                            <strong><?php _e('Description', 'sermon-browser'); ?></strong>
+                            <div>
+                                <textarea name="description" cols="100" rows="5"><?php
+                                    echo isset($preacher->description) ? esc_textarea(stripslashes($preacher->description)) : '';
+                                ?></textarea>
+                            </div>
+                        </div>
+                        <div>
+                            <?php if ($isEdit && $preacher && $preacher->image) : ?>
                                 <div>
-                                    <input type="text"
-                                           value="<?php echo isset($preacher->name) ? esc_attr(stripslashes($preacher->name)) : ''; ?>"
-                                           name="name" size="60" style="width:400px;"/>
+                                    <img src="<?php echo esc_url(trailingslashit(site_url()) . sb_get_option('upload_dir') . Constants::IMAGES_PATH . $preacher->image); ?>" alt="<?php echo esc_attr($preacher->name); ?>">
                                 </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <strong><?php _e('Description', 'sermon-browser'); ?></strong>
-                                <div>
-                                    <textarea name="description" cols="100" rows="5"><?php
-                                        echo isset($preacher->description) ? esc_textarea(stripslashes($preacher->description)) : '';
-                                    ?></textarea>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <?php if ($isEdit && $preacher && $preacher->image) : ?>
-                                    <div>
-                                        <img src="<?php echo esc_url(trailingslashit(site_url()) . sb_get_option('upload_dir') . Constants::IMAGES_PATH . $preacher->image); ?>" alt="<?php echo esc_attr($preacher->name); ?>">
-                                    </div>
-                                    <input type="hidden" name="old" value="<?php echo esc_attr($preacher->image); ?>">
-                                <?php endif; ?>
-                                <strong><?php _e('Image', 'sermon-browser'); ?></strong>
-                                <div>
-                                    <input type="file" name="upload">
-                                    <label>
-                                        <?php _e('Remove image', 'sermon-browser'); ?>&nbsp;
-                                        <input type="checkbox" name="remove" value="true">
-                                    </label>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                                <input type="hidden" name="old" value="<?php echo esc_attr($preacher->image); ?>">
+                            <?php endif; ?>
+                            <strong><?php _e('Image', 'sermon-browser'); ?></strong>
+                            <div>
+                                <input type="file" name="upload">
+                                <label>
+                                    <?php _e('Remove image', 'sermon-browser'); ?>&nbsp;
+                                    <input type="checkbox" name="remove" value="true">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </fieldset>
                 <?php wp_nonce_field('sermon_manage_preachers', 'sermon_manage_preachers_nonce'); ?>
                 <p class="submit">

@@ -572,10 +572,9 @@ class SermonEditorPage
      * @param array $formData Form data.
      * @param array $id3_tags Imported ID3 tags.
      * @param array $translated_books Translated Bible book names.
-     * @param bool $error Whether an error occurred.
      * @return void
      */
-    private function renderForm(array $formData, array $id3_tags, array $translated_books, bool $_error): void
+    private function renderForm(array $formData, array $id3_tags, array $translated_books): void
     {
         // Extract form data for template.
         extract($formData);
