@@ -314,9 +314,10 @@ class OptionsPage
      */
     private function displayError(string $message): string
     {
-        return '<tr><td style="text-align:right;color:#AA0000; font-weight:bold">' .
-            __('Error', 'sermon-browser') . ':</td>' .
-            '<td style="color: #AA0000">' . $message . '</td></tr>';
+        return '<div style="display: flex; gap: 1em; margin-bottom: 1em;">' .
+            '<label style="min-width: 180px; text-align: right; padding-top: 0.5em; color: #AA0000; font-weight: bold;">' .
+            __('Error', 'sermon-browser') . ':</label>' .
+            '<div style="flex: 1; color: #AA0000;">' . $message . '</div></div>';
     }
 
     /**
@@ -327,9 +328,10 @@ class OptionsPage
      */
     private function displayWarning(string $message): string
     {
-        return '<tr><td style="text-align:right;color:#FFDC00; font-weight:bold">' .
-            __('Warning', 'sermon-browser') . ':</td>' .
-            '<td style="color: #FF8C00">' . $message . '</td></tr>';
+        return '<div style="display: flex; gap: 1em; margin-bottom: 1em;">' .
+            '<label style="min-width: 180px; text-align: right; padding-top: 0.5em; color: #FFDC00; font-weight: bold;">' .
+            __('Warning', 'sermon-browser') . ':</label>' .
+            '<div style="flex: 1; color: #FF8C00;">' . $message . '</div></div>';
     }
 
     /**
@@ -541,27 +543,25 @@ class OptionsPage
             'none'     => __('None', 'sermon-browser'),
         ];
         ?>
-        <tr>
-            <td style="text-align:right;vertical-align:top" rowspan="2">
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Filter type', 'sermon-browser') ?>:
-            </td>
-            <td>
+            </label>
+            <div style="flex: 1;">
                 <?php
                 foreach ($filter_options as $value => $filter_option) {
                     $checked = ($ft === $value) ? Constants::CHECKED : '';
                     echo "<input type=\"radio\" name=\"filtertype\" value=\"{$value}\" {$checked}/> {$filter_option}<br/>\n";
                 }
                 ?>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <input type="checkbox" name="filterhide"
-                    <?php echo (sb_get_option('filter_hide') === 'hide') ? Constants::CHECKED : ''; ?>
-                       value="hide"/>
-                <?php _e('Minimise filter', 'sermon-browser'); ?>
-            </td>
-        </tr>
+                <div style="margin-top: 0.5em;">
+                    <input type="checkbox" name="filterhide"
+                        <?php echo (sb_get_option('filter_hide') === 'hide') ? Constants::CHECKED : ''; ?>
+                           value="hide"/>
+                    <?php _e('Minimise filter', 'sermon-browser'); ?>
+                </div>
+            </div>
+        </div>
         <?php
     }
 
@@ -573,14 +573,16 @@ class OptionsPage
     private function renderHideNoAttachmentsField(): void
     {
         ?>
-        <tr>
-            <td style="text-align:right"><?php _e('Hide sermons without attachments?', 'sermon-browser') ?></td>
-            <td>
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+                <?php _e('Hide sermons without attachments?', 'sermon-browser') ?>
+            </label>
+            <div style="flex: 1;">
                 <input type="checkbox" name="hide_no_attachments"
                     <?php echo sb_get_option('hide_no_attachments') ? Constants::CHECKED : ''; ?>
                        value="1"/>
-            </td>
-        </tr>
+            </div>
+        </div>
         <?php
     }
 
@@ -746,51 +748,61 @@ class OptionsPage
     private function renderImportOptions(): void
     {
         ?>
-        <tr>
-            <td style="text-align:right"><?php _e('Add files prompt to top of Add Sermon page?', 'sermon-browser') ?></td>
-            <td>
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+                <?php _e('Add files prompt to top of Add Sermon page?', 'sermon-browser') ?>
+            </label>
+            <div style="flex: 1;">
                 <input type="checkbox" name="import_prompt"
                     <?php echo sb_get_option('import_prompt') ? Constants::CHECKED : ''; ?>
                        value="1"/>
-            </td>
-        </tr>
-        <tr>
-            <td style="text-align:right"><?php _e('Use title tag for sermon title?', 'sermon-browser') ?></td>
-            <td>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+                <?php _e('Use title tag for sermon title?', 'sermon-browser') ?>
+            </label>
+            <div style="flex: 1;">
                 <input type="checkbox" name="import_title"
                     <?php echo sb_get_option('import_title') ? Constants::CHECKED : ''; ?>
                        value="1"/>
-            </td>
-        </tr>
-        <tr>
-            <td style="text-align:right"><?php _e('Use artist tag for preacher?', 'sermon-browser') ?></td>
-            <td>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+                <?php _e('Use artist tag for preacher?', 'sermon-browser') ?>
+            </label>
+            <div style="flex: 1;">
                 <input type="checkbox" name="import_artist"
                     <?php echo sb_get_option('import_artist') ? Constants::CHECKED : ''; ?>
                        value="1"/>
-            </td>
-        </tr>
-        <tr>
-            <td style="text-align:right"><?php _e('Use album tag for series?', 'sermon-browser') ?></td>
-            <td>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+                <?php _e('Use album tag for series?', 'sermon-browser') ?>
+            </label>
+            <div style="flex: 1;">
                 <input type="checkbox" name="import_album"
                     <?php echo sb_get_option('import_album') ? Constants::CHECKED : ''; ?>
                        value="1"/>
-            </td>
-        </tr>
-        <tr>
-            <td style="text-align:right"><?php _e('Use comments tag for sermon description?', 'sermon-browser') ?></td>
-            <td>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+                <?php _e('Use comments tag for sermon description?', 'sermon-browser') ?>
+            </label>
+            <div style="flex: 1;">
                 <input type="checkbox" name="import_comments"
                     <?php echo sb_get_option('import_comments') ? Constants::CHECKED : ''; ?>
                        value="1"/>
-            </td>
-        </tr>
-        <tr>
-            <td style="text-align:right;vertical-align: middle">
+            </div>
+        </div>
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Attempt to extract date from filename', 'sermon-browser') ?>
-            </td>
-            <td style="vertical-align: middle">
+            </label>
+            <div style="flex: 1;">
                 <select name="import_filename">
                     <?php
                     $filename_options = [
@@ -809,8 +821,8 @@ class OptionsPage
                 </select>
                 <br/>
                 <?php _e('(Use if you name your files something like 2008-11-06-eveningsermon.mp3)', 'sermon-browser'); ?>
-            </td>
-        </tr>
+            </div>
+        </div>
         <?php
     }
 }
