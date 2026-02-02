@@ -476,4 +476,286 @@ class SermonRepositoryTest extends TestCase
 
         $this->assertCount(1, $result);
     }
+
+    /**
+     * Test findByService returns sermons for a service.
+     */
+    public function testFindByServiceReturnsSermonsForService(): void
+    {
+        $expectedSermons = [
+            (object) ['id' => 1, 'title' => 'Sermon 1', 'service_id' => 2],
+            (object) ['id' => 2, 'title' => 'Sermon 2', 'service_id' => 2],
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->with('service_id = %d', 2)
+            ->andReturn('service_id = 2');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $result = $this->repository->findByService(2);
+
+        $this->assertCount(2, $result);
+        $this->assertSame('Sermon 1', $result[0]->title);
+    }
+
+    /**
+     * Test findByYearMonth returns sermons for specific year and month.
+     */
+    public function testFindByYearMonthReturnsSermonsForYearMonth(): void
+    {
+        $expectedSermons = [
+            (object) ['id' => 1, 'title' => 'January Sermon', 'datetime' => '2024-01-07 10:00:00'],
+            (object) ['id' => 2, 'title' => 'Another January', 'datetime' => '2024-01-14 10:00:00'],
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn('SELECT * FROM wp_sb_sermons WHERE YEAR(datetime) = 2024 AND MONTH(datetime) = 1');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $result = $this->repository->findByYearMonth(2024, 1);
+
+        $this->assertCount(2, $result);
+        $this->assertSame('January Sermon', $result[0]->title);
+    }
+
+    /**
+     * Test findByYearMonth returns empty array when no sermons.
+     */
+    public function testFindByYearMonthReturnsEmptyArrayWhenNoSermons(): void
+    {
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn('SELECT * FROM wp_sb_sermons WHERE YEAR(datetime) = 2024 AND MONTH(datetime) = 12');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn([]);
+
+        $result = $this->repository->findByYearMonth(2024, 12);
+
+        $this->assertSame([], $result);
+    }
+
+    /**
+     * Test findSameDay returns sermons preached on the same day.
+     */
+    public function testFindSameDayReturnsSermonsOnSameDay(): void
+    {
+        $expectedSermons = [
+            (object) ['id' => 2, 'title' => 'Evening Sermon'],
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn('SELECT id, title FROM wp_sb_sermons WHERE DATE(datetime) = DATE("2024-01-07 10:00:00") AND id <> 1');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $result = $this->repository->findSameDay('2024-01-07 10:00:00', 1);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('Evening Sermon', $result[0]->title);
+    }
+
+    /**
+     * Test findSameDay returns empty array when no other sermons.
+     */
+    public function testFindSameDayReturnsEmptyArrayWhenNoOtherSermons(): void
+    {
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn('SELECT id, title FROM wp_sb_sermons...');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn([]);
+
+        $result = $this->repository->findSameDay('2024-01-07 10:00:00', 1);
+
+        $this->assertSame([], $result);
+    }
+
+    /**
+     * Test findAllWithRelations returns sermons with related data.
+     */
+    public function testFindAllWithRelationsReturnsSermonsWithRelatedData(): void
+    {
+        $expectedSermons = [
+            (object) [
+                'id' => 1,
+                'title' => 'Test Sermon',
+                'preacher_name' => 'John Doe',
+                'series_name' => 'Romans',
+                'service_name' => 'Sunday Morning',
+            ],
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->andReturn('SELECT...');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $result = $this->repository->findAllWithRelations();
+
+        $this->assertCount(1, $result);
+        $this->assertSame('John Doe', $result[0]->preacher_name);
+        $this->assertSame('Romans', $result[0]->series_name);
+    }
+
+    /**
+     * Test findAllWithRelations applies filters.
+     */
+    public function testFindAllWithRelationsAppliesFilters(): void
+    {
+        $expectedSermons = [
+            (object) [
+                'id' => 1,
+                'title' => 'Filtered Sermon',
+                'preacher_name' => 'John Doe',
+                'series_name' => 'Romans',
+                'service_name' => 'Sunday Morning',
+            ],
+        ];
+
+        $this->wpdb->shouldReceive('esc_like')
+            ->once()
+            ->with('Test')
+            ->andReturn('Test');
+
+        $this->wpdb->shouldReceive('prepare')
+            ->andReturn('SELECT...');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $result = $this->repository->findAllWithRelations(
+            ['title' => 'Test', 'preacher_id' => 5],
+            10,
+            0
+        );
+
+        $this->assertCount(1, $result);
+    }
+
+    /**
+     * Test findForFrontendListing returns paginated results with total count.
+     */
+    public function testFindForFrontendListingReturnsPaginatedResults(): void
+    {
+        $expectedSermons = [
+            (object) [
+                'id' => 1,
+                'title' => 'Test Sermon',
+                'datetime' => '2024-01-07 10:00:00',
+                'preacher' => 'John Doe',
+                'series' => 'Romans',
+                'service' => 'Sunday Morning',
+            ],
+        ];
+
+        $this->wpdb->shouldReceive('query')
+            ->once()
+            ->with('SET SQL_BIG_SELECTS=1')
+            ->andReturn(true);
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $this->wpdb->shouldReceive('get_var')
+            ->once()
+            ->with('SELECT FOUND_ROWS()')
+            ->andReturn('10');
+
+        $result = $this->repository->findForFrontendListing([], [], 1, 10);
+
+        $this->assertArrayHasKey('items', $result);
+        $this->assertArrayHasKey('total', $result);
+        $this->assertCount(1, $result['items']);
+        $this->assertSame(10, $result['total']);
+    }
+
+    /**
+     * Test findForFrontendListing applies filters correctly.
+     */
+    public function testFindForFrontendListingAppliesFilters(): void
+    {
+        $expectedSermons = [
+            (object) [
+                'id' => 1,
+                'title' => 'Gospel Sermon',
+                'preacher' => 'John Doe',
+            ],
+        ];
+
+        $this->wpdb->shouldReceive('esc_like')
+            ->once()
+            ->with('Gospel')
+            ->andReturn('Gospel');
+
+        $this->wpdb->shouldReceive('prepare')
+            ->andReturn('...');
+
+        $this->wpdb->shouldReceive('query')
+            ->once()
+            ->with('SET SQL_BIG_SELECTS=1')
+            ->andReturn(true);
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedSermons);
+
+        $this->wpdb->shouldReceive('get_var')
+            ->once()
+            ->with('SELECT FOUND_ROWS()')
+            ->andReturn('1');
+
+        $result = $this->repository->findForFrontendListing(
+            ['title' => 'Gospel', 'preacher' => 5],
+            ['by' => 'm.datetime', 'dir' => 'desc'],
+            1,
+            10
+        );
+
+        $this->assertCount(1, $result['items']);
+        $this->assertSame(1, $result['total']);
+    }
+
+    /**
+     * Test findForFrontendListing returns empty when no results.
+     */
+    public function testFindForFrontendListingReturnsEmptyWhenNoResults(): void
+    {
+        $this->wpdb->shouldReceive('query')
+            ->once()
+            ->with('SET SQL_BIG_SELECTS=1')
+            ->andReturn(true);
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn([]);
+
+        $this->wpdb->shouldReceive('get_var')
+            ->once()
+            ->with('SELECT FOUND_ROWS()')
+            ->andReturn('0');
+
+        $result = $this->repository->findForFrontendListing([], [], 1, 10);
+
+        $this->assertSame([], $result['items']);
+        $this->assertSame(0, $result['total']);
+    }
 }

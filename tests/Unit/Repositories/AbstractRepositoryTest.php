@@ -320,4 +320,138 @@ class AbstractRepositoryTest extends TestCase
 
         $this->assertFalse($result);
     }
+
+    /**
+     * Test findBy returns entities matching criteria.
+     */
+    public function testFindByReturnsMatchingEntities(): void
+    {
+        $expectedPreachers = [
+            (object) ['id' => 1, 'name' => 'John Doe'],
+            (object) ['id' => 2, 'name' => 'John Smith'],
+        ];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->with('name = %s', 'John')
+            ->andReturn("name = 'John'");
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn($expectedPreachers);
+
+        $result = $this->repository->findBy('name', 'John');
+
+        $this->assertCount(2, $result);
+        $this->assertSame('John Doe', $result[0]->name);
+    }
+
+    /**
+     * Test findBy returns empty array when no matches.
+     */
+    public function testFindByReturnsEmptyArrayWhenNoMatches(): void
+    {
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->with('name = %s', 'NonExistent')
+            ->andReturn("name = 'NonExistent'");
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn([]);
+
+        $result = $this->repository->findBy('name', 'NonExistent');
+
+        $this->assertSame([], $result);
+    }
+
+    /**
+     * Test findOneBy returns single matching entity.
+     */
+    public function testFindOneByReturnsSingleEntity(): void
+    {
+        $expectedPreacher = (object) ['id' => 1, 'name' => 'John Doe'];
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->with('name = %s', 'John Doe')
+            ->andReturn("name = 'John Doe'");
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->with(' LIMIT %d OFFSET %d', 1, 0)
+            ->andReturn(' LIMIT 1 OFFSET 0');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn([$expectedPreacher]);
+
+        $result = $this->repository->findOneBy('name', 'John Doe');
+
+        $this->assertSame('John Doe', $result->name);
+    }
+
+    /**
+     * Test findOneBy returns null when no match.
+     */
+    public function testFindOneByReturnsNullWhenNoMatch(): void
+    {
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->with('name = %s', 'NonExistent')
+            ->andReturn("name = 'NonExistent'");
+
+        $this->wpdb->shouldReceive('prepare')
+            ->once()
+            ->with(' LIMIT %d OFFSET %d', 1, 0)
+            ->andReturn(' LIMIT 1 OFFSET 0');
+
+        $this->wpdb->shouldReceive('get_results')
+            ->once()
+            ->andReturn([]);
+
+        $result = $this->repository->findOneBy('name', 'NonExistent');
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test deleteTransientsByPattern deletes matching transients.
+     */
+    public function testDeleteTransientsByPatternDeletesMatchingTransients(): void
+    {
+        // Need to mock global $wpdb for the static method
+        global $wpdb;
+        $originalWpdb = $wpdb ?? null;
+        $wpdb = Mockery::mock('wpdb');
+        $wpdb->options = 'wp_options';
+
+        $wpdb->shouldReceive('esc_like')
+            ->once()
+            ->with('sb_template_')
+            ->andReturn('sb_template_');
+
+        $wpdb->shouldReceive('prepare')
+            ->once()
+            ->andReturn("SELECT option_name FROM wp_options WHERE option_name LIKE '_transient_sb_template_%'");
+
+        $wpdb->shouldReceive('get_col')
+            ->once()
+            ->andReturn([
+                '_transient_sb_template_sermon',
+                '_transient_sb_template_list',
+            ]);
+
+        // Mock delete_transient function
+        \Brain\Monkey\Functions\expect('delete_transient')
+            ->twice()
+            ->andReturn(true);
+
+        $result = PreacherRepository::deleteTransientsByPattern('sb_template_');
+
+        $this->assertSame(2, $result);
+
+        // Restore original $wpdb
+        $wpdb = $originalWpdb;
+    }
 }
