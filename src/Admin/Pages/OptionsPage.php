@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace SermonBrowser\Admin\Pages;
 
+use SermonBrowser\Admin\FormHelpers;
 use SermonBrowser\Constants;
 use SermonBrowser\Facades\Book;
 
@@ -301,34 +302,6 @@ class OptionsPage
     }
 
     /**
-     * Display error message row.
-     *
-     * @param string $message Error message.
-     * @return string HTML for error row.
-     */
-    private function displayError(string $message): string
-    {
-        return '<div style="display: flex; gap: 1em; margin-bottom: 1em;">' .
-            '<label style="min-width: 180px; text-align: right; padding-top: 0.5em; color: #AA0000; font-weight: bold;">' .
-            __('Error', 'sermon-browser') . ':</label>' .
-            '<div style="flex: 1; color: #AA0000;">' . $message . '</div></div>';
-    }
-
-    /**
-     * Display warning message row.
-     *
-     * @param string $message Warning message.
-     * @return string HTML for warning row.
-     */
-    private function displayWarning(string $message): string
-    {
-        return '<div style="display: flex; gap: 1em; margin-bottom: 1em;">' .
-            '<label style="min-width: 180px; text-align: right; padding-top: 0.5em; color: #FFDC00; font-weight: bold;">' .
-            __('Warning', 'sermon-browser') . ':</label>' .
-            '<div style="flex: 1; color: #FF8C00;">' . $message . '</div></div>';
-    }
-
-    /**
      * Render the options page HTML.
      *
      * @return void
@@ -598,141 +571,76 @@ class OptionsPage
         $max_memory = sb_return_kbytes(ini_get('memory_limit'));
         $checkSermonUpload = sb_checkSermonUploadable();
 
+        // Upload folder errors
+        if ($checkSermonUpload === "unwriteable") {
+            $msg = IS_MU
+                ? __('The upload folder is not writeable. You need to specify a folder that you have permissions to write to.', 'sermon-browser')
+                : __('The upload folder is not writeable. You need to specify a folder that you have permissions to write to, or CHMOD this folder to 666 or 777.', 'sermon-browser');
+            echo FormHelpers::displayError($msg);
+        } elseif ($checkSermonUpload === "notexist") {
+            echo FormHelpers::displayError(
+                __('The upload folder you have specified does not exist.', 'sermon-browser')
+            );
+        }
+
+        // Upload permissions error
+        if ($allow_uploads === '0') {
+            $msg = IS_MU
+                ? __('Your administrator does not allow file uploads. You will need to upload via FTP.', 'sermon-browser')
+                : __('Your php.ini file does not allow uploads. Please change file_uploads in php.ini.', 'sermon-browser');
+            echo FormHelpers::displayError($msg);
+        }
+
+        // File size warnings
         if (IS_MU) {
-            $this->renderMuWarnings($checkSermonUpload, $allow_uploads, $max_filesize, $max_post, $max_execution, $max_input);
-        } else {
-            $this->renderStandardWarnings($checkSermonUpload, $allow_uploads, $max_filesize, $max_post, $max_execution, $max_input, $max_memory);
+            $max_filesize = min($max_filesize, $max_post);
         }
-    }
-
-    /**
-     * Render multisite-specific warnings.
-     *
-     * @param string $checkSermonUpload Upload status.
-     * @param string $allow_uploads     Whether uploads are allowed.
-     * @param int    $max_filesize      Max file size in KB.
-     * @param int    $max_post          Max post size in KB.
-     * @param int    $max_execution     Max execution time.
-     * @param int    $max_input         Max input time.
-     * @return void
-     */
-    private function renderMuWarnings(
-        string $checkSermonUpload,
-        string $allow_uploads,
-        int $max_filesize,
-        int $max_post,
-        int $max_execution,
-        int $max_input
-    ): void {
-        if ($checkSermonUpload === "unwriteable") {
-            echo $this->displayError(
-                __('The upload folder is not writeable. You need to specify a folder that you have permissions to write to.', 'sermon-browser')
-            );
-        } elseif ($checkSermonUpload === "notexist") {
-            echo $this->displayError(
-                __('The upload folder you have specified does not exist.', 'sermon-browser')
-            );
-        }
-
-        if ($allow_uploads === '0') {
-            echo $this->displayError(
-                __('Your administrator does not allow file uploads. You will need to upload via FTP.', 'sermon-browser')
-            );
-        }
-
-        $max_filesize = min($max_filesize, $max_post);
         if ($max_filesize < 15360) {
-            echo $this->displayWarning(
-                __('The maximum file size you can upload is only ', 'sermon-browser') .
-                $max_filesize .
-                __('k. You may need to upload via FTP.', 'sermon-browser')
+            $suffix = IS_MU
+                ? __('k. You may need to upload via FTP.', 'sermon-browser')
+                : __('k. Please change upload_max_filesize to at least 15M in php.ini.', 'sermon-browser');
+            echo FormHelpers::displayWarning(
+                __('The maximum file size you can upload is only ', 'sermon-browser') . $max_filesize . $suffix
             );
         }
 
-        $max_execution = (($max_execution < $max_input) || $max_input == -1) ? $max_execution : $max_input;
+        // Standard (non-MU) specific warnings
+        if (!IS_MU) {
+            if ($max_post < 15360) {
+                echo FormHelpers::displayWarning(
+                    __('The maximum file size you send through the browser is only ', 'sermon-browser') .
+                    $max_post .
+                    __('k. Please change post_max_size to at least 15M in php.ini.', 'sermon-browser')
+                );
+            }
+
+            if ($max_input < 600 && $max_input != -1) {
+                echo FormHelpers::displayWarning(
+                    __('The maximum time allowed for an upload script to run is only ', 'sermon-browser') .
+                    $max_input .
+                    __(' seconds. Please change max_input_time to at least 600 in php.ini.', 'sermon-browser')
+                );
+            }
+
+            if ($max_memory < 16384) {
+                echo FormHelpers::displayWarning(
+                    __('The maximum amount of memory allowed is only ', 'sermon-browser') .
+                    $max_memory .
+                    __('k. Please change memory_limit to at least 16M in php.ini.', 'sermon-browser')
+                );
+            }
+        }
+
+        // Execution time warning (both MU and standard)
+        if (IS_MU) {
+            $max_execution = (($max_execution < $max_input) || $max_input == -1) ? $max_execution : $max_input;
+        }
         if ($max_execution < 600) {
-            echo $this->displayWarning(
-                __('The maximum time allowed for any script to run is only ', 'sermon-browser') .
-                $max_execution .
-                __(' seconds. If your files take longer than this to upload, you will need to upload via FTP.', 'sermon-browser')
-            );
-        }
-    }
-
-    /**
-     * Render standard (non-multisite) warnings.
-     *
-     * @param string $checkSermonUpload Upload status.
-     * @param string $allow_uploads     Whether uploads are allowed.
-     * @param int    $max_filesize      Max file size in KB.
-     * @param int    $max_post          Max post size in KB.
-     * @param int    $max_execution     Max execution time.
-     * @param int    $max_input         Max input time.
-     * @param int    $max_memory        Max memory in KB.
-     * @return void
-     */
-    private function renderStandardWarnings(
-        string $checkSermonUpload,
-        string $allow_uploads,
-        int $max_filesize,
-        int $max_post,
-        int $max_execution,
-        int $max_input,
-        int $max_memory
-    ): void {
-        if ($checkSermonUpload === "unwriteable") {
-            echo $this->displayError(
-                __('The upload folder is not writeable. You need to specify a folder that you have permissions to write to, or CHMOD this folder to 666 or 777.', 'sermon-browser')
-            );
-        } elseif ($checkSermonUpload === "notexist") {
-            echo $this->displayError(
-                __('The upload folder you have specified does not exist.', 'sermon-browser')
-            );
-        }
-
-        if ($allow_uploads === '0') {
-            echo $this->displayError(
-                __('Your php.ini file does not allow uploads. Please change file_uploads in php.ini.', 'sermon-browser')
-            );
-        }
-
-        if ($max_filesize < 15360) {
-            echo $this->displayWarning(
-                __('The maximum file size you can upload is only ', 'sermon-browser') .
-                $max_filesize .
-                __('k. Please change upload_max_filesize to at least 15M in php.ini.', 'sermon-browser')
-            );
-        }
-
-        if ($max_post < 15360) {
-            echo $this->displayWarning(
-                __('The maximum file size you send through the browser is only ', 'sermon-browser') .
-                $max_post .
-                __('k. Please change post_max_size to at least 15M in php.ini.', 'sermon-browser')
-            );
-        }
-
-        if ($max_execution < 600) {
-            echo $this->displayWarning(
-                __('The maximum time allowed for any script to run is only ', 'sermon-browser') .
-                $max_execution .
-                __(' seconds. Please change max_execution_time to at least 600 in php.ini.', 'sermon-browser')
-            );
-        }
-
-        if ($max_input < 600 && $max_input != -1) {
-            echo $this->displayWarning(
-                __('The maximum time allowed for an upload script to run is only ', 'sermon-browser') .
-                $max_input .
-                __(' seconds. Please change max_input_time to at least 600 in php.ini.', 'sermon-browser')
-            );
-        }
-
-        if ($max_memory < 16384) {
-            echo $this->displayWarning(
-                __('The maximum amount of memory allowed is only ', 'sermon-browser') .
-                $max_memory .
-                __('k. Please change memory_limit to at least 16M in php.ini.', 'sermon-browser')
+            $suffix = IS_MU
+                ? __(' seconds. If your files take longer than this to upload, you will need to upload via FTP.', 'sermon-browser')
+                : __(' seconds. Please change max_execution_time to at least 600 in php.ini.', 'sermon-browser');
+            echo FormHelpers::displayWarning(
+                __('The maximum time allowed for any script to run is only ', 'sermon-browser') . $max_execution . $suffix
             );
         }
     }
