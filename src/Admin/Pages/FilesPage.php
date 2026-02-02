@@ -506,7 +506,7 @@ class FilesPage
                 <td style="text-align:center"><?php echo $fileType ?></td>
                 <td style="text-align:center">
                     <a href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
-                    <a id="u-link-<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Rename', 'sermon-browser'); ?></a> | <a onclick="return confirm('Do you really want to delete <?php echo str_replace("'", '', $file->name); ?>?');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
+                    <button type="button" id="u-link-<?php echo $file->id; ?>" class="button-link" onclick="rename(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Rename', 'sermon-browser'); ?></button> | <button type="button" class="button-link" onclick="if(confirm('Do you really want to delete <?php echo str_replace("'", '', $file->name); ?>?')) kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Delete', 'sermon-browser'); ?></button>
                 </td>
             </tr>
             <?php
@@ -578,7 +578,7 @@ class FilesPage
                         return false;
                     }
                     </script>
-                    <a id="l-link-<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></a> | <a onclick="return deletelinked_<?php echo $file->id;?>('<?php echo $safeName; ?>', '<?php echo $safeTitle; ?>');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
+                    <button type="button" id="l-link-<?php echo $file->id; ?>" class="button-link" onclick="rename(<?php echo $file->id; ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></button> | <button type="button" class="button-link" onclick="if(deletelinked_<?php echo $file->id;?>('<?php echo $safeName; ?>', '<?php echo $safeTitle; ?>')) kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Delete', 'sermon-browser'); ?></button>
                 </td>
             </tr>
             <?php
