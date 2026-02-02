@@ -304,13 +304,13 @@ class FilesPage
             $alternateClass = (++$i % 2 == 0) ? 'alternate' : '';
             $fileType = $this->getFileTypeName($file->name);
             ?>
-            <tr class="file <?php echo $alternateClass ?>" id="u-file-<?php echo $file->id ?>">
-                <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
-                <td id="u-name-<?php echo $file->id ?>"><?php echo $this->getFileBasename($file->name) ?></td>
-                <td style="text-align:center"><?php echo $fileType ?></td>
+            <tr class="file <?php echo esc_attr($alternateClass) ?>" id="u-file-<?php echo (int) $file->id ?>">
+                <th style="text-align:center" scope="row"><?php echo (int) $file->id ?></th>
+                <td id="u-name-<?php echo (int) $file->id ?>"><?php echo esc_html($this->getFileBasename($file->name)) ?></td>
+                <td style="text-align:center"><?php echo esc_html($fileType) ?></td>
                 <td style="text-align:center">
-                    <a href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
-                    <button type="button" id="u-link-<?php echo $file->id; ?>" class="button-link" onclick="rename(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Rename', 'sermon-browser'); ?></button> | <button type="button" class="button-link" onclick="if(confirm('Do you really want to delete <?php echo str_replace("'", '', $file->name); ?>?')) kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Delete', 'sermon-browser'); ?></button>
+                    <a href="<?php echo esc_url(admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={(int) $file->id}")); ?>"><?php esc_html_e('Create sermon', 'sermon-browser') ?></a> |
+                    <button type="button" id="u-link-<?php echo (int) $file->id; ?>" class="button-link" onclick="rename(<?php echo (int) $file->id; ?>, '<?php echo esc_js($file->name); ?>')"><?php esc_html_e('Rename', 'sermon-browser'); ?></button> | <button type="button" class="button-link" onclick="if(confirm('Do you really want to delete <?php echo esc_js($file->name); ?>?')) kill(<?php echo (int) $file->id; ?>, '<?php echo esc_js($file->name); ?>')"><?php esc_html_e('Delete', 'sermon-browser'); ?></button>
                 </td>
             </tr>
             <?php
@@ -364,24 +364,24 @@ class FilesPage
         foreach ($files as $file) {
             $alternateClass = (++$i % 2 == 0) ? 'alternate' : '';
             $fileType = $this->getFileTypeName($file->name);
-            $safeName = str_replace("'", '', $file->name);
-            $safeTitle = str_replace("'", '', $file->title);
+            $safeName = esc_js($file->name);
+            $safeTitle = esc_js($file->title);
             ?>
-            <tr class="file <?php echo $alternateClass ?>" id="l-file-<?php echo $file->id ?>">
-                <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
-                <td id="l-name-<?php echo $file->id ?>"><?php echo $this->getFileBasename($file->name) ?></td>
-                <td style="text-align:center"><?php echo $fileType ?></td>
-                <td><?php echo stripslashes($file->title) ?></td>
+            <tr class="file <?php echo esc_attr($alternateClass) ?>" id="l-file-<?php echo (int) $file->id ?>">
+                <th style="text-align:center" scope="row"><?php echo (int) $file->id ?></th>
+                <td id="l-name-<?php echo (int) $file->id ?>"><?php echo esc_html($this->getFileBasename($file->name)) ?></td>
+                <td style="text-align:center"><?php echo esc_html($fileType) ?></td>
+                <td><?php echo esc_html(stripslashes($file->title)) ?></td>
                 <td style="text-align:center">
                     <script type="text/javascript">
-                    function deletelinked_<?php echo $file->id;?>(filename, filesermon) {
+                    function deletelinked_<?php echo (int) $file->id;?>(filename, filesermon) {
                         if (confirm('Do you really want to delete '+filename+'?')) {
                             return confirm('This file is linked to the sermon called ['+filesermon+']. Are you sure you want to delete it?');
                         }
                         return false;
                     }
                     </script>
-                    <button type="button" id="l-link-<?php echo $file->id; ?>" class="button-link" onclick="rename(<?php echo $file->id; ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></button> | <button type="button" class="button-link" onclick="if(deletelinked_<?php echo $file->id;?>('<?php echo $safeName; ?>', '<?php echo $safeTitle; ?>')) kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Delete', 'sermon-browser'); ?></button>
+                    <button type="button" id="l-link-<?php echo (int) $file->id; ?>" class="button-link" onclick="rename(<?php echo (int) $file->id; ?>, '<?php echo $safeName ?>')"><?php esc_html_e('Rename', 'sermon-browser') ?></button> | <button type="button" class="button-link" onclick="if(deletelinked_<?php echo (int) $file->id;?>('<?php echo $safeName; ?>', '<?php echo $safeTitle; ?>')) kill(<?php echo (int) $file->id; ?>, '<?php echo $safeName; ?>')"><?php esc_html_e('Delete', 'sermon-browser'); ?></button>
                 </td>
             </tr>
             <?php

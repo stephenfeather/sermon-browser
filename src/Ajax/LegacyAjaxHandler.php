@@ -21,6 +21,20 @@ use SermonBrowser\Facades\Sermon;
 class LegacyAjaxHandler
 {
     /**
+     * Nonce actions for legacy AJAX requests, keyed by operation type.
+     *
+     * @var array<string, string>
+     */
+    private const NONCE_ACTIONS = [
+        'preacher'        => 'sb_preacher_nonce',
+        'service'         => 'sb_service_nonce',
+        'series'          => 'sb_series_nonce',
+        'file'            => 'sb_file_nonce',
+        'file_pagination' => 'sb_file_nonce',
+        'sermon'          => 'sb_sermon_nonce',
+    ];
+
+    /**
      * Handle incoming AJAX request.
      *
      * This method processes various AJAX operations including:
@@ -37,22 +51,87 @@ class LegacyAjaxHandler
     {
         define('SB_AJAX', true);
 
-        // Route to appropriate handler based on POST parameters
-        if (isset($_POST['pname'])) {
-            self::handlePreacher();
-        } elseif (isset($_POST['sname'])) {
-            self::handleService();
-        } elseif (isset($_POST['ssname'])) {
-            self::handleSeries();
-        } elseif (isset($_POST['fname']) && validate_file(sb_get_option('upload_dir') . $_POST['fname']) === 0) {
-            self::handleFile();
-        } elseif (isset($_POST['fetch'])) {
-            self::handleSermonPagination();
-        } elseif (isset($_POST['fetchU']) || isset($_POST['fetchL']) || isset($_POST['search'])) {
-            self::handleFilePagination();
+        // Determine operation type and verify appropriate nonce
+        $operationType = self::determineOperationType();
+
+        if ($operationType === null || !self::verifyNonce($operationType)) {
+            wp_die(
+                esc_html__('Security check failed. Please refresh the page and try again.', 'sermon-browser'),
+                esc_html__('Security Error', 'sermon-browser'),
+                ['response' => 403]
+            );
+        }
+
+        // Route to appropriate handler based on operation type
+        switch ($operationType) {
+            case 'preacher':
+                self::handlePreacher();
+                break;
+            case 'service':
+                self::handleService();
+                break;
+            case 'series':
+                self::handleSeries();
+                break;
+            case 'file':
+                self::handleFile();
+                break;
+            case 'sermon':
+                self::handleSermonPagination();
+                break;
+            case 'file_pagination':
+                self::handleFilePagination();
+                break;
         }
 
         die();
+    }
+
+    /**
+     * Determine the operation type from POST parameters.
+     *
+     * @return string|null The operation type or null if unknown.
+     */
+    private static function determineOperationType(): ?string
+    {
+        if (isset($_POST['pname'])) {
+            return 'preacher';
+        }
+        if (isset($_POST['sname'])) {
+            return 'service';
+        }
+        if (isset($_POST['ssname'])) {
+            return 'series';
+        }
+        if (isset($_POST['fname']) && validate_file(sb_get_option('upload_dir') . $_POST['fname']) === 0) {
+            return 'file';
+        }
+        if (isset($_POST['fetch'])) {
+            return 'sermon';
+        }
+        if (isset($_POST['fetchU']) || isset($_POST['fetchL']) || isset($_POST['search'])) {
+            return 'file_pagination';
+        }
+
+        return null;
+    }
+
+    /**
+     * Verify the nonce for the AJAX request.
+     *
+     * @param string $operationType The type of operation (preacher, service, series, file, sermon).
+     * @return bool True if nonce is valid, false otherwise.
+     */
+    private static function verifyNonce(string $operationType): bool
+    {
+        $nonce = $_REQUEST['_wpnonce'] ?? $_REQUEST['_sb_nonce'] ?? '';
+        $action = self::NONCE_ACTIONS[$operationType] ?? '';
+
+        if (empty($action)) {
+            return false;
+        }
+
+        return (bool) wp_verify_nonce($nonce, $action);
     }
 
     /**
@@ -247,18 +326,18 @@ class LegacyAjaxHandler
             ++$i;
             ?>
             <tr class="<?php echo $i % 2 == 0 ? 'alternate' : '' ?>">
-                <th style="text-align:center" scope="row"><?php echo $sermon->id ?></th>
-                <td><?php echo stripslashes($sermon->title) ?></td>
-                <td><?php echo stripslashes($sermon->pname) ?></td>
-                <td><?php echo ($sermon->datetime == '1970-01-01 00:00:00') ? __('Unknown', 'sermon-browser') : wp_date('d M y', strtotime($sermon->datetime)); ?></td>
-                <td><?php echo stripslashes($sermon->sname) ?></td>
-                <td><?php echo stripslashes($sermon->ssname) ?></td>
-                <td><?php echo sb_sermon_stats($sermon->id) ?></td>
+                <th style="text-align:center" scope="row"><?php echo (int) $sermon->id ?></th>
+                <td><?php echo esc_html(stripslashes($sermon->title)) ?></td>
+                <td><?php echo esc_html(stripslashes($sermon->pname)) ?></td>
+                <td><?php echo ($sermon->datetime == '1970-01-01 00:00:00') ? esc_html__('Unknown', 'sermon-browser') : esc_html(wp_date('d M y', strtotime($sermon->datetime))); ?></td>
+                <td><?php echo esc_html(stripslashes($sermon->sname)) ?></td>
+                <td><?php echo esc_html(stripslashes($sermon->ssname)) ?></td>
+                <td><?php echo esc_html(sb_sermon_stats($sermon->id)) ?></td>
                 <td style="text-align:center">
                     <?php if (current_user_can('edit_posts')) { ?>
-                        <a href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&mid={$sermon->id}"); ?>"><?php _e('Edit', 'sermon-browser') ?></a> | <a onclick="return confirm('Are you sure?')" href="<?php echo admin_url("admin.php?page=sermon-browser/sermon.php&mid={$sermon->id}"); ?>"><?php _e('Delete', 'sermon-browser'); ?></a> |
+                        <a href="<?php echo esc_url(admin_url("admin.php?page=sermon-browser/new_sermon.php&mid={$sermon->id}")); ?>"><?php esc_html_e('Edit', 'sermon-browser') ?></a> | <a onclick="return confirm('<?php echo esc_js(__('Are you sure?', 'sermon-browser')); ?>')" href="<?php echo esc_url(admin_url("admin.php?page=sermon-browser/sermon.php&mid={$sermon->id}")); ?>"><?php esc_html_e('Delete', 'sermon-browser'); ?></a> |
                     <?php } ?>
-                    <a href="<?php echo sb_display_url() . sb_query_char(true) . 'sermon_id=' . $sermon->id;?>">View</a>
+                    <a href="<?php echo esc_url(sb_display_url() . sb_query_char(true) . 'sermon_id=' . $sermon->id); ?>">View</a>
                 </td>
             </tr>
         <?php endforeach ?>
@@ -282,7 +361,7 @@ class LegacyAjaxHandler
         $isUnlinked = isset($_POST['fetchU']);
 
         if (count($files) === 0) {
-            echo '<tr><td>' . __('No results', 'sermon-browser') . '</td></tr>';
+            echo '<tr><td>' . esc_html__('No results', 'sermon-browser') . '</td></tr>';
             die();
         }
 
@@ -335,12 +414,12 @@ class LegacyAjaxHandler
         $fileBasename = substr($file->name, 0, strrpos($file->name, '.'));
         $fileTypeName = $filetypes[$fileExt]['name'] ?? strtoupper($fileExt);
         ?>
-        <tr class="file <?php echo $altClass ?>" id="<?php echo $prefix ?>file<?php echo $file->id ?>">
-            <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
-            <td id="<?php echo $prefix ?><?php echo $file->id ?>"><?php echo $fileBasename ?></td>
-            <td style="text-align:center"><?php echo $fileTypeName ?></td>
+        <tr class="file <?php echo esc_attr($altClass) ?>" id="<?php echo esc_attr($prefix) ?>file<?php echo (int) $file->id ?>">
+            <th style="text-align:center" scope="row"><?php echo (int) $file->id ?></th>
+            <td id="<?php echo esc_attr($prefix) ?><?php echo (int) $file->id ?>"><?php echo esc_html($fileBasename) ?></td>
+            <td style="text-align:center"><?php echo esc_html($fileTypeName) ?></td>
             <?php if (!$isUnlinked) : ?>
-                <td><?php echo stripslashes($file->title) ?></td>
+                <td><?php echo esc_html(stripslashes($file->title)) ?></td>
             <?php endif; ?>
             <td style="text-align:center">
                 <?php self::renderFileRowActions($file, $isUnlinked); ?>
@@ -357,14 +436,16 @@ class LegacyAjaxHandler
      */
     private static function renderFileRowActions(object $file, bool $isUnlinked): void
     {
-        $safeName = str_replace("'", '', $file->name);
-        $safeTitle = str_replace("'", '', $file->title);
+        // Escape values for safe use in JavaScript strings.
+        $safeName = esc_js($file->name);
+        $safeTitle = esc_js($file->title);
+        $fileId = (int) $file->id;
         ?>
         <script type="text/javascript" language="javascript">
-        function deletelinked_<?php echo $file->id;?>(filename, filesermon) {
-            if (confirm('Do you really want to delete '+filename+'?')) {
+        function deletelinked_<?php echo $fileId;?>(filename, filesermon) {
+            if (confirm('<?php echo esc_js(__('Do you really want to delete', 'sermon-browser')); ?> '+filename+'?')) {
                 if (filesermon != '') {
-                    return confirm('This file is linked to the sermon called ['+filesermon+']. Are you sure you want to delete it?');
+                    return confirm('<?php echo esc_js(__('This file is linked to the sermon called', 'sermon-browser')); ?> ['+filesermon+']. <?php echo esc_js(__('Are you sure you want to delete it?', 'sermon-browser')); ?>');
                 }
                 return true;
             }
@@ -372,9 +453,9 @@ class LegacyAjaxHandler
         }
         </script>
         <?php if ($isUnlinked) : ?>
-            <a id="" href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
+            <a id="" href="<?php echo esc_url(admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$fileId}")); ?>"><?php esc_html_e('Create sermon', 'sermon-browser') ?></a> |
         <?php endif; ?>
-        <button type="button" id="link<?php echo $file->id ?>" class="button-link" onclick="rename(<?php echo $file->id ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></button> | <button type="button" class="button-link" onclick="if(deletelinked_<?php echo $file->id;?>('<?php echo $safeName ?>', '<?php echo $safeTitle ?>')){kill(<?php echo $file->id ?>, '<?php echo $file->name ?>');}"><?php _e('Delete', 'sermon-browser') ?></button>
+        <button type="button" id="link<?php echo $fileId ?>" class="button-link" onclick="rename(<?php echo $fileId ?>, '<?php echo $safeName ?>')"><?php esc_html_e('Rename', 'sermon-browser') ?></button> | <button type="button" class="button-link" onclick="if(deletelinked_<?php echo $fileId; ?>('<?php echo $safeName ?>', '<?php echo $safeTitle ?>')){kill(<?php echo $fileId ?>, '<?php echo $safeName ?>');}"><?php esc_html_e('Delete', 'sermon-browser') ?></button>
         <?php
     }
 }

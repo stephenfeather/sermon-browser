@@ -100,6 +100,8 @@ class UploadHelper
         ?>
         <table style="width:100%; border-spacing:2px" class="widefat">
             <form method="post" enctype="multipart/form-data" action ="<?php echo admin_url('admin.php?page=sermon-browser/files.php'); ?>" >
+            <?php wp_nonce_field('sb_file_upload', 'sb_file_upload_nonce'); ?>
+            <?php wp_nonce_field('sb_file_import', 'sb_file_import_nonce'); ?>
             <thead>
             <tr>
                 <th scope="col" colspan="3"><?php
