@@ -531,15 +531,14 @@ class FilterRenderer
         }
 
         self::renderDropdownHtml(
-            $preachers,
-            $series,
-            $services,
-            $bookCount,
-            $translatedBooks,
-            $sortByOptions,
-            $directionOptions,
-            $currentSortBy,
-            $currentDir
+            ['preachers' => $preachers, 'series' => $series, 'services' => $services],
+            ['count' => $bookCount, 'translations' => $translatedBooks],
+            [
+                'byOptions' => $sortByOptions,
+                'dirOptions' => $directionOptions,
+                'currentBy' => $currentSortBy,
+                'currentDir' => $currentDir,
+            ]
         );
 
         self::renderDropdownJs($hideFilter, $jsHide);

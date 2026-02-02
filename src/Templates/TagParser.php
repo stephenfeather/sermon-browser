@@ -86,7 +86,7 @@ class TagParser
      * @param string $_context The context (unused, reserved for future use).
      * @return string The template with loop tags converted to markers.
      */
-    private function convertLoopTagsToMarkers(string $template, string $_context): string
+    private function convertLoopTagsToMarkers(string $template, string $_context): string // NOSONAR S1172 - reserved for context-aware rendering
     {
         $loopTags = [
             'sermons_loop' => self::SERMONS_LOOP_START,
@@ -170,7 +170,7 @@ class TagParser
         $sermon = $currentSermon ?? ($data['Sermon'] ?? null);
 
         // Map tag names to renderer methods with appropriate data
-        switch ($tagName) {
+        switch ($tagName) { // NOSONAR S1479,S1142 - template tag dispatch requires case per tag
             // Loop markers - these should already be converted, but handle just in case
             case 'sermons_loop':
                 return self::SERMONS_LOOP_START;

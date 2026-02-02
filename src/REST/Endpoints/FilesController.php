@@ -158,7 +158,7 @@ class FilesController extends RestController
      * @param WP_REST_Request $request The request object.
      * @return bool Always true for public access.
      */
-    public function get_items_permissions_check($request): bool
+    public function get_items_permissions_check($request): bool // NOSONAR S1172 - WP REST API callback signature
     {
         return true;
     }

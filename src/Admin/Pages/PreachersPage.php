@@ -138,35 +138,35 @@ class PreachersPage
             return $p ? $p->image : '';
         }
 
+        $filename = '';
+
         if ($_FILES['upload']['error'] !== UPLOAD_ERR_OK) {
             $error = true;
             echo '<div id="message" class="updated fade"><p><b>' .
                 __('Could not upload file. Please check the Options page for any errors or warnings.', 'sermon-browser') .
                 '</b></div>';
-            return '';
+        } else {
+            // Process upload.
+            $filename = basename($_FILES['upload']['name']);
+            $imagesDir = SB_ABSPATH . $this->uploadDir . 'images';
+
+            // Create images directory if needed.
+            if (!is_dir($imagesDir) && sb_mkdir($imagesDir)) {
+                @chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
+            }
+
+            $dest = $imagesDir . '/' . $filename;
+
+            if (!@move_uploaded_file($_FILES['upload']['tmp_name'], $dest)) {
+                $error = true;
+                echo '<div id="message" class="updated fade"><p><b>' .
+                    __('Could not save uploaded file. Please try again.', 'sermon-browser') . '</b></div>';
+                @chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
+                $filename = '';
+            }
         }
 
-        // Process upload.
-        $filename = basename($_FILES['upload']['name']);
-        $imagesDir = SB_ABSPATH . $this->uploadDir . 'images';
-
-        // Create images directory if needed.
-        if (!is_dir($imagesDir) && sb_mkdir($imagesDir)) {
-            @chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
-        }
-
-        $dest = $imagesDir . '/' . $filename;
-
-        if (@move_uploaded_file($_FILES['upload']['tmp_name'], $dest)) {
-            return $filename;
-        }
-
-        $error = true;
-        echo '<div id="message" class="updated fade"><p><b>' .
-            __('Could not save uploaded file. Please try again.', 'sermon-browser') . '</b></div>';
-        @chmod($imagesDir, 0755); // NOSONAR - WordPress standard directory permission
-
-        return '';
+        return $filename;
     }
 
     /**

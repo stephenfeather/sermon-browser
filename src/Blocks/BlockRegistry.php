@@ -199,7 +199,7 @@ class BlockRegistry
         $asset_file = $build_path . '/index.asset.php';
 
         $this->cachedAsset = file_exists($asset_file)
-            ? require_once $asset_file
+            ? require_once $asset_file // NOSONAR S4833 - webpack-generated asset file returns array
             : ['dependencies' => [], 'version' => SB_CURRENT_VERSION];
 
         // Handle case where require_once returns true on subsequent calls

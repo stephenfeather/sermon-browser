@@ -36,7 +36,7 @@ class UrlDownloadHandler
             self::urlNotFound(esc_html__('Invalid or unregistered URL.', 'sermon-browser'));
         }
 
-        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php'; // NOSONAR S4833 - WordPress core not namespaced
         $downloadedFile = download_url($file->name);
 
         if (is_wp_error($downloadedFile)) {

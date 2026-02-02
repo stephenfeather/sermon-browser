@@ -42,6 +42,10 @@ use stdClass;
  * @SuppressWarnings("PHPMD.UnusedFormalParameter")
  * @SuppressWarnings("PHPMD.TooManyMethods")
  * @SuppressWarnings("PHPMD.TooManyPublicMethods")
+ *
+ * Note: All render methods use consistent ($data, $context) signature for uniform
+ * dispatch even when parameters are unused. This is intentional API design.
+ * NOSONAR S1172 S1448 - template renderer requires uniform method signatures
  */
 class TagRenderer
 {

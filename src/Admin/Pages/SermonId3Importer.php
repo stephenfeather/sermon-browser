@@ -44,7 +44,7 @@ class SermonId3Importer
         }
 
         if (!class_exists('getID3')) {
-            require_once ABSPATH . WPINC . '/ID3/getid3.php';
+            require_once ABSPATH . WPINC . '/ID3/getid3.php'; // NOSONAR S4833 - WordPress bundled library not namespaced
         }
 
         $getID3 = new \getID3();
