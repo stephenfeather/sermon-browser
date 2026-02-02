@@ -312,16 +312,23 @@ class FilesPage
      */
     private function renderPage(array $data): void
     {
-        global $checkSermonUpload;
-
-        $unlinked = $data['unlinked'];
-        $linked = $data['linked'];
-        $cntu = $data['cntu'];
-        $cntl = $data['cntl'];
-        $filetypes = $this->filetypes;
-        $sermonsPerPage = sb_get_option('sermons_per_page');
-
         sb_do_alerts();
+        $this->renderPageScripts();
+        $this->renderUploadSection();
+        $this->renderUnlinkedFilesSection($data['unlinked'], $data['cntu']);
+        $this->renderLinkedFilesSection($data['linked'], $data['cntl']);
+        $this->renderSearchSection();
+        $this->renderPaginationScripts($data['cntu'], $data['cntl']);
+        $this->renderCleanupSection();
+    }
+
+    /**
+     * Render the page JavaScript functions.
+     *
+     * @return void
+     */
+    private function renderPageScripts(): void
+    {
         ?>
         <script>
             function rename(id, old) {
@@ -409,17 +416,52 @@ class FilesPage
                 });
             }
         </script>
+        <?php
+    }
+
+    /**
+     * Render the upload section.
+     *
+     * @return void
+     */
+    private function renderUploadSection(): void
+    {
+        ?>
         <div class="wrap" id="top">
             <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
             <h2><?php _e('Upload Files', 'sermon-browser') ?></h2>
-            <?php if (!sb_import_options_set()) {
-                echo '<p class="plugin-update">';
-                sb_print_import_options_message();
-                echo "</p>\n";
-            } ?>
+            <?php $this->renderImportOptionsWarning(); ?>
             <br style="clear:both">
             <?php sb_print_upload_form(); ?>
         </div>
+        <?php
+    }
+
+    /**
+     * Render import options warning if not set.
+     *
+     * @return void
+     */
+    private function renderImportOptionsWarning(): void
+    {
+        if (sb_import_options_set()) {
+            return;
+        }
+        echo '<p class="plugin-update">';
+        sb_print_import_options_message();
+        echo "</p>\n";
+    }
+
+    /**
+     * Render the unlinked files section.
+     *
+     * @param array<object> $unlinked Unlinked files.
+     * @param int $count Total count.
+     * @return void
+     */
+    private function renderUnlinkedFilesSection(array $unlinked, int $count): void
+    {
+        ?>
         <div class="wrap">
             <h2><?php _e('Unlinked files', 'sermon-browser') ?></h2>
             <br style="clear:both">
@@ -433,19 +475,7 @@ class FilesPage
                     </tr>
                 </thead>
                 <tbody id="the-list-u">
-                    <?php if (is_array($unlinked)) : ?>
-                        <?php $i = 0; foreach ($unlinked as $file) : ?>
-                            <tr class="file <?php echo (++$i % 2 == 0) ? 'alternate' : '' ?>" id="file<?php echo $file->id ?>">
-                                <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
-                                <td id="<?php echo $file->id ?>"><?php echo substr($file->name, 0, strrpos($file->name, '.')) ?></td>
-                                <td style="text-align:center"><?php echo isset($filetypes[substr($file->name, strrpos($file->name, '.') + 1)]['name']) ? $filetypes[substr($file->name, strrpos($file->name, '.') + 1)]['name'] : strtoupper(substr($file->name, strrpos($file->name, '.') + 1)) ?></td>
-                                <td style="text-align:center">
-                                    <a href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
-                                    <a id="link<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Rename', 'sermon-browser'); ?></a> | <a onclick="return confirm('Do you really want to delete <?php echo str_replace("'", '', $file->name); ?>?');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
-                                </td>
-                            </tr>
-                        <?php endforeach ?>
-                    <?php endif ?>
+                    <?php $this->renderUnlinkedFileRows($unlinked); ?>
                 </tbody>
             </table>
             <br style="clear:both">
@@ -454,6 +484,45 @@ class FilesPage
                 <div class="alignright" id="uright"></div>
             </div>
         </div>
+        <?php
+    }
+
+    /**
+     * Render unlinked file rows.
+     *
+     * @param array<object> $files Files to render.
+     * @return void
+     */
+    private function renderUnlinkedFileRows(array $files): void
+    {
+        $i = 0;
+        foreach ($files as $file) {
+            $alternateClass = (++$i % 2 == 0) ? 'alternate' : '';
+            $fileType = $this->getFileTypeName($file->name);
+            ?>
+            <tr class="file <?php echo $alternateClass ?>" id="file<?php echo $file->id ?>">
+                <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
+                <td id="<?php echo $file->id ?>"><?php echo $this->getFileBasename($file->name) ?></td>
+                <td style="text-align:center"><?php echo $fileType ?></td>
+                <td style="text-align:center">
+                    <a href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
+                    <a id="link<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Rename', 'sermon-browser'); ?></a> | <a onclick="return confirm('Do you really want to delete <?php echo str_replace("'", '', $file->name); ?>?');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
+                </td>
+            </tr>
+            <?php
+        }
+    }
+
+    /**
+     * Render the linked files section.
+     *
+     * @param array<object> $linked Linked files.
+     * @param int $count Total count.
+     * @return void
+     */
+    private function renderLinkedFilesSection(array $linked, int $count): void
+    {
+        ?>
         <div class="wrap" id="linked">
             <h2><?php _e('Linked files', 'sermon-browser') ?></h2>
             <br style="clear:both">
@@ -468,27 +537,7 @@ class FilesPage
                     </tr>
                 </thead>
                 <tbody id="the-list-l">
-                    <?php if (is_array($linked)) : ?>
-                        <?php $i = 0; foreach ($linked as $file) : ?>
-                            <tr class="file <?php echo (++$i % 2 == 0) ? 'alternate' : '' ?>" id="file<?php echo $file->id ?>">
-                                <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
-                                <td id="<?php echo $file->id ?>"><?php echo substr($file->name, 0, strrpos($file->name, '.')) ?></td>
-                                <td style="text-align:center"><?php echo isset($filetypes[substr($file->name, strrpos($file->name, '.') + 1)]['name']) ? $filetypes[substr($file->name, strrpos($file->name, '.') + 1)]['name'] : strtoupper(substr($file->name, strrpos($file->name, '.') + 1)) ?></td>
-                                <td><?php echo stripslashes($file->title) ?></td>
-                                <td style="text-align:center">
-                                    <script type="text/javascript">
-                                    function deletelinked_<?php echo $file->id;?>(filename, filesermon) {
-                                        if (confirm('Do you really want to delete '+filename+'?')) {
-                                            return confirm('This file is linked to the sermon called ['+filesermon+']. Are you sure you want to delete it?');
-                                        }
-                                        return false;
-                                    }
-                                    </script>
-                                    <a id="link<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></a> | <a onclick="return deletelinked_<?php echo $file->id;?>('<?php echo str_replace("'", '', $file->name); ?>', '<?php echo str_replace("'", '', $file->title); ?>');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
-                                </td>
-                            </tr>
-                        <?php endforeach ?>
-                    <?php endif ?>
+                    <?php $this->renderLinkedFileRows($linked); ?>
                 </tbody>
             </table>
             <br style="clear:both">
@@ -497,6 +546,53 @@ class FilesPage
                 <div class="alignright" id="right"></div>
             </div>
         </div>
+        <?php
+    }
+
+    /**
+     * Render linked file rows.
+     *
+     * @param array<object> $files Files to render.
+     * @return void
+     */
+    private function renderLinkedFileRows(array $files): void
+    {
+        $i = 0;
+        foreach ($files as $file) {
+            $alternateClass = (++$i % 2 == 0) ? 'alternate' : '';
+            $fileType = $this->getFileTypeName($file->name);
+            $safeName = str_replace("'", '', $file->name);
+            $safeTitle = str_replace("'", '', $file->title);
+            ?>
+            <tr class="file <?php echo $alternateClass ?>" id="file<?php echo $file->id ?>">
+                <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
+                <td id="<?php echo $file->id ?>"><?php echo $this->getFileBasename($file->name) ?></td>
+                <td style="text-align:center"><?php echo $fileType ?></td>
+                <td><?php echo stripslashes($file->title) ?></td>
+                <td style="text-align:center">
+                    <script type="text/javascript">
+                    function deletelinked_<?php echo $file->id;?>(filename, filesermon) {
+                        if (confirm('Do you really want to delete '+filename+'?')) {
+                            return confirm('This file is linked to the sermon called ['+filesermon+']. Are you sure you want to delete it?');
+                        }
+                        return false;
+                    }
+                    </script>
+                    <a id="link<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></a> | <a onclick="return deletelinked_<?php echo $file->id;?>('<?php echo $safeName; ?>', '<?php echo $safeTitle; ?>');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
+                </td>
+            </tr>
+            <?php
+        }
+    }
+
+    /**
+     * Render the search section.
+     *
+     * @return void
+     */
+    private function renderSearchSection(): void
+    {
+        ?>
         <div class="wrap" id="search">
             <h2><?php _e('Search for files', 'sermon-browser') ?></h2>
             <form id="searchform" name="searchform">
@@ -523,6 +619,20 @@ class FilesPage
             </table>
             <br style="clear:both">
         </div>
+        <?php
+    }
+
+    /**
+     * Render pagination scripts.
+     *
+     * @param int $cntu Unlinked count.
+     * @param int $cntl Linked count.
+     * @return void
+     */
+    private function renderPaginationScripts(int $cntu, int $cntl): void
+    {
+        $sermonsPerPage = sb_get_option('sermons_per_page');
+        ?>
         <script>
             <?php if ($cntu > $sermonsPerPage) : ?>
                 jQuery('#uright').html('<a href="javascript:fetchU(2)"><?php _e('Next', 'sermon-browser') ?> &raquo;</a>');
@@ -532,17 +642,53 @@ class FilesPage
             <?php endif ?>
         </script>
         <?php
-        if (isset($checkSermonUpload) && $checkSermonUpload === 'writeable') {
-            ?>
-            <div class="wrap">
-                <h2><?php _e('Clean up', 'sermon-browser') ?></h2>
-                <form method="post">
-                    <p><?php _e('Pressing the button below scans every sermon in the database, and removes missing attachments. Use with caution!', 'sermon-browser') ?></p>
-                    <input type="submit" name="clean" value="<?php _e('Clean up missing files', 'sermon-browser') ?>" />
-                    <?php wp_nonce_field('sermon_browser_clean', 'sermon_browser_clean_nonce'); ?>
-                </form>
-            </div>
-            <?php
+    }
+
+    /**
+     * Render the cleanup section.
+     *
+     * @return void
+     */
+    private function renderCleanupSection(): void
+    {
+        global $checkSermonUpload;
+
+        if (!isset($checkSermonUpload) || $checkSermonUpload !== 'writeable') {
+            return;
         }
+        ?>
+        <div class="wrap">
+            <h2><?php _e('Clean up', 'sermon-browser') ?></h2>
+            <form method="post">
+                <p><?php _e('Pressing the button below scans every sermon in the database, and removes missing attachments. Use with caution!', 'sermon-browser') ?></p>
+                <input type="submit" name="clean" value="<?php _e('Clean up missing files', 'sermon-browser') ?>" />
+                <?php wp_nonce_field('sermon_browser_clean', 'sermon_browser_clean_nonce'); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * Get the file type display name.
+     *
+     * @param string $filename File name.
+     * @return string Type name.
+     */
+    private function getFileTypeName(string $filename): string
+    {
+        $ext = substr($filename, strrpos($filename, '.') + 1);
+        return $this->filetypes[$ext]['name'] ?? strtoupper($ext);
+    }
+
+    /**
+     * Get file basename without extension.
+     *
+     * @param string $filename File name.
+     * @return string Basename.
+     */
+    private function getFileBasename(string $filename): string
+    {
+        $pos = strrpos($filename, '.');
+        return $pos !== false ? substr($filename, 0, $pos) : $filename;
     }
 }

@@ -82,83 +82,43 @@ class SermonEditorPage
      */
     private function handlePost(): bool
     {
-        global $allowedposttags;
-        $error = false;
-
         if (!isset($_POST['save']) || !isset($_POST['title'])) {
             return false;
         }
 
-        // Verify nonce.
-        if (!wp_verify_nonce($_REQUEST['sermon_browser_save_nonce'] ?? '', 'sermon_browser_save')) {
-            wp_die(__("You do not have the correct permissions to edit or create sermons", 'sermon-browser'));
-        }
+        $this->verifyNonce();
 
-        // Prepare data.
-        $title = sanitize_text_field($_POST['title']);
-        $preacher_id = (int) $_POST['preacher'];
-        $service_id = (int) $_POST['service'];
-        $series_id = (int) $_POST['series'];
-        $time = isset($_POST['time']) ? sanitize_text_field($_POST['time']) : '';
+        // Collect form data.
+        $formInput = $this->collectFormInput();
 
         // Process Bible passages.
-        $startz = $endz = [];
-        $startBooks = $_POST['start']['book'] ?? [];
-        for ($foo = 0; $foo < count($startBooks); $foo++) {
-            if (
-                !empty($_POST['start']['chapter'][$foo]) && !empty($_POST['end']['chapter'][$foo])
-                && !empty($_POST['start']['verse'][$foo]) && !empty($_POST['end']['verse'][$foo])
-            ) {
-                $startz[] = [
-                    'book' => sanitize_text_field($_POST['start']['book'][$foo]),
-                    'chapter' => (int) $_POST['start']['chapter'][$foo],
-                    'verse' => (int) $_POST['start']['verse'][$foo],
-                ];
-                $endz[] = [
-                    'book' => sanitize_text_field($_POST['end']['book'][$foo]),
-                    'chapter' => (int) $_POST['end']['chapter'][$foo],
-                    'verse' => (int) $_POST['end']['verse'][$foo],
-                ];
-            }
-        }
-        $start = serialize($startz);
-        $end = serialize($endz);
+        [$startz, $endz] = $this->processBiblePassages();
+        $formInput['start'] = serialize($startz);
+        $formInput['end'] = serialize($endz);
 
-        // Process date.
-        $date = strtotime($_POST['date']);
-        $override = (isset($_POST['override']) && $_POST['override'] === 'on') ? 1 : 0;
-        if ($date) {
-            if (!$override) {
-                $service = Service::find($service_id);
-                $service_time = $service ? $service->time : null;
-                if ($service_time) {
-                    $date = $date - strtotime('00:00') + strtotime($service_time);
-                }
-            } else {
-                $date = $date - strtotime('00:00') + strtotime($_POST['time']);
-            }
-            $date = date('Y-m-d H:i:s', $date);
-        } else {
-            $date = '1970-01-01 00:00';
-        }
+        // Process date with service time.
+        $formInput['date'] = $this->processSermonDate($formInput['service_id'], $formInput['override']);
 
-        // Filter description.
-        if (!current_user_can('unfiltered_html')) {
-            $description = wp_kses($_POST['description'], $allowedposttags);
-        } else {
-            $description = $_POST['description'];
-        }
+        // Filter description based on user capabilities.
+        $formInput['description'] = $this->filterDescription($formInput['description']);
 
         // Insert or update sermon.
-        $id = $this->saveSermon($title, $preacher_id, $service_id, $series_id, $date, $start, $end, $description, $time, $override);
+        $id = $this->saveSermon(
+            $formInput['title'],
+            $formInput['preacher_id'],
+            $formInput['service_id'],
+            $formInput['series_id'],
+            $formInput['date'],
+            $formInput['start'],
+            $formInput['end'],
+            $formInput['description'],
+            $formInput['time'],
+            $formInput['override']
+        );
 
-        // Save Bible passages.
+        // Save related data.
         $this->saveBiblePassages($id, $startz, $endz);
-
-        // Save attachments.
-        $error = $this->saveAttachments($id) || $error;
-
-        // Save tags.
+        $error = $this->saveAttachments($id);
         $this->saveTags($id);
 
         // Redirect on success.
@@ -168,6 +128,136 @@ class SermonEditorPage
         }
 
         return $error;
+    }
+
+    /**
+     * Verify the nonce for sermon save.
+     *
+     * @return void
+     */
+    private function verifyNonce(): void
+    {
+        if (!wp_verify_nonce($_REQUEST['sermon_browser_save_nonce'] ?? '', 'sermon_browser_save')) {
+            wp_die(__("You do not have the correct permissions to edit or create sermons", 'sermon-browser'));
+        }
+    }
+
+    /**
+     * Collect basic form input data.
+     *
+     * @return array<string, mixed> Form input data.
+     */
+    private function collectFormInput(): array
+    {
+        return [
+            'title' => sanitize_text_field($_POST['title']),
+            'preacher_id' => (int) $_POST['preacher'],
+            'service_id' => (int) $_POST['service'],
+            'series_id' => (int) $_POST['series'],
+            'time' => isset($_POST['time']) ? sanitize_text_field($_POST['time']) : '',
+            'override' => (isset($_POST['override']) && $_POST['override'] === 'on') ? 1 : 0,
+            'description' => $_POST['description'] ?? '',
+        ];
+    }
+
+    /**
+     * Process Bible passages from POST data.
+     *
+     * @return array{0: array<int, array{book: string, chapter: int, verse: int}>, 1: array<int, array{book: string, chapter: int, verse: int}>}
+     */
+    private function processBiblePassages(): array
+    {
+        $startz = [];
+        $endz = [];
+        $startBooks = $_POST['start']['book'] ?? [];
+
+        for ($i = 0; $i < count($startBooks); $i++) {
+            if (!$this->isValidPassage($i)) {
+                continue;
+            }
+            $startz[] = [
+                'book' => sanitize_text_field($_POST['start']['book'][$i]),
+                'chapter' => (int) $_POST['start']['chapter'][$i],
+                'verse' => (int) $_POST['start']['verse'][$i],
+            ];
+            $endz[] = [
+                'book' => sanitize_text_field($_POST['end']['book'][$i]),
+                'chapter' => (int) $_POST['end']['chapter'][$i],
+                'verse' => (int) $_POST['end']['verse'][$i],
+            ];
+        }
+
+        return [$startz, $endz];
+    }
+
+    /**
+     * Check if a passage at the given index has all required fields.
+     *
+     * @param int $index Passage index.
+     * @return bool True if valid.
+     */
+    private function isValidPassage(int $index): bool
+    {
+        return !empty($_POST['start']['chapter'][$index])
+            && !empty($_POST['end']['chapter'][$index])
+            && !empty($_POST['start']['verse'][$index])
+            && !empty($_POST['end']['verse'][$index]);
+    }
+
+    /**
+     * Process the sermon date with optional service time.
+     *
+     * @param int $serviceId Service ID.
+     * @param int $override Whether to override service time.
+     * @return string Formatted date string.
+     */
+    private function processSermonDate(int $serviceId, int $override): string
+    {
+        $date = strtotime($_POST['date']);
+
+        if (!$date) {
+            return '1970-01-01 00:00';
+        }
+
+        $timeOffset = $this->getTimeOffset($serviceId, $override);
+        $date = $date - strtotime('00:00') + $timeOffset;
+
+        return date('Y-m-d H:i:s', $date);
+    }
+
+    /**
+     * Get the time offset for a sermon date.
+     *
+     * @param int $serviceId Service ID.
+     * @param int $override Whether to override service time.
+     * @return int Time offset in seconds.
+     */
+    private function getTimeOffset(int $serviceId, int $override): int
+    {
+        if ($override) {
+            return strtotime($_POST['time']);
+        }
+
+        $service = Service::find($serviceId);
+        $serviceTime = $service ? $service->time : null;
+
+        return $serviceTime ? strtotime($serviceTime) : strtotime('00:00');
+    }
+
+    /**
+     * Filter description based on user HTML capabilities.
+     *
+     * @param string $description Raw description.
+     * @return string Filtered description.
+     */
+    private function filterDescription(string $description): string
+    {
+        if (current_user_can('unfiltered_html')) {
+            return $description;
+        }
+
+        global $allowedposttags;
+        return wp_kses($description, $allowedposttags);
     }
 
     /**
@@ -892,6 +982,7 @@ class SermonEditorPage
      */
     private function renderExistingDataInit(?int $mid): void
     {
+        $fileData = $this->loadAssociatedFiles($mid);
         ?>
                 stuff = new Array();
                 type = new Array();
@@ -903,53 +994,81 @@ class SermonEditorPage
                 end3 = new Array();
 
                 <?php
-                if ($mid !== null) {
-                    $assocFiles = File::findBySermonAndType($mid, 'file');
-                    $assocURLs = File::findBySermonAndType($mid, 'url');
-                    $assocCode = File::findBySermonAndType($mid, 'code');
-                } else {
-                    $assocFiles = $assocURLs = $assocCode = [];
-                }
-                $r = false;
-                if (isset($_GET['getid3'])) {
-                    $file_data = File::find((int) $_GET['getid3']);
-                    if ($file_data !== null) {
-                        if ($file_data->type === 'url') {
-                            $assocURLs[] = $file_data;
-                        } else {
-                            $newFile = new \stdClass();
-                            $newFile->id = esc_js($_GET['getid3']);
-                            $assocFiles[] = $newFile;
-                        }
-                    }
-                }
+                $hasFiles = false;
+                $hasFiles = $this->renderFileArrayInit($fileData['files'], 'file', $hasFiles);
+                $hasFiles = $this->renderFileArrayInit($fileData['urls'], 'url', $hasFiles);
+                $hasFiles = $this->renderFileArrayInit($fileData['code'], 'code', $hasFiles);
                 ?>
 
-                <?php for ($i = 0; $i < count($assocFiles); $i++) : ?>
-                    <?php $r = true ?>
-                    addFile();
-                    stuff.push(<?php echo $assocFiles[$i]->id ?>);
-                    type.push('file');
-                <?php endfor ?>
-
-                <?php for ($i = 0; $i < count($assocURLs); $i++) : ?>
-                    <?php $r = true ?>
-                    addFile();
-                    stuff.push('<?php echo $assocURLs[$i]->name ?>');
-                    type.push('url');
-                <?php endfor ?>
-
-                <?php for ($i = 0; $i < count($assocCode); $i++) : ?>
-                    <?php $r = true ?>
-                    addFile();
-                    stuff.push('<?php echo $assocCode[$i]->name ?>');
-                    type.push('code');
-                <?php endfor ?>
-
-                <?php if ($r) : ?>
+                <?php if ($hasFiles) : ?>
                 jQuery('.choose:last').remove();
                 <?php endif ?>
         <?php
+    }
+
+    /**
+     * Load associated files for a sermon.
+     *
+     * @param int|null $mid Sermon ID.
+     * @return array{files: array<object>, urls: array<object>, code: array<object>}
+     */
+    private function loadAssociatedFiles(?int $mid): array
+    {
+        $assocFiles = $mid !== null ? File::findBySermonAndType($mid, 'file') : [];
+        $assocURLs = $mid !== null ? File::findBySermonAndType($mid, 'url') : [];
+        $assocCode = $mid !== null ? File::findBySermonAndType($mid, 'code') : [];
+
+        // Handle ID3 import.
+        if (isset($_GET['getid3'])) {
+            $this->addId3File($assocFiles, $assocURLs);
+        }
+
+        return ['files' => $assocFiles, 'urls' => $assocURLs, 'code' => $assocCode];
+    }
+
+    /**
+     * Add file from ID3 import to appropriate array.
+     *
+     * @param array<object> $assocFiles Files array (modified by reference).
+     * @param array<object> $assocURLs URLs array (modified by reference).
+     * @return void
+     */
+    private function addId3File(array &$assocFiles, array &$assocURLs): void
+    {
+        $file_data = File::find((int) $_GET['getid3']);
+        if ($file_data === null) {
+            return;
+        }
+
+        if ($file_data->type === 'url') {
+            $assocURLs[] = $file_data;
+        } else {
+            $newFile = new \stdClass();
+            $newFile->id = esc_js($_GET['getid3']);
+            $assocFiles[] = $newFile;
+        }
+    }
+
+    /**
+     * Render JavaScript array initialization for files.
+     *
+     * @param array<object> $files Files to render.
+     * @param string $type File type ('file', 'url', 'code').
+     * @param bool $hasFiles Whether files have been rendered.
+     * @return bool Updated hasFiles flag.
+     */
+    private function renderFileArrayInit(array $files, string $type, bool $hasFiles): bool
+    {
+        foreach ($files as $file) {
+            $hasFiles = true;
+            $value = $type === 'file' ? $file->id : "'{$file->name}'";
+            ?>
+                    addFile();
+                    stuff.push(<?php echo $value ?>);
+                    type.push('<?php echo $type ?>');
+            <?php
+        }
+        return $hasFiles;
     }
 
     /**
