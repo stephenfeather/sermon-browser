@@ -349,7 +349,7 @@ class OptionsPage
             <form method="post">
                 <h2><?php _e('Basic Options', 'sermon-browser') ?></h2>
                 <br style="clear:both"/>
-                <table border="0" class="widefat">
+                <table border="0" class="widefat" role="presentation">
                     <?php $this->renderUploadFolderField(); ?>
                     <?php $this->renderPodcastFields(); ?>
                     <?php $this->renderMp3ShortcodeField(); ?>
@@ -373,7 +373,7 @@ class OptionsPage
                     );
                     ?>
                 </p>
-                <table border="0" class="widefat">
+                <table border="0" class="widefat" role="presentation">
                     <?php $this->renderImportOptions(); ?>
                 </table>
 

@@ -231,7 +231,7 @@ class PreachersPage
             <form method="post" enctype="multipart/form-data">
                 <input type="hidden" name="pid" value="<?php echo $pid; ?>">
                 <fieldset>
-                    <table class="widefat">
+                    <table class="widefat" role="presentation">
                         <tr>
                             <td>
                                 <strong><?php _e('Name', 'sermon-browser'); ?></strong>

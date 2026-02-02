@@ -94,7 +94,7 @@ class UninstallPage
                 ?>
             </p>
         <?php endif; ?>
-        <table border="0" class="widefat">
+        <table border="0" class="widefat" role="presentation">
             <tr>
                 <td><input type="checkbox" name="wipe"
                            value="1"> <?php _e('Also remove all uploaded files', 'sermon-browser'); ?></td>

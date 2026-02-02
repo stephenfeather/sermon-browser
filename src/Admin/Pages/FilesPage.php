@@ -500,13 +500,13 @@ class FilesPage
             $alternateClass = (++$i % 2 == 0) ? 'alternate' : '';
             $fileType = $this->getFileTypeName($file->name);
             ?>
-            <tr class="file <?php echo $alternateClass ?>" id="file<?php echo $file->id ?>">
+            <tr class="file <?php echo $alternateClass ?>" id="u-file-<?php echo $file->id ?>">
                 <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
-                <td id="<?php echo $file->id ?>"><?php echo $this->getFileBasename($file->name) ?></td>
+                <td id="u-name-<?php echo $file->id ?>"><?php echo $this->getFileBasename($file->name) ?></td>
                 <td style="text-align:center"><?php echo $fileType ?></td>
                 <td style="text-align:center">
                     <a href="<?php echo admin_url("admin.php?page=sermon-browser/new_sermon.php&amp;getid3={$file->id}"); ?>"><?php _e('Create sermon', 'sermon-browser') ?></a> |
-                    <a id="link<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Rename', 'sermon-browser'); ?></a> | <a onclick="return confirm('Do you really want to delete <?php echo str_replace("'", '', $file->name); ?>?');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
+                    <a id="u-link-<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name; ?>')"><?php _e('Rename', 'sermon-browser'); ?></a> | <a onclick="return confirm('Do you really want to delete <?php echo str_replace("'", '', $file->name); ?>?');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
                 </td>
             </tr>
             <?php
@@ -564,9 +564,9 @@ class FilesPage
             $safeName = str_replace("'", '', $file->name);
             $safeTitle = str_replace("'", '', $file->title);
             ?>
-            <tr class="file <?php echo $alternateClass ?>" id="file<?php echo $file->id ?>">
+            <tr class="file <?php echo $alternateClass ?>" id="l-file-<?php echo $file->id ?>">
                 <th style="text-align:center" scope="row"><?php echo $file->id ?></th>
-                <td id="<?php echo $file->id ?>"><?php echo $this->getFileBasename($file->name) ?></td>
+                <td id="l-name-<?php echo $file->id ?>"><?php echo $this->getFileBasename($file->name) ?></td>
                 <td style="text-align:center"><?php echo $fileType ?></td>
                 <td><?php echo stripslashes($file->title) ?></td>
                 <td style="text-align:center">
@@ -578,7 +578,7 @@ class FilesPage
                         return false;
                     }
                     </script>
-                    <a id="link<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></a> | <a onclick="return deletelinked_<?php echo $file->id;?>('<?php echo $safeName; ?>', '<?php echo $safeTitle; ?>');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
+                    <a id="l-link-<?php echo $file->id; ?>" href="javascript:rename(<?php echo $file->id; ?>, '<?php echo $file->name ?>')"><?php _e('Rename', 'sermon-browser') ?></a> | <a onclick="return deletelinked_<?php echo $file->id;?>('<?php echo $safeName; ?>', '<?php echo $safeTitle; ?>');" href="javascript:kill(<?php echo $file->id; ?>, '<?php echo $file->name; ?>');"><?php _e('Delete', 'sermon-browser'); ?></a>
                 </td>
             </tr>
             <?php

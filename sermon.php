@@ -404,7 +404,7 @@ function sb_update_podcast_url()
     global $wp_rewrite;
     $existing_url = sb_get_option('podcast_url');
     if (substr($existing_url, 0, strlen(site_url())) == site_url()) {
-        if (sb_display_url(true) == "") {
+        if (sb_display_url() == "") {
             sb_update_option('podcast_url', site_url() . sb_query_char(false) . 'podcast');
         } else {
             sb_update_option('podcast_url', sb_display_url() . sb_query_char(false) . 'podcast');
@@ -501,9 +501,9 @@ function sb_shortcode($atts, $content = null)
         sb_render_sermon_list($atts);
     }
 
-    $content = ob_get_contents();
+    $output = ob_get_contents();
     ob_end_clean();
-    return $content;
+    return $output;
 }
 
 /**

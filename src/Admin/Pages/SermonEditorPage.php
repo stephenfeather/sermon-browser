@@ -629,7 +629,7 @@ class SermonEditorPage
             <br/>
             <form method="post" enctype="multipart/form-data">
             <fieldset>
-                <table class="widefat">
+                <table class="widefat" role="presentation">
                     <thead>
                         <tr>
                             <th scope="col" colspan="2"><?php _e('Enter sermon details', 'sermon-browser') ?></th>

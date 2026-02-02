@@ -93,7 +93,7 @@ class TemplatesPage
         <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" /></a>
         <h2><?php _e('Templates', 'sermon-browser'); ?></h2>
         <br/>
-        <table border="0" class="widefat">
+        <table border="0" class="widefat" role="presentation">
             <tr>
                 <td style="text-align:right"><?php _e('Search results page', 'sermon-browser'); ?>: </td>
                 <td>
