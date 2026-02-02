@@ -311,8 +311,8 @@ class TagRenderer
             return '';
         }
 
-        $start = is_string($sermon->start) ? unserialize($sermon->start) : $sermon->start;
-        $end = is_string($sermon->end) ? unserialize($sermon->end) : $sermon->end;
+        $start = is_string($sermon->start) ? unserialize($sermon->start, ['allowed_classes' => false]) : $sermon->start;
+        $end = is_string($sermon->end) ? unserialize($sermon->end, ['allowed_classes' => false]) : $sermon->end;
 
         if (empty($start) || empty($end) || !isset($start[0]) || !isset($end[0])) {
             return '';

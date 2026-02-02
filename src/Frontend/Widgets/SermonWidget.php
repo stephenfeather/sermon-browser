@@ -81,8 +81,8 @@ final class SermonWidget
                 sb_print_sermon_link($sermon, true);
                 echo "\">" . stripslashes($sermon->title) . "</a></span>";
                 if ($displayPassage) {
-                    $foo = unserialize($sermon->start);
-                    $bar = unserialize($sermon->end);
+                    $foo = unserialize($sermon->start, ['allowed_classes' => false]);
+                    $bar = unserialize($sermon->end, ['allowed_classes' => false]);
                     echo "<span class=\"sermon-passage\"> (" . sb_get_books($foo[0], $bar[0]) . ")</span>";
                 }
                 if ($displayPreacher) {
@@ -186,8 +186,8 @@ final class SermonWidget
         echo stripslashes($sermon->title) . '</a></span>';
 
         if ($opts['book']) {
-            $start = unserialize($sermon->start);
-            $end = unserialize($sermon->end);
+            $start = unserialize($sermon->start, ['allowed_classes' => false]);
+            $end = unserialize($sermon->end, ['allowed_classes' => false]);
             if (isset($start[0], $end[0])) {
                 echo " <span class=\"sermon-passage\">(" . sb_get_books($start[0], $end[0]) . ")</span>";
             }

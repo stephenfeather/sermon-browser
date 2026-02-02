@@ -242,8 +242,8 @@ class OptionsPage
         $sermon_books = Book::getSermonsWithVerseData();
 
         foreach ($sermon_books as $sermon_book) {
-            $start_verse = unserialize($sermon_book->start);
-            $end_verse = unserialize($sermon_book->end);
+            $start_verse = unserialize($sermon_book->start, ['allowed_classes' => false]);
+            $end_verse = unserialize($sermon_book->end, ['allowed_classes' => false]);
 
             $start_index = array_search($start_verse[0]['book'], $eng_books, true);
             $end_index = array_search($end_verse[0]['book'], $eng_books, true);

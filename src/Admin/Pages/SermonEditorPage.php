@@ -540,8 +540,8 @@ class SermonEditorPage
             $mid = (int) $_GET['mid'];
             $curSermon = Sermon::find($mid);
             $files = File::findBySermonOrUnlinked($mid);
-            $startArr = unserialize($curSermon->start) ?: [];
-            $endArr = unserialize($curSermon->end) ?: [];
+            $startArr = unserialize($curSermon->start, ['allowed_classes' => false]) ?: [];
+            $endArr = unserialize($curSermon->end, ['allowed_classes' => false]) ?: [];
 
             $rawtags = Tag::findBySermon($mid);
             $tagNames = [];

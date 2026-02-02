@@ -1497,8 +1497,8 @@ function sb_get_single_sermon($id)
     }
 
     // Unserialize start/end passages
-    $sermon->start = unserialize($sermon->start);
-    $sermon->end = unserialize($sermon->end);
+    $sermon->start = unserialize($sermon->start, ['allowed_classes' => false]);
+    $sermon->end = unserialize($sermon->end, ['allowed_classes' => false]);
 
     return [
         'Sermon' => $sermon,

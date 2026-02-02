@@ -149,8 +149,8 @@ class SermonsWidget extends WP_Widget
         if ($sermon->start === null || $sermon->end === null) {
             return;
         }
-        $startData = unserialize($sermon->start);
-        $endData = unserialize($sermon->end);
+        $startData = unserialize($sermon->start, ['allowed_classes' => false]);
+        $endData = unserialize($sermon->end, ['allowed_classes' => false]);
         if ($startData && $endData) {
             echo ' <span class="sermon-passage">(';
             echo esc_html(sb_get_books($startData[0], $endData[0])) . ')</span>';

@@ -83,7 +83,7 @@ class OptionsManager
         }
 
         $decoded = base64_decode($options);
-        $unserialized = unserialize($decoded);
+        $unserialized = unserialize($decoded, ['allowed_classes' => false]);
 
         if ($unserialized === false) {
             wp_die('Failed to get SermonBrowser options ' . $decoded);
