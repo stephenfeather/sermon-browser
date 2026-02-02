@@ -63,7 +63,7 @@ class SermonEditorPage
         $translated_books = array_combine(sb_get_default('eng_bible_books'), sb_get_default('bible_books'));
 
         // Handle form submission.
-        $error = $this->handlePost();
+        $this->handlePost();
 
         // Handle ID3 tag import.
         $id3Importer = new SermonId3Importer();
