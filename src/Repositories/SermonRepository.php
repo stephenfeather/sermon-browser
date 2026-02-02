@@ -656,7 +656,53 @@ class SermonRepository extends AbstractRepository
             $orderBy = "b.id {$orderDir}, bs.chapter {$orderDir}, bs.verse";
         }
 
-        // Build conditions
+        // Build conditions using helper method
+        $filterResult = $this->buildFrontendFilterConditions($filter, $hideEmpty);
+        $conditions = $filterResult['conditions'];
+        $bookJoinCondition = $filterResult['bookJoinCondition'];
+
+        // Calculate offset
+        $offset = $limit * ($page - 1);
+
+        // Build the query
+        $sql = "SELECT SQL_CALC_FOUND_ROWS DISTINCT
+                m.id, m.title, m.description, m.datetime, m.time, m.start, m.end,
+                p.id as pid, p.name as preacher, p.description as preacher_description, p.image,
+                s.id as sid, s.name as service,
+                ss.id as ssid, ss.name as series
+            FROM {$table} as m
+            LEFT JOIN {$preachersTable} as p ON m.preacher_id = p.id
+            LEFT JOIN {$servicesTable} as s ON m.service_id = s.id
+            LEFT JOIN {$seriesTable} as ss ON m.series_id = ss.id
+            LEFT JOIN {$booksSermonTable} as bs ON bs.sermon_id = m.id{$bookJoinCondition}
+            LEFT JOIN {$booksTable} as b ON bs.book_name = b.name
+            LEFT JOIN {$sermonsTagsTable} as st ON st.sermon_id = m.id
+            LEFT JOIN {$tagsTable} as t ON t.id = st.tag_id
+            LEFT JOIN {$stuffTable} as stuff ON stuff.sermon_id = m.id
+            WHERE {$conditions}
+            ORDER BY {$orderBy} {$orderDir}
+            LIMIT {$offset}, {$limit}";
+
+        // Execute query
+        $this->db->query('SET SQL_BIG_SELECTS=1');
+        $results = $this->db->get_results($sql);
+        $total = (int) $this->db->get_var("SELECT FOUND_ROWS()");
+
+        return [
+            'items' => is_array($results) ? $results : [],
+            'total' => $total,
+        ];
+    }
+
+    /**
+     * Build filter conditions for frontend listing query.
+     *
+     * @param array<string, mixed> $filter Filter criteria.
+     * @param bool $hideEmpty Only show sermons with attached files.
+     * @return array{conditions: string, bookJoinCondition: string} SQL conditions.
+     */
+    private function buildFrontendFilterConditions(array $filter, bool $hideEmpty): array
+    {
         $conditions = '1=1 ';
         $bookJoinCondition = '';
 
@@ -711,36 +757,9 @@ class SermonRepository extends AbstractRepository
             $conditions .= " AND stuff.name != ''";
         }
 
-        // Calculate offset
-        $offset = $limit * ($page - 1);
-
-        // Build the query
-        $sql = "SELECT SQL_CALC_FOUND_ROWS DISTINCT
-                m.id, m.title, m.description, m.datetime, m.time, m.start, m.end,
-                p.id as pid, p.name as preacher, p.description as preacher_description, p.image,
-                s.id as sid, s.name as service,
-                ss.id as ssid, ss.name as series
-            FROM {$table} as m
-            LEFT JOIN {$preachersTable} as p ON m.preacher_id = p.id
-            LEFT JOIN {$servicesTable} as s ON m.service_id = s.id
-            LEFT JOIN {$seriesTable} as ss ON m.series_id = ss.id
-            LEFT JOIN {$booksSermonTable} as bs ON bs.sermon_id = m.id{$bookJoinCondition}
-            LEFT JOIN {$booksTable} as b ON bs.book_name = b.name
-            LEFT JOIN {$sermonsTagsTable} as st ON st.sermon_id = m.id
-            LEFT JOIN {$tagsTable} as t ON t.id = st.tag_id
-            LEFT JOIN {$stuffTable} as stuff ON stuff.sermon_id = m.id
-            WHERE {$conditions}
-            ORDER BY {$orderBy} {$orderDir}
-            LIMIT {$offset}, {$limit}";
-
-        // Execute query
-        $this->db->query('SET SQL_BIG_SELECTS=1');
-        $results = $this->db->get_results($sql);
-        $total = (int) $this->db->get_var("SELECT FOUND_ROWS()");
-
         return [
-            'items' => is_array($results) ? $results : [],
-            'total' => $total,
+            'conditions' => $conditions,
+            'bookJoinCondition' => $bookJoinCondition,
         ];
     }
 }
