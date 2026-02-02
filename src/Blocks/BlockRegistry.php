@@ -217,11 +217,7 @@ class BlockRegistry
      */
     private function hasBlocksOnPage(): bool
     {
-        if (!is_singular()) {
-            return false;
-        }
-
-        $post = get_post();
+        $post = is_singular() ? get_post() : null;
         if (!$post) {
             return false;
         }
