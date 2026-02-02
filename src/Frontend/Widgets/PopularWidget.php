@@ -47,7 +47,7 @@ final class PopularWidget
 
         echo $beforeWidget;
         if ($options['title'] != '') {
-            echo $beforeTitle . $options['title'] . $afterTitle;
+            echo $beforeTitle . esc_html($options['title']) . $afterTitle;
         }
 
         $jscript = '';
@@ -97,8 +97,8 @@ final class PopularWidget
 
         $output['sermons'] = '<div class="popular-sermons' . $suffix . '"><ul>';
         foreach ($sermons as $sermon) {
-            $output['sermons'] .= '<li><a href="' . UrlBuilder::build(['sermon_id' => $sermon->id], true) . '">';
-            $output['sermons'] .= $sermon->title . '</a></li>';
+            $output['sermons'] .= '<li><a href="' . esc_url(UrlBuilder::build(['sermon_id' => $sermon->id], true)) . '">';
+            $output['sermons'] .= esc_html($sermon->title) . '</a></li>';
         }
         $output['sermons'] .= '</ul></div>';
         $trigger[] = '<a id="popular_sermons_trigger' . $suffix . '" href="#">Sermons</a>';
@@ -126,8 +126,8 @@ final class PopularWidget
         if ($seriesList) {
             $output['series'] = '<div class="popular-series' . $suffix . '"><ul>';
             foreach ($seriesList as $series) {
-                $output['series'] .= '<li><a href="' . UrlBuilder::build(['series' => $series->id], true) . '">';
-                $output['series'] .= $series->name . '</a></li>';
+                $output['series'] .= '<li><a href="' . esc_url(UrlBuilder::build(['series' => $series->id], true)) . '">';
+                $output['series'] .= esc_html($series->name) . '</a></li>';
             }
             $output['series'] .= '</ul></div>';
         }
@@ -159,8 +159,8 @@ final class PopularWidget
 
         $output['preachers'] = '<div class="popular-preachers' . $suffix . '"><ul>';
         foreach ($preachersList as $preacher) {
-            $output['preachers'] .= '<li><a href="' . UrlBuilder::build(['preacher' => $preacher->id], true) . '">';
-            $output['preachers'] .= $preacher->name . '</a></li>';
+            $output['preachers'] .= '<li><a href="' . esc_url(UrlBuilder::build(['preacher' => $preacher->id], true)) . '">';
+            $output['preachers'] .= esc_html($preacher->name) . '</a></li>';
         }
         $output['preachers'] .= '</ul></div>';
         $trigger[] = '<a id="popular_preachers_trigger' . $suffix . '" href="#">Preachers</a>';
