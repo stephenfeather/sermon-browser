@@ -481,7 +481,7 @@ class SermonRepositoryTest extends TestCase
             ->once()
             ->andReturn($expectedSermons);
 
-        $result = $this->repository->findForAdminList(10, 0);
+        $result = $this->repository->findForAdminListFiltered([], 10, 0);
 
         $this->assertCount(1, $result);
     }

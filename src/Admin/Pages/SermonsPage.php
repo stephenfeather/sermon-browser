@@ -44,12 +44,15 @@ class SermonsPage
         $this->handleSavedMessage();
         $this->handleDeletion();
 
+        // Build filter array from GET params
+        $filters = $this->extractFilters();
+
         $cnt = Sermon::count();
-        $sermons = Sermon::findForAdminList((int) sb_get_option('sermons_per_page'));
+        $sermons = Sermon::findForAdminListFiltered($filters, (int) sb_get_option('sermons_per_page'));
         $preachers = Preacher::findAllSorted();
         $series = Series::findAllSorted();
 
-        $this->renderPage($cnt, $sermons, $preachers, $series);
+        $this->renderPage($cnt, $sermons, $preachers, $series, $filters);
     }
 
     /**
@@ -116,18 +119,46 @@ class SermonsPage
     }
 
     /**
+     * Extract filter values from GET parameters.
+     *
+     * @return array<string, mixed> Filter criteria for repository query.
+     */
+    private function extractFilters(): array
+    {
+        $filters = [];
+
+        // Title search (sanitize as text field)
+        if (!empty($_GET['title'])) {
+            $filters['title'] = sanitize_text_field(wp_unslash($_GET['title']));
+        }
+
+        // Preacher filter (integer ID)
+        if (!empty($_GET['preacher_id']) && (int) $_GET['preacher_id'] > 0) {
+            $filters['preacher_id'] = (int) $_GET['preacher_id'];
+        }
+
+        // Series filter (integer ID)
+        if (!empty($_GET['series_id']) && (int) $_GET['series_id'] > 0) {
+            $filters['series_id'] = (int) $_GET['series_id'];
+        }
+
+        return $filters;
+    }
+
+    /**
      * Render the page content.
      *
-     * @param int   $cnt      Total sermon count.
-     * @param array $sermons  Sermon list.
+     * @param int   $cnt       Total sermon count.
+     * @param array $sermons   Sermon list.
      * @param array $preachers Preacher list.
      * @param array $series    Series list.
+     * @param array $filters   Current filter values.
      * @return void
      */
-    private function renderPage(int $cnt, array $sermons, array $preachers, array $series): void
+    private function renderPage(int $cnt, array $sermons, array $preachers, array $series, array $filters): void
     {
         $this->renderScript();
-        $this->renderFilterForm($preachers, $series);
+        $this->renderFilterForm($preachers, $series, $filters);
         $this->renderSermonsTable($sermons);
         $this->renderNavigation($cnt);
     }
@@ -170,10 +201,14 @@ class SermonsPage
      *
      * @param array $preachers Preacher list.
      * @param array $series    Series list.
+     * @param array $filters   Current filter values.
      * @return void
      */
-    private function renderFilterForm(array $preachers, array $series): void
+    private function renderFilterForm(array $preachers, array $series, array $filters): void
     {
+        $currentTitle = esc_attr($filters['title'] ?? '');
+        $currentPreacherId = (int) ($filters['preacher_id'] ?? 0);
+        $currentSeriesId = (int) ($filters['series_id'] ?? 0);
         ?>
     <div class="wrap">
             <a href="http://www.sermonbrowser.com/"><img src="<?php echo SB_PLUGIN_URL; ?>/assets/images/logo-small.png" width="191" height ="35" style="margin: 1em 2em; float: right;" alt="<?php esc_attr_e('Sermon Browser logo', 'sermon-browser'); ?>" /></a>
@@ -181,14 +216,14 @@ class SermonsPage
             <form id="searchform" name="searchform">
             <fieldset style="float:left; margin-right: 1em">
                 <legend><?php _e('Title', 'sermon-browser'); ?></legend>
-                <input type="text" size="17" value="" id="search" />
+                <input type="text" size="17" value="<?php echo $currentTitle; ?>" id="search" />
             </fieldset>
             <fieldset style="float:left; margin-right: 1em">
                 <legend><?php _e('Preacher', 'sermon-browser'); ?></legend>
                 <select id="preacher">
                     <option value="0"></option>
                     <?php foreach ($preachers as $preacher) : ?>
-                        <option value="<?php echo $preacher->id; ?>"><?php echo htmlspecialchars(stripslashes($preacher->name), ENT_QUOTES); ?></option>
+                        <option value="<?php echo $preacher->id; ?>"<?php selected($preacher->id, $currentPreacherId); ?>><?php echo htmlspecialchars(stripslashes($preacher->name), ENT_QUOTES); ?></option>
                     <?php endforeach; ?>
                 </select>
             </fieldset>
@@ -197,7 +232,7 @@ class SermonsPage
                 <select id="series">
                     <option value="0"></option>
                     <?php foreach ($series as $item) : ?>
-                        <option value="<?php echo $item->id; ?>"><?php echo htmlspecialchars(stripslashes($item->name), ENT_QUOTES); ?></option>
+                        <option value="<?php echo $item->id; ?>"<?php selected($item->id, $currentSeriesId); ?>><?php echo htmlspecialchars(stripslashes($item->name), ENT_QUOTES); ?></option>
                     <?php endforeach; ?>
                 </select>
             </fieldset style="float:left; margin-right: 1em">
