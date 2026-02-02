@@ -629,92 +629,89 @@ class SermonEditorPage
             <br/>
             <form method="post" enctype="multipart/form-data">
             <fieldset>
-                <table class="widefat" role="presentation">
-                    <thead>
-                        <tr>
-                            <td colspan="2"><strong><?php _e('Enter sermon details', 'sermon-browser') ?></strong></td>
-                        </tr>
-                    </thead>
-                    <tr>
-                        <td>
+                <div class="widefat" style="padding: 1em;">
+                    <div style="margin-bottom: 1em;"><strong><?php _e('Enter sermon details', 'sermon-browser') ?></strong></div>
+
+                    <!-- Title | Tags row -->
+                    <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+                        <div style="flex: 1;">
                             <strong><?php _e('Title', 'sermon-browser') ?></strong>
                             <div>
                                 <input type="text" value="<?php echo esc_attr($titleValue); ?>" name="title" size="60" style="width:400px;" />
                             </div>
-                        </td>
-                        <td>
+                        </div>
+                        <div style="flex: 1;">
                             <strong><?php _e('Tags (comma separated)', 'sermon-browser') ?></strong>
                             <div>
                                 <input type="text" name="tags" value="<?php echo esc_attr($tagsValue); ?>" style="width:400px" />
                             </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
+                        </div>
+                    </div>
+
+                    <!-- Preacher | Series row -->
+                    <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+                        <div style="flex: 1;">
                             <strong><?php _e('Preacher', 'sermon-browser') ?></strong><br/>
                             <?php $this->renderSelectDropdown('preacher', 'preacher', $preachers, $preacherId, __('Create new preacher', 'sermon-browser'), 'createNewPreacher(this)'); ?>
-                        </td>
-                        <td>
+                        </div>
+                        <div style="flex: 1;">
                             <strong><?php _e('Series', 'sermon-browser') ?></strong><br/>
                             <?php $this->renderSelectDropdown('series', 'series', $series, $seriesId, __('Create new series', 'sermon-browser'), 'createNewSeries(this)'); ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="overflow: visible">
-                            <strong><?php _e('Date', 'sermon-browser') ?></strong> (yyyy-mm-dd)
-                            <div>
-                                <input type="text" id="date" name="date" value="<?php echo esc_attr($dateValue); ?>" />
+                        </div>
+                    </div>
+
+                    <!-- Date/Service/Time | Description grid (Description spans 3 logical rows) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1em; margin-bottom: 1em;">
+                        <div>
+                            <div style="margin-bottom: 1em; overflow: visible;">
+                                <strong><?php _e('Date', 'sermon-browser') ?></strong> (yyyy-mm-dd)
+                                <div>
+                                    <input type="text" id="date" name="date" value="<?php echo esc_attr($dateValue); ?>" />
+                                </div>
                             </div>
-                        </td>
-                        <td rowspan="3">
+                            <div style="margin-bottom: 1em;">
+                                <strong><?php _e('Service', 'sermon-browser') ?></strong><br/>
+                                <?php $this->renderSelectDropdown('service', 'service', $services, $serviceId, __('Create new service', 'sermon-browser'), 'createNewService(this)'); ?>
+                            </div>
+                            <div>
+                                <strong><?php _e('Time', 'sermon-browser') ?></strong>
+                                <div>
+                                    <input type="text" name="time" value="<?php echo esc_attr($timeValue); ?>" id="time" <?php echo $overrideChecked ? '' : 'disabled="disabled" class="gray"'; ?> />
+                                    <input type="checkbox" name="override" id="override" onchange="doOverride()" <?php echo $overrideChecked ? 'checked="checked"' : ''; ?>> <?php _e('Override default time', 'sermon-browser') ?>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
                             <strong><?php _e('Description', 'sermon-browser') ?></strong>
                             <div>
                                 <textarea name="description" cols="50" rows="7"><?php echo esc_textarea($descValue); ?></textarea>
                             </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <strong><?php _e('Service', 'sermon-browser') ?></strong><br/>
-                            <?php $this->renderSelectDropdown('service', 'service', $services, $serviceId, __('Create new service', 'sermon-browser'), 'createNewService(this)'); ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <strong><?php _e('Time', 'sermon-browser') ?></strong>
-                            <div>
-                                <input type="text" name="time" value="<?php echo esc_attr($timeValue); ?>" id="time" <?php echo $overrideChecked ? '' : 'disabled="disabled" class="gray"'; ?> />
-                                <input type="checkbox" name="override" id="override" onchange="doOverride()" <?php echo $overrideChecked ? 'checked="checked"' : ''; ?>> <?php _e('Override default time', 'sermon-browser') ?>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">
-                            <strong><?php _e('Bible passage', 'sermon-browser') ?></strong> (<a href="javascript:addPassage()"><?php _e('add more', 'sermon-browser') ?></a>)
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><?php _e('From', 'sermon-browser') ?></td>
-                        <td><?php _e('To', 'sermon-browser') ?></td>
-                    </tr>
-                    <tr id="passage" class="passage">
-                        <td>
-                            <div style="display: flex; gap: 0.5em; align-items: center;">
-                                <?php $this->renderBooksDropdown('startbook', 'start[book][]', $books, $translated_books, 'start1', 'syncBook(this)'); ?>
-                                <input type="text" style="width:60px;" name="start[chapter][]" value="" class="start2" />
-                                <input type="text" style="width:60px;" name="start[verse][]" value="" class="start3" />
-                            </div>
-                        </td>
-                        <td>
-                            <div style="display: flex; gap: 0.5em; align-items: center;">
-                                <?php $this->renderBooksDropdown('endbook', 'end[book][]', $books, $translated_books, 'end'); ?>
-                                <input type="text" style="width:60px;" name="end[chapter][]" value="" class="end2" />
-                                <input type="text" style="width:60px;" name="end[verse][]" value="" class="end3" />
-                            </div>
-                        </td>
-                    </tr>
-                    <?php $this->renderAttachmentsRow($files); ?>
-                </table>
+                        </div>
+                    </div>
+
+                    <!-- Bible passage section -->
+                    <div style="margin-bottom: 0.5em;">
+                        <strong><?php _e('Bible passage', 'sermon-browser') ?></strong> (<a href="javascript:addPassage()"><?php _e('add more', 'sermon-browser') ?></a>)
+                    </div>
+                    <div style="display: flex; gap: 1em; margin-bottom: 0.5em;">
+                        <div style="flex: 1;"><?php _e('From', 'sermon-browser') ?></div>
+                        <div style="flex: 1;"><?php _e('To', 'sermon-browser') ?></div>
+                    </div>
+                    <div id="passage" class="passage" style="display: flex; gap: 1em; margin-bottom: 1em;">
+                        <div style="flex: 1; display: flex; gap: 0.5em; align-items: center;">
+                            <?php $this->renderBooksDropdown('startbook', 'start[book][]', $books, $translated_books, 'start1', 'syncBook(this)'); ?>
+                            <input type="text" style="width:60px;" name="start[chapter][]" value="" class="start2" />
+                            <input type="text" style="width:60px;" name="start[verse][]" value="" class="start3" />
+                        </div>
+                        <div style="flex: 1; display: flex; gap: 0.5em; align-items: center;">
+                            <?php $this->renderBooksDropdown('endbook', 'end[book][]', $books, $translated_books, 'end'); ?>
+                            <input type="text" style="width:60px;" name="end[chapter][]" value="" class="end2" />
+                            <input type="text" style="width:60px;" name="end[verse][]" value="" class="end3" />
+                        </div>
+                    </div>
+
+                    <?php $this->renderAttachmentsSection($files); ?>
+                </div>
             </fieldset>
             <p class="submit"><input type="submit" name="save" value="<?php _e('Save', 'sermon-browser') ?> &raquo;" /></p>
             <?php wp_nonce_field('sermon_browser_save', 'sermon_browser_save_nonce'); ?>
@@ -780,46 +777,43 @@ class SermonEditorPage
     }
 
     /**
-     * Render the attachments row.
+     * Render the attachments section.
      *
      * @param array<object> $files Available files.
      * @return void
      */
-    private function renderAttachmentsRow(array $files): void
+    private function renderAttachmentsSection(array $files): void
     {
         ?>
-                    <tr>
-                        <td colspan="2">
-                            <strong><?php _e('Attachments', 'sermon-browser') ?></strong> (<a href="javascript:addFile()"><?php _e('add more', 'sermon-browser') ?></a>)
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">
-                            <table>
-                                <tr id="choosefile" class="choose">
-                                    <th scope="row" style="padding:3px 7px">
-                                    <select class="choosefile" name="choosefile" onchange="chooseType(this.name, this.value);">
-                                    <option value="filelist"><?php _e('Choose existing file:', 'sermon-browser') ?></option>
-                                    <option value="newupload"><?php _e('Upload a new one:', 'sermon-browser') ?></option>
-                                    <option value="newurl"><?php _e('Enter an URL:', 'sermon-browser') ?></option>
-                                    <option value="newcode"><?php _e('Enter embed or shortcode:', 'sermon-browser') ?></option>
+                    <!-- Attachments section -->
+                    <div style="margin-bottom: 0.5em;">
+                        <strong><?php _e('Attachments', 'sermon-browser') ?></strong> (<a href="javascript:addFile()"><?php _e('add more', 'sermon-browser') ?></a>)
+                    </div>
+                    <div>
+                        <table>
+                            <tr id="choosefile" class="choose">
+                                <th scope="row" style="padding:3px 7px">
+                                <select class="choosefile" name="choosefile" onchange="chooseType(this.name, this.value);">
+                                <option value="filelist"><?php _e('Choose existing file:', 'sermon-browser') ?></option>
+                                <option value="newupload"><?php _e('Upload a new one:', 'sermon-browser') ?></option>
+                                <option value="newurl"><?php _e('Enter an URL:', 'sermon-browser') ?></option>
+                                <option value="newcode"><?php _e('Enter embed or shortcode:', 'sermon-browser') ?></option>
+                                </select>
+                                </th>
+                                <td class="filelist">
+                                    <select id="file" name="file[]">
+                                    <?php echo empty($files) ? '<option value="0">No files found</option>' : '<option value="0"></option>'; ?>
+                                    <?php foreach ($files as $file) : ?>
+                                        <option value="<?php echo esc_attr((string) $file->id); ?>"><?php echo esc_html($file->name); ?></option>
+                                    <?php endforeach; ?>
                                     </select>
-                                    </th>
-                                    <td class="filelist">
-                                        <select id="file" name="file[]">
-                                        <?php echo empty($files) ? '<option value="0">No files found</option>' : '<option value="0"></option>'; ?>
-                                        <?php foreach ($files as $file) : ?>
-                                            <option value="<?php echo esc_attr((string) $file->id); ?>"><?php echo esc_html($file->name); ?></option>
-                                        <?php endforeach; ?>
-                                        </select>
-                                    </td>
-                                    <td class="newupload" style="display:none"><input type="file" size="50" name="upload[]"/></td>
-                                    <td class="newurl" style="display:none"><input type="text" size="50" name="url[]"/></td>
-                                    <td class="newcode" style="display:none"><input type="text" size="92" name="code[]"/></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
+                                </td>
+                                <td class="newupload" style="display:none"><input type="file" size="50" name="upload[]"/></td>
+                                <td class="newurl" style="display:none"><input type="text" size="50" name="url[]"/></td>
+                                <td class="newcode" style="display:none"><input type="text" size="92" name="code[]"/></td>
+                            </tr>
+                        </table>
+                    </div>
         <?php
     }
 
