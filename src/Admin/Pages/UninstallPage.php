@@ -97,12 +97,12 @@ class UninstallPage
                 ?>
             </p>
         <?php endif; ?>
-        <table border="0" class="widefat" role="presentation">
-            <tr>
-                <td><input type="checkbox" name="wipe"
-                           value="1"> <?php _e('Also remove all uploaded files', 'sermon-browser'); ?></td>
-            </tr>
-        </table>
+        <div class="widefat" style="padding: 1em; background: #fff; border: 1px solid #c3c4c7;">
+            <label>
+                <input type="checkbox" name="wipe" value="1">
+                <?php _e('Also remove all uploaded files', 'sermon-browser'); ?>
+            </label>
+        </div>
         <p class="submit"><input type="submit" name="uninstall" value="<?php
         if (IS_MU) {
             _e('Delete all', 'sermon-browser');
