@@ -350,7 +350,7 @@ class OptionsPage
             <form method="post">
                 <h2><?php _e('Basic Options', 'sermon-browser') ?></h2>
                 <br style="clear:both"/>
-                <table border="0" class="widefat" role="presentation">
+                <div class="widefat" style="background: #fff; border: 1px solid #c3c4c7; padding: 1em;">
                     <?php $this->renderUploadFolderField(); ?>
                     <?php $this->renderPodcastFields(); ?>
                     <?php $this->renderMp3ShortcodeField(); ?>
@@ -359,7 +359,7 @@ class OptionsPage
                     <?php $this->renderFilterTypeFields(); ?>
                     <?php $this->renderHideNoAttachmentsField(); ?>
                     <?php $this->renderPhpIniWarnings(); ?>
-                </table>
+                </div>
 
                 <h2><?php _e('Import Options', 'sermon-browser') ?></h2>
                 <p>
@@ -374,9 +374,9 @@ class OptionsPage
                     );
                     ?>
                 </p>
-                <table border="0" class="widefat" role="presentation">
+                <div class="widefat" style="background: #fff; border: 1px solid #c3c4c7; padding: 1em;">
                     <?php $this->renderImportOptions(); ?>
-                </table>
+                </div>
 
                 <?php wp_nonce_field('sermon_options_save_reset', 'sermon_options_save_reset_nonce'); ?>
                 <p class="submit">
@@ -397,16 +397,16 @@ class OptionsPage
     {
         if (!IS_MU || sb_is_super_admin()) {
             ?>
-            <tr>
-                <td style="text-align:right;vertical-align:middle">
+            <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+                <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                     <?php _e('Upload folder', 'sermon-browser') ?>:
-                </td>
-                <td>
+                </label>
+                <div style="flex: 1;">
                     <input type="text" name="dir"
                            value="<?php echo htmlspecialchars(sb_get_option('upload_dir')) ?>"
                            style="width:100%"/>
-                </td>
-            </tr>
+                </div>
+            </div>
             <?php
         } else {
             ?>
@@ -424,19 +424,21 @@ class OptionsPage
     private function renderPodcastFields(): void
     {
         ?>
-        <tr>
-            <td style="text-align:right;vertical-align:middle">
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Public podcast feed', 'sermon-browser') ?>:
-            </td>
-            <td>
+            </label>
+            <div style="flex: 1;">
                 <input type="text" name="podcast"
                        value="<?php echo htmlspecialchars(sb_get_option('podcast_url')) ?>"
                        style="width:100%"/>
-            </td>
-        </tr>
-        <tr>
-            <td style="text-align:right"><?php _e('Private podcast feed', 'sermon-browser') ?>:</td>
-            <td>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+                <?php _e('Private podcast feed', 'sermon-browser') ?>:
+            </label>
+            <div style="flex: 1;">
                 <?php
                 if (sb_display_url() === '') {
                     echo htmlspecialchars(site_url());
@@ -445,8 +447,8 @@ class OptionsPage
                 }
                 echo sb_query_char();
                 ?>podcast
-            </td>
-        </tr>
+            </div>
+        </div>
         <?php
     }
 
@@ -458,17 +460,17 @@ class OptionsPage
     private function renderMp3ShortcodeField(): void
     {
         ?>
-        <tr>
-            <td style="text-align:right;vertical-align:middle">
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('MP3 shortcode', 'sermon-browser') ?>:
                 <br/><?php _e('Default: ', 'sermon-browser') ?>[audio mp3=&quot;%SERMONURL%&quot;]
-            </td>
-            <td>
+            </label>
+            <div style="flex: 1;">
                 <input type="text" name="mp3_shortcode"
                        value="<?php echo htmlspecialchars(sb_get_option('mp3_shortcode')) ?>"
                        style="width:100%"/>
-            </td>
-        </tr>
+            </div>
+        </div>
         <?php
     }
 
@@ -486,8 +488,8 @@ class OptionsPage
             $extra_text = __('<br/>Without an API key, your site will display text from the KJV, instead.', 'sermon-browser');
         }
         ?>
-        <tr>
-            <td style="text-align:right;vertical-align:middle">
+        <div style="display: flex; gap: 1em; margin-bottom: 1em;">
+            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('ESV API Key (required to display the ESV text)', 'sermon-browser') ?>:
                 <br/>
                 <?php
@@ -496,13 +498,13 @@ class OptionsPage
                     'sermon-browser'
                 ) . $extra_text;
                 ?>
-            </td>
-            <td>
+            </label>
+            <div style="flex: 1;">
                 <input type="text" name="esv_api_key"
                        value="<?php echo htmlspecialchars(sb_get_option('esv_api_key')) ?>"
                        style="width:100%"/>
-            </td>
-        </tr>
+            </div>
+        </div>
         <?php
     }
 
