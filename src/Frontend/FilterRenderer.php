@@ -260,7 +260,7 @@ class FilterRenderer
             }
         }
 
-        if (count($returnedQuery) > 0) {
+        if (!empty($returnedQuery)) {
             return esc_url(PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . implode('&', $returnedQuery));
         }
 
@@ -660,7 +660,6 @@ class FilterRenderer
      */
     private static function renderBookSelect(array $bookCount, array $translatedBooks): void
     {
-        $currentBook = $_REQUEST['book'] ?? '';
         ?>
         <select name="book">
             <option value=""><?php esc_html_e(Constants::ALL_FILTER, 'sermon-browser'); ?></option>

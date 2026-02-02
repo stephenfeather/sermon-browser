@@ -53,7 +53,6 @@ class RequestInterceptor
         // File show/redirect handling
         if (self::isShowRequest()) {
             self::handleShow();
-            return;
         }
     }
 

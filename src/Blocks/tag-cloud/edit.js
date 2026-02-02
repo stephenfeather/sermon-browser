@@ -13,7 +13,6 @@ import {
 	Placeholder,
 	Spinner,
 } from '@wordpress/components';
-import { useSelect } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
 import { useState, useEffect } from '@wordpress/element';
 

@@ -230,7 +230,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						value={ preacherId }
 						options={ preacherOptions }
 						onChange={ ( value ) =>
-							setAttributes( { preacherId: parseInt( value ) } )
+							setAttributes( { preacherId: Number.parseInt( value, 10 ) } )
 						}
 					/>
 					<SelectControl
@@ -238,7 +238,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						value={ seriesId }
 						options={ seriesOptions }
 						onChange={ ( value ) =>
-							setAttributes( { seriesId: parseInt( value ) } )
+							setAttributes( { seriesId: Number.parseInt( value, 10 ) } )
 						}
 					/>
 					<SelectControl
@@ -246,7 +246,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						value={ serviceId }
 						options={ serviceOptions }
 						onChange={ ( value ) =>
-							setAttributes( { serviceId: parseInt( value ) } )
+							setAttributes( { serviceId: Number.parseInt( value, 10 ) } )
 						}
 					/>
 				</PanelBody>
