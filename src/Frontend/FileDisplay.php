@@ -169,20 +169,17 @@ final class FileDisplay
                 continue;
             }
 
-            if (str_starts_with($file, 'http://') || str_starts_with($file, 'https://')) {
-                if ($stats) {
-                    return PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . 'show&amp;url=' . rawurlencode($file);
-                }
-                return $file;
+            $isUrl = str_starts_with($file, 'http://') || str_starts_with($file, 'https://');
+
+            if (!$stats) {
+                return $isUrl
+                    ? $file
+                    : trailingslashit(site_url()) . OptionsManager::get(Constants::OPT_UPLOAD_DIR) . rawurlencode($file);
             }
 
-            // Local file
-            if (!$stats) {
-                return trailingslashit(site_url())
-                    . OptionsManager::get(Constants::OPT_UPLOAD_DIR)
-                    . rawurlencode($file);
-            }
-            return PageResolver::getDisplayUrl() . PageResolver::getQueryChar() . 'show&amp;file_name=' . rawurlencode($file);
+            return PageResolver::getDisplayUrl() . PageResolver::getQueryChar()
+                . ($isUrl ? 'show&amp;url=' : 'show&amp;file_name=')
+                . rawurlencode($file);
         }
 
         return null;
