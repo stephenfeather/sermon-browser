@@ -95,19 +95,19 @@ class TemplatesPage
         <br/>
         <div class="widefat" style="background: #fff; border: 1px solid #c3c4c7; padding: 1em;">
             <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-                <label style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Search results page', 'sermon-browser'); ?>:</label>
+                <label for="multi" style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Search results page', 'sermon-browser'); ?>:</label>
                 <div style="flex: 1;">
                     <?php sb_build_textarea('multi', sb_get_option('search_template')); ?>
                 </div>
             </div>
             <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-                <label style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Sermon page', 'sermon-browser'); ?>:</label>
+                <label for="single" style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Sermon page', 'sermon-browser'); ?>:</label>
                 <div style="flex: 1;">
                     <?php sb_build_textarea('single', sb_get_option('single_template')); ?>
                 </div>
             </div>
             <div style="display: flex; gap: 1em;">
-                <label style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Style', 'sermon-browser'); ?>:</label>
+                <label for="style" style="min-width: 150px; text-align: right; padding-top: 0.5em;"><?php _e('Style', 'sermon-browser'); ?>:</label>
                 <div style="flex: 1;">
                     <?php sb_build_textarea('style', sb_get_option('css_style')); ?>
                 </div>

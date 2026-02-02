@@ -394,11 +394,11 @@ class OptionsPage
         if (!IS_MU || sb_is_super_admin()) {
             ?>
             <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-                <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+                <label for="sb-upload-dir" style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                     <?php _e('Upload folder', 'sermon-browser') ?>:
                 </label>
                 <div style="flex: 1;">
-                    <input type="text" name="dir"
+                    <input type="text" id="sb-upload-dir" name="dir"
                            value="<?php echo htmlspecialchars(sb_get_option('upload_dir')) ?>"
                            style="width:100%"/>
                 </div>
@@ -421,11 +421,11 @@ class OptionsPage
     {
         ?>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-podcast-url" style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Public podcast feed', 'sermon-browser') ?>:
             </label>
             <div style="flex: 1;">
-                <input type="text" name="podcast"
+                <input type="text" id="sb-podcast-url" name="podcast"
                        value="<?php echo htmlspecialchars(sb_get_option('podcast_url')) ?>"
                        style="width:100%"/>
             </div>
@@ -457,12 +457,12 @@ class OptionsPage
     {
         ?>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-mp3-shortcode" style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('MP3 shortcode', 'sermon-browser') ?>:
                 <br/><?php _e('Default: ', 'sermon-browser') ?>[audio mp3=&quot;%SERMONURL%&quot;]
             </label>
             <div style="flex: 1;">
-                <input type="text" name="mp3_shortcode"
+                <input type="text" id="sb-mp3-shortcode" name="mp3_shortcode"
                        value="<?php echo htmlspecialchars(sb_get_option('mp3_shortcode')) ?>"
                        style="width:100%"/>
             </div>
@@ -485,7 +485,7 @@ class OptionsPage
         }
         ?>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-esv-api-key" style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('ESV API Key (required to display the ESV text)', 'sermon-browser') ?>:
                 <br/>
                 <?php
@@ -496,7 +496,7 @@ class OptionsPage
                 ?>
             </label>
             <div style="flex: 1;">
-                <input type="text" name="esv_api_key"
+                <input type="text" id="sb-esv-api-key" name="esv_api_key"
                        value="<?php echo htmlspecialchars(sb_get_option('esv_api_key')) ?>"
                        style="width:100%"/>
             </div>
@@ -513,11 +513,11 @@ class OptionsPage
     {
         ?>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-perpage" style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Sermons per page', 'sermon-browser') ?>:
             </label>
             <div style="flex: 1;">
-                <input type="text" name="perpage" value="<?php echo sb_get_option('sermons_per_page') ?>"/>
+                <input type="text" id="sb-perpage" name="perpage" value="<?php echo sb_get_option('sermons_per_page') ?>"/>
             </div>
         </div>
         <?php
@@ -538,21 +538,24 @@ class OptionsPage
         ];
         ?>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-filtertype-dropdown" style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Filter type', 'sermon-browser') ?>:
             </label>
             <div style="flex: 1;">
                 <?php
+                $first = true;
                 foreach ($filter_options as $value => $filter_option) {
                     $checked = ($ft === $value) ? Constants::CHECKED : '';
-                    echo "<input type=\"radio\" name=\"filtertype\" value=\"{$value}\" {$checked}/> {$filter_option}<br/>\n";
+                    $id = $first ? ' id="sb-filtertype-dropdown"' : '';
+                    $first = false;
+                    echo "<input type=\"radio\" name=\"filtertype\" value=\"{$value}\"{$id} {$checked}/> {$filter_option}<br/>\n";
                 }
                 ?>
                 <div style="margin-top: 0.5em;">
-                    <input type="checkbox" name="filterhide"
+                    <input type="checkbox" id="sb-filterhide" name="filterhide"
                         <?php echo (sb_get_option('filter_hide') === 'hide') ? Constants::CHECKED : ''; ?>
                            value="hide"/>
-                    <?php _e('Minimise filter', 'sermon-browser'); ?>
+                    <label for="sb-filterhide"><?php _e('Minimise filter', 'sermon-browser'); ?></label>
                 </div>
             </div>
         </div>
@@ -568,11 +571,11 @@ class OptionsPage
     {
         ?>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 180px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-hide-no-attachments" style="min-width: 180px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Hide sermons without attachments?', 'sermon-browser') ?>
             </label>
             <div style="flex: 1;">
-                <input type="checkbox" name="hide_no_attachments"
+                <input type="checkbox" id="sb-hide-no-attachments" name="hide_no_attachments"
                     <?php echo sb_get_option('hide_no_attachments') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </div>
@@ -743,61 +746,61 @@ class OptionsPage
     {
         ?>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-import-prompt" style="min-width: 280px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Add files prompt to top of Add Sermon page?', 'sermon-browser') ?>
             </label>
             <div style="flex: 1;">
-                <input type="checkbox" name="import_prompt"
+                <input type="checkbox" id="sb-import-prompt" name="import_prompt"
                     <?php echo sb_get_option('import_prompt') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </div>
         </div>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-import-title" style="min-width: 280px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Use title tag for sermon title?', 'sermon-browser') ?>
             </label>
             <div style="flex: 1;">
-                <input type="checkbox" name="import_title"
+                <input type="checkbox" id="sb-import-title" name="import_title"
                     <?php echo sb_get_option('import_title') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </div>
         </div>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-import-artist" style="min-width: 280px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Use artist tag for preacher?', 'sermon-browser') ?>
             </label>
             <div style="flex: 1;">
-                <input type="checkbox" name="import_artist"
+                <input type="checkbox" id="sb-import-artist" name="import_artist"
                     <?php echo sb_get_option('import_artist') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </div>
         </div>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-import-album" style="min-width: 280px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Use album tag for series?', 'sermon-browser') ?>
             </label>
             <div style="flex: 1;">
-                <input type="checkbox" name="import_album"
+                <input type="checkbox" id="sb-import-album" name="import_album"
                     <?php echo sb_get_option('import_album') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </div>
         </div>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-import-comments" style="min-width: 280px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Use comments tag for sermon description?', 'sermon-browser') ?>
             </label>
             <div style="flex: 1;">
-                <input type="checkbox" name="import_comments"
+                <input type="checkbox" id="sb-import-comments" name="import_comments"
                     <?php echo sb_get_option('import_comments') ? Constants::CHECKED : ''; ?>
                        value="1"/>
             </div>
         </div>
         <div style="display: flex; gap: 1em; margin-bottom: 1em;">
-            <label style="min-width: 280px; text-align: right; padding-top: 0.5em;">
+            <label for="sb-import-filename" style="min-width: 280px; text-align: right; padding-top: 0.5em;">
                 <?php _e('Attempt to extract date from filename', 'sermon-browser') ?>
             </label>
             <div style="flex: 1;">
-                <select name="import_filename">
+                <select id="sb-import-filename" name="import_filename">
                     <?php
                     $filename_options = [
                         'none' => __('Disabled', 'sermon-browser'),

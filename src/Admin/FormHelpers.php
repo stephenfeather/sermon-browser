@@ -30,7 +30,8 @@ final class FormHelpers
      */
     public static function textarea(string $name, string $html): string
     {
-        $output = '<textarea name="' . esc_attr($name) . '" cols="75" rows="20" style="width:100%">';
+        $id = esc_attr($name);
+        $output = '<textarea id="' . $id . '" name="' . $id . '" cols="75" rows="20" style="width:100%">';
         $output .= stripslashes(str_replace('\r\n', "\n", $html));
         $output .= '</textarea>';
 
