@@ -37,40 +37,19 @@ class LegacyAjaxHandler
     {
         define('SB_AJAX', true);
 
-        // Preacher operations
+        // Route to appropriate handler based on POST parameters
         if (isset($_POST['pname'])) {
             self::handlePreacher();
-            return;
-        }
-
-        // Service operations
-        if (isset($_POST['sname'])) {
+        } elseif (isset($_POST['sname'])) {
             self::handleService();
-            return;
-        }
-
-        // Series operations
-        if (isset($_POST['ssname'])) {
+        } elseif (isset($_POST['ssname'])) {
             self::handleSeries();
-            return;
-        }
-
-        // File operations
-        if (isset($_POST['fname']) && validate_file(sb_get_option('upload_dir') . $_POST['fname']) === 0) {
+        } elseif (isset($_POST['fname']) && validate_file(sb_get_option('upload_dir') . $_POST['fname']) === 0) {
             self::handleFile();
-            return;
-        }
-
-        // Sermon pagination
-        if (isset($_POST['fetch'])) {
+        } elseif (isset($_POST['fetch'])) {
             self::handleSermonPagination();
-            return;
-        }
-
-        // File pagination
-        if (isset($_POST['fetchU']) || isset($_POST['fetchL']) || isset($_POST['search'])) {
+        } elseif (isset($_POST['fetchU']) || isset($_POST['fetchL']) || isset($_POST['search'])) {
             self::handleFilePagination();
-            return;
         }
 
         die();
