@@ -36,7 +36,7 @@ class TemplateHelper
         $out = [];
         foreach ($tags as $tag) {
             $tag = stripslashes($tag);
-            $out[] = '<a href="' . sb_get_tag_link($tag) . '">' . $tag . '</a>';
+            $out[] = '<a href="' . esc_url(sb_get_tag_link($tag)) . '">' . esc_html($tag) . '</a>';
         }
         $tagsString = implode(', ', $out);
         echo $tagsString;
@@ -79,7 +79,7 @@ class TemplateHelper
         $out = [];
         foreach ($cnt as $tag => $count) {
             $size = $minfont + $fontrange * (log($count) - $minlog) / $logrange;
-            $out[] = '<a style="font-size:' . (int) $size . '%" href="' . sb_get_tag_link($tag) . '">' . $tag . '</a>';
+            $out[] = '<a style="font-size:' . (int) $size . '%" href="' . esc_url(sb_get_tag_link($tag)) . '">' . esc_html($tag) . '</a>';
         }
         echo implode(' ', $out);
     }
@@ -130,9 +130,9 @@ class TemplateHelper
     {
         if (strlen($sermon->preacher_description) > 0) {
             echo "<div class='preacher-description'><span class='about'>"
-                . __('About', 'sermon-browser') . ' ' . stripslashes($sermon->preacher)
+                . esc_html__('About', 'sermon-browser') . ' ' . esc_html(stripslashes($sermon->preacher))
                 . ': </span>';
-            echo "<span class='description'>" . stripslashes($sermon->preacher_description) . "</span></div>";
+            echo "<span class='description'>" . esc_html(stripslashes($sermon->preacher_description)) . "</span></div>";
         }
     }
 
@@ -145,8 +145,9 @@ class TemplateHelper
     public static function printPreacherImage(object $sermon): void
     {
         if ($sermon->image) {
-            echo "<img alt='" . stripslashes($sermon->preacher) . "' class='preacher' src='"
-                . trailingslashit(site_url()) . OptionsManager::get('upload_dir') . 'images/' . $sermon->image . "'>";
+            $imageSrc = trailingslashit(site_url()) . OptionsManager::get('upload_dir') . 'images/' . $sermon->image;
+            echo "<img alt='" . esc_attr(stripslashes($sermon->preacher)) . "' class='preacher' src='"
+                . esc_url($imageSrc) . "'>";
         }
     }
 
@@ -164,7 +165,7 @@ class TemplateHelper
         }
         echo '<a href="';
         sb_print_sermon_link($next);
-        echo '">' . stripslashes($next->title) . ' &raquo;</a>';
+        echo '">' . esc_html(stripslashes($next->title)) . ' &raquo;</a>';
     }
 
     /**
@@ -181,7 +182,7 @@ class TemplateHelper
         }
         echo '<a href="';
         sb_print_sermon_link($prev);
-        echo '">&laquo; ' . stripslashes($prev->title) . '</a>';
+        echo '">&laquo; ' . esc_html(stripslashes($prev->title)) . '</a>';
     }
 
     /**
@@ -199,7 +200,7 @@ class TemplateHelper
         }
         $output = [];
         foreach ($same as $cur) {
-            $output[] = '<a href="' . sb_print_sermon_link($cur, false) . '">' . stripslashes($cur->title) . '</a>';
+            $output[] = '<a href="' . esc_url(sb_print_sermon_link($cur, false)) . '">' . esc_html(stripslashes($cur->title)) . '</a>';
         }
         echo implode(', ', $output);
     }

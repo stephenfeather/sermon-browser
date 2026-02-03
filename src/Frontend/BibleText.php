@@ -79,10 +79,10 @@ class BibleText
         $endVerse = isset($end['verse']) ? trim((string) $end['verse']) : '';
 
         if ($addLink) {
-            $startBookTranslated = '<a href="' . UrlBuilder::bookLink($startBook) . '">'
-                . $startBookTranslated . '</a>';
-            $endBookTranslated = '<a href="' . UrlBuilder::bookLink($endBook) . '">'
-                . $endBookTranslated . '</a>';
+            $startBookTranslated = '<a href="' . esc_url(UrlBuilder::bookLink($startBook)) . '">'
+                . esc_html($startBookTranslated) . '</a>';
+            $endBookTranslated = '<a href="' . esc_url(UrlBuilder::bookLink($endBook)) . '">'
+                . esc_html($endBookTranslated) . '</a>';
         }
 
         // Build reference based on book/chapter/verse relationships
