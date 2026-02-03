@@ -101,6 +101,10 @@ class FileActionHandler
         $filename = substr($url, strrpos($url, '/') + 1);
         $filename = substr($filename, 0, strrpos($filename, '?') ?: strlen($filename));
 
+        // Security: Sanitize filename to prevent path traversal attacks.
+        // sanitize_file_name() removes path components, special characters, and normalizes the filename.
+        $filename = sanitize_file_name($filename);
+
         if (file_exists(SB_ABSPATH . sb_get_option('upload_dir') . $filename)) {
             echo '<div id="message" class="updated fade"><p><b>' .
                 sprintf(__('File %s already exists', 'sermon-browser'), $filename) .
