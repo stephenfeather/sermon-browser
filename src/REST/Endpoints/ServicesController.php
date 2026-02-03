@@ -155,27 +155,27 @@ class ServicesController extends RestController
     /**
      * Check if the current user can list services.
      *
-     * Services are public, so this always returns true.
+     * Services are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_items_permissions_check($request): bool
+    public function get_items_permissions_check($request): true|WP_Error
     {
-        return true;
+        return $this->check_rate_limit($request);
     }
 
     /**
      * Check if the current user can view a single service.
      *
-     * Services are public, so this always returns true.
+     * Services are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_item_permissions_check($request): bool
+    public function get_item_permissions_check($request): true|WP_Error
     {
-        return $this->get_items_permissions_check($request);
+        return $this->check_rate_limit($request);
     }
 
     /**
@@ -256,8 +256,9 @@ class ServicesController extends RestController
         $data = array_map([$this, 'prepare_service_for_response'], $services);
 
         $response = new WP_REST_Response($data);
+        $response = $this->prepare_pagination_response($response, $total, $perPage);
 
-        return $this->prepare_pagination_response($response, $total, $perPage);
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**
@@ -281,7 +282,9 @@ class ServicesController extends RestController
 
         $data = $this->prepare_service_for_response($service);
 
-        return new WP_REST_Response($data);
+        $response = new WP_REST_Response($data);
+
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**

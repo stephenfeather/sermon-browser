@@ -101,27 +101,27 @@ class TagsController extends RestController
     /**
      * Check if the current user can list tags.
      *
-     * Tags are public, so this always returns true.
+     * Tags are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_items_permissions_check($request): bool
+    public function get_items_permissions_check($request): true|WP_Error
     {
-        return true;
+        return $this->check_rate_limit($request);
     }
 
     /**
      * Check if the current user can get sermons by tag.
      *
-     * This is public, so this always returns true.
+     * This is public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_sermons_by_tag_permissions_check($_request): bool
+    public function get_sermons_by_tag_permissions_check($request): true|WP_Error
     {
-        return $this->get_items_permissions_check($_request);
+        return $this->check_rate_limit($request);
     }
 
     /**
@@ -142,8 +142,9 @@ class TagsController extends RestController
         $data = array_map([$this, 'prepare_tag_for_response'], $tags);
 
         $response = new WP_REST_Response($data);
+        $response = $this->prepare_pagination_response($response, $total, $total > 0 ? $total : 1);
 
-        return $this->prepare_pagination_response($response, $total, $total > 0 ? $total : 1);
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**
@@ -172,7 +173,8 @@ class TagsController extends RestController
         // If no sermons, return empty array.
         if (empty($sermonIds)) {
             $response = new WP_REST_Response([]);
-            return $this->prepare_pagination_response($response, 0, 1);
+            $response = $this->prepare_pagination_response($response, 0, 1);
+            return $this->add_rate_limit_headers($response, $request);
         }
 
         // Get full sermon data for each ID.
@@ -190,8 +192,9 @@ class TagsController extends RestController
         $data = array_map([$this, 'prepare_sermon_for_response'], $sermons);
 
         $response = new WP_REST_Response($data);
+        $response = $this->prepare_pagination_response($response, $total, $total > 0 ? $total : 1);
 
-        return $this->prepare_pagination_response($response, $total, $total > 0 ? $total : 1);
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**

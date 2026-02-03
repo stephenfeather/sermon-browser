@@ -193,40 +193,40 @@ class SeriesController extends RestController
     /**
      * Check if the current user can list series.
      *
-     * Series are public, so this always returns true.
+     * Series are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_items_permissions_check($request): bool
+    public function get_items_permissions_check($request): true|WP_Error
     {
-        return true;
+        return $this->check_rate_limit($request);
     }
 
     /**
      * Check if the current user can view a single series.
      *
-     * Series are public, so this always returns true.
+     * Series are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_item_permissions_check($request): bool
+    public function get_item_permissions_check($request): true|WP_Error
     {
-        return $this->get_items_permissions_check($request);
+        return $this->check_rate_limit($request);
     }
 
     /**
      * Check if the current user can view sermons in a series.
      *
-     * Sermons are public, so this always returns true.
+     * Sermons are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_sermons_permissions_check($_request): bool
+    public function get_sermons_permissions_check($request): true|WP_Error
     {
-        return $this->get_items_permissions_check($_request);
+        return $this->check_rate_limit($request);
     }
 
     /**
@@ -308,7 +308,9 @@ class SeriesController extends RestController
         // Prepare response data.
         $data = array_map([$this, 'prepare_series_for_response'], $seriesList);
 
-        return new WP_REST_Response($data);
+        $response = new WP_REST_Response($data);
+
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**
@@ -332,7 +334,9 @@ class SeriesController extends RestController
 
         $data = $this->prepare_series_for_response($series);
 
-        return new WP_REST_Response($data);
+        $response = new WP_REST_Response($data);
+
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**
@@ -359,7 +363,9 @@ class SeriesController extends RestController
         // Prepare response data.
         $data = array_map([$this, 'prepare_sermon_for_response'], $sermons);
 
-        return new WP_REST_Response($data);
+        $response = new WP_REST_Response($data);
+
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**

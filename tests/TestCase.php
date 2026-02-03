@@ -15,6 +15,7 @@ namespace SermonBrowser\Tests;
 use Brain\Monkey;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
+use SermonBrowser\REST\RestController;
 
 /**
  * Base test case with Brain Monkey integration.
@@ -42,6 +43,9 @@ abstract class TestCase extends PHPUnitTestCase
      */
     protected function tearDown(): void
     {
+        // Reset the static rate limiter to avoid test pollution.
+        RestController::setRateLimiter(null);
+
         Monkey\tearDown();
         parent::tearDown();
     }
@@ -72,8 +76,33 @@ abstract class TestCase extends PHPUnitTestCase
             'esc_attr__' => static fn($text, $domain = 'default') => htmlspecialchars($text, ENT_QUOTES, 'UTF-8'),
         ]);
 
+        // Set up a pass-through rate limiter for tests.
+        // This prevents rate limiting from interfering with controller tests.
+        $this->setupPassThroughRateLimiter();
+
         // Note: get_option, update_option, delete_option, and get_locale are NOT stubbed here
         // because individual tests may need to set specific expectations for them.
         // Use Brain\Monkey\Functions\expect() in your tests for these functions.
+    }
+
+    /**
+     * Set up a pass-through rate limiter that always allows requests.
+     *
+     * This prevents rate limiting from interfering with controller tests.
+     * The RateLimiterTest overrides setUp to test actual rate limiting behavior.
+     */
+    protected function setupPassThroughRateLimiter(): void
+    {
+        $mockRateLimiter = \Mockery::mock(\SermonBrowser\REST\RateLimiter::class);
+
+        // Always allow requests (return true from check).
+        $mockRateLimiter->shouldReceive('check')
+            ->andReturn(true);
+
+        // Add headers - just return the response unchanged.
+        $mockRateLimiter->shouldReceive('addHeaders')
+            ->andReturnUsing(static fn($response, $request, $isSearch = false) => $response);
+
+        RestController::setRateLimiter($mockRateLimiter);
     }
 }

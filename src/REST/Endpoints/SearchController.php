@@ -15,6 +15,7 @@ namespace SermonBrowser\REST\Endpoints;
 
 use SermonBrowser\REST\RestController;
 use SermonBrowser\Facades\Sermon;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -93,14 +94,14 @@ class SearchController extends RestController
     /**
      * Check if the current user can perform a search.
      *
-     * Search is public, so this always returns true.
+     * Search is public but rate limited (stricter limits than other endpoints).
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_items_permissions_check($request): bool
+    public function get_items_permissions_check($request): true|WP_Error
     {
-        return true;
+        return $this->check_rate_limit($request, true);
     }
 
     /**
@@ -150,8 +151,9 @@ class SearchController extends RestController
         $data = array_map([$this, 'prepare_sermon_for_response'], $sermons);
 
         $response = new WP_REST_Response($data);
+        $response = $this->prepare_pagination_response($response, $total, $perPage);
 
-        return $this->prepare_pagination_response($response, $total, $perPage);
+        return $this->add_rate_limit_headers($response, $request, true);
     }
 
     /**

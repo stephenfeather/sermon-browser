@@ -15,8 +15,10 @@ declare(strict_types=1);
 namespace SermonBrowser\REST;
 
 use SermonBrowser\Constants;
+use SermonBrowser\REST\RateLimiter;
 use WP_Error;
 use WP_REST_Controller;
+use WP_REST_Request;
 use WP_REST_Response;
 
 /**
@@ -33,6 +35,13 @@ abstract class RestController extends WP_REST_Controller
      * @var string
      */
     protected $namespace = Constants::REST_NAMESPACE;
+
+    /**
+     * The rate limiter instance.
+     *
+     * @var RateLimiter|null
+     */
+    protected static ?RateLimiter $rateLimiter = null;
 
     /**
      * Check if the current user has admin permissions.
@@ -139,5 +148,58 @@ abstract class RestController extends WP_REST_Controller
             $message,
             ['status' => $code]
         );
+    }
+
+    /**
+     * Get the rate limiter instance.
+     *
+     * @return RateLimiter The rate limiter.
+     */
+    protected function getRateLimiter(): RateLimiter
+    {
+        if (self::$rateLimiter === null) {
+            self::$rateLimiter = new RateLimiter();
+        }
+
+        return self::$rateLimiter;
+    }
+
+    /**
+     * Set the rate limiter instance (for testing).
+     *
+     * @param RateLimiter|null $rateLimiter The rate limiter or null to reset.
+     * @return void
+     */
+    public static function setRateLimiter(?RateLimiter $rateLimiter): void
+    {
+        self::$rateLimiter = $rateLimiter;
+    }
+
+    /**
+     * Check rate limit for the current request.
+     *
+     * @param WP_REST_Request $request The request object.
+     * @param bool $isSearchEndpoint Whether this is the search endpoint.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
+     */
+    protected function check_rate_limit(WP_REST_Request $request, bool $isSearchEndpoint = false): true|WP_Error
+    {
+        return $this->getRateLimiter()->check($request, $isSearchEndpoint);
+    }
+
+    /**
+     * Add rate limit headers to a response.
+     *
+     * @param WP_REST_Response $response The response object.
+     * @param WP_REST_Request $request The request object.
+     * @param bool $isSearchEndpoint Whether this is the search endpoint.
+     * @return WP_REST_Response The response with rate limit headers.
+     */
+    protected function add_rate_limit_headers(
+        WP_REST_Response $response,
+        WP_REST_Request $request,
+        bool $isSearchEndpoint = false
+    ): WP_REST_Response {
+        return $this->getRateLimiter()->addHeaders($response, $request, $isSearchEndpoint);
     }
 }

@@ -69,6 +69,13 @@ class Constants
     public const HTTP = 'http://';
     public const HTTPS = 'https://';
 
+    // Rate limiting
+    public const RATE_LIMIT_WINDOW = 60;
+    public const RATE_LIMIT_ANONYMOUS = 60;
+    public const RATE_LIMIT_AUTHENTICATED = 120;
+    public const RATE_LIMIT_SEARCH_ANONYMOUS = 20;
+    public const RATE_LIMIT_SEARCH_AUTHENTICATED = 60;
+
     // Database table suffixes (appended to WordPress prefix)
     public const TABLE_SERMONS = 'sb_sermons';
     public const TABLE_PREACHERS = 'sb_preachers';

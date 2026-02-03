@@ -178,27 +178,27 @@ class PreachersController extends RestController
     /**
      * Check if the current user can list preachers.
      *
-     * Preachers are public, so this always returns true.
+     * Preachers are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_items_permissions_check($request): bool
+    public function get_items_permissions_check($request): true|WP_Error
     {
-        return true;
+        return $this->check_rate_limit($request);
     }
 
     /**
      * Check if the current user can view a single preacher.
      *
-     * Preachers are public, so this always returns true.
+     * Preachers are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_item_permissions_check($request): bool
+    public function get_item_permissions_check($request): true|WP_Error
     {
-        return $this->get_items_permissions_check($request);
+        return $this->check_rate_limit($request);
     }
 
     /**
@@ -272,7 +272,8 @@ class PreachersController extends RestController
         // Check for search query.
         $search = $request->get_param('search');
         if (!empty($search)) {
-            return $this->get_search_results($search);
+            $response = $this->get_search_results($search);
+            return $this->add_rate_limit_headers($response, $request);
         }
 
         // Get all preachers with sermon counts.
@@ -283,8 +284,9 @@ class PreachersController extends RestController
         $data = array_map([$this, 'prepare_preacher_for_response'], $preachers);
 
         $response = new WP_REST_Response($data);
+        $response = $this->prepare_pagination_response($response, $total, $total > 0 ? $total : 1);
 
-        return $this->prepare_pagination_response($response, $total, $total > 0 ? $total : 1);
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**
@@ -326,7 +328,9 @@ class PreachersController extends RestController
 
         $data = $this->prepare_preacher_for_response($preacher);
 
-        return new WP_REST_Response($data);
+        $response = new WP_REST_Response($data);
+
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**

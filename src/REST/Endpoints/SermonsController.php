@@ -210,27 +210,27 @@ class SermonsController extends RestController
     /**
      * Check if the current user can list sermons.
      *
-     * Sermons are public, so this always returns true.
+     * Sermons are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_items_permissions_check($request): bool
+    public function get_items_permissions_check($request): true|WP_Error
     {
-        return true;
+        return $this->check_rate_limit($request);
     }
 
     /**
      * Check if the current user can view a single sermon.
      *
-     * Sermons are public, so this always returns true.
+     * Sermons are public but rate limited.
      *
      * @param WP_REST_Request $request The request object.
-     * @return bool Always true for public access.
+     * @return true|WP_Error True if allowed, WP_Error if rate limited.
      */
-    public function get_item_permissions_check($request): bool
+    public function get_item_permissions_check($request): true|WP_Error
     {
-        return $this->get_items_permissions_check($request);
+        return $this->check_rate_limit($request);
     }
 
     /**
@@ -337,8 +337,9 @@ class SermonsController extends RestController
         $data = array_map([$this, 'prepare_sermon_for_response'], $sermons);
 
         $response = new WP_REST_Response($data);
+        $response = $this->prepare_pagination_response($response, $total, $perPage);
 
-        return $this->prepare_pagination_response($response, $total, $perPage);
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**
@@ -381,7 +382,9 @@ class SermonsController extends RestController
 
         $data = $this->prepare_sermon_for_response($sermon);
 
-        return new WP_REST_Response($data);
+        $response = new WP_REST_Response($data);
+
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**
