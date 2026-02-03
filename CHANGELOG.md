@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-02-03
+
+### Added
+- New Gutenberg Blocks (Phase 5 completion):
+  - Preacher List block: Display preachers with sermon counts in list or grid layout
+  - Series Grid block: Display sermon series in responsive card grid
+  - Sermon Player block: Embed audio player with download link for individual sermon files
+- GPL 3.0 License file added to match original plugin headers
+
 ## [0.6.0] - 2026-02-03
 
 ### Added
@@ -115,7 +124,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial tagged release with basic functionality.
 
-[Unreleased]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/stephenfeather/sermon-browser/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-beta-1...v0.6.0
 [0.6.0-beta-1]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-alpha-1...v0.6.0-beta-1
 [0.6.0-alpha-1]: https://github.com/stephenfeather/sermon-browser/compare/v0.5.0...v0.6.0-alpha-1

@@ -29,7 +29,7 @@ if (!defined('WP_DEBUG')) {
 
 // Plugin-specific constants.
 if (!defined('SB_CURRENT_VERSION')) {
-    define('SB_CURRENT_VERSION', '0.6.0');
+    define('SB_CURRENT_VERSION', '0.7.0');
 }
 
 if (!defined('SB_PLUGIN_URL')) {
