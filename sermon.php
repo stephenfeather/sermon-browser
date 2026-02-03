@@ -160,6 +160,9 @@ add_action('plugins_loaded', function () {
     $registry->init();
 }, 20);
 
+// Register block patterns (Phase 4).
+require_once __DIR__ . '/src/Blocks/patterns/index.php';
+
 // Phase 6: Template migration on plugin activation.
 register_activation_hook(__FILE__, function () {
     $migrator = new \SermonBrowser\Templates\TemplateMigrator();
