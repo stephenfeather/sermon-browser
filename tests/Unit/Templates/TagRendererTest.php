@@ -151,6 +151,7 @@ class TagRendererTest extends TestCase
         $sermon = $this->createMockSermon();
         $sermon->description = "Line one\n\nLine two";
 
+        // wp_kses_post is stubbed in TestCase::defineCommonWordPressFunctions()
         Functions\expect('wpautop')
             ->once()
             ->andReturnUsing(function ($text) {
@@ -160,6 +161,56 @@ class TagRendererTest extends TestCase
         $result = $this->renderer->renderSermonDescription($sermon, 'single');
 
         $this->assertStringContainsString('<p>', $result);
+    }
+
+    /**
+     * Test renderSermonDescription calls wp_kses_post for XSS protection.
+     *
+     * This test verifies the code path calls wp_kses_post() before wpautop().
+     * The actual XSS filtering is WordPress's responsibility.
+     */
+    public function testRenderSermonDescriptionCallsWpKsesPost(): void
+    {
+        $sermon = $this->createMockSermon();
+        $sermon->description = 'Test description';
+
+        // Track that wp_kses_post was called with the description
+        $wpKsesPostCalled = false;
+        $wpKsesPostInput = '';
+
+        Functions\when('wp_kses_post')->alias(function ($text) use (&$wpKsesPostCalled, &$wpKsesPostInput) {
+            $wpKsesPostCalled = true;
+            $wpKsesPostInput = $text;
+            return $text;
+        });
+
+        Functions\expect('wpautop')
+            ->once()
+            ->andReturnUsing(fn($text) => '<p>' . $text . '</p>');
+
+        $this->renderer->renderSermonDescription($sermon, 'single');
+
+        $this->assertTrue($wpKsesPostCalled, 'wp_kses_post() should be called for XSS protection');
+        $this->assertEquals('Test description', $wpKsesPostInput);
+    }
+
+    /**
+     * Test renderSermonDescription preserves safe HTML through wp_kses_post.
+     */
+    public function testRenderSermonDescriptionPreservesSafeHtml(): void
+    {
+        $sermon = $this->createMockSermon();
+        $sermon->description = '<strong>Bold</strong> and <em>italic</em> text';
+
+        // wp_kses_post is stubbed to pass through (which preserves safe HTML)
+        Functions\expect('wpautop')
+            ->once()
+            ->andReturnUsing(fn($text) => '<p>' . $text . '</p>');
+
+        $result = $this->renderer->renderSermonDescription($sermon, 'single');
+
+        $this->assertStringContainsString('<strong>Bold</strong>', $result);
+        $this->assertStringContainsString('<em>italic</em>', $result);
     }
 
     // =========================================================================

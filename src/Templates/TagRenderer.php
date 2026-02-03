@@ -170,7 +170,7 @@ class TagRenderer
         }
 
         $description = stripslashes((string) $sermon->description);
-        return wpautop($description);
+        return wpautop(wp_kses_post($description));
     }
 
     // =========================================================================
