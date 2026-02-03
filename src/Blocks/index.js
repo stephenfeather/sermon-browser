@@ -10,3 +10,6 @@
 import './tag-cloud';
 import './single-sermon';
 import './sermon-list';
+import './preacher-list';
+import './series-grid';
+import './sermon-player';

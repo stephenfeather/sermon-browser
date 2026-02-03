@@ -1,0 +1,86 @@
+/**
+ * Series Grid Block - Frontend Styles
+ *
+ * @package sermon-browser
+ */
+
+.sb-series-grid {
+	--sb-series-grid-columns: 3;
+	--sb-series-grid-gap: 1.5em;
+	--sb-series-card-bg: #f9f9f9;
+	--sb-series-card-hover-bg: #f0f0f0;
+	--sb-series-card-border-radius: 8px;
+	--sb-series-card-padding: 1.5em;
+	--sb-series-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	--sb-series-card-hover-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	--sb-series-title-color: inherit;
+	--sb-series-count-color: inherit;
+	--sb-series-count-opacity: 0.7;
+	--sb-series-description-color: inherit;
+	--sb-series-description-opacity: 0.8;
+}
+
+.sb-series-grid__grid {
+	display: grid;
+	grid-template-columns: repeat(var(--sb-series-grid-columns), 1fr);
+	gap: var(--sb-series-grid-gap);
+}
+
+/* Responsive grid */
+@media (max-width: 1024px) {
+	.sb-series-grid__grid {
+		grid-template-columns: repeat(min(var(--sb-series-grid-columns), 2), 1fr);
+	}
+}
+
+@media (max-width: 600px) {
+	.sb-series-grid__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.sb-series-grid__card {
+	display: flex;
+	flex-direction: column;
+	padding: var(--sb-series-card-padding);
+	background: var(--sb-series-card-bg);
+	border-radius: var(--sb-series-card-border-radius);
+	box-shadow: var(--sb-series-card-shadow);
+	text-decoration: none;
+	color: inherit;
+	transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.sb-series-grid__card:hover,
+.sb-series-grid__card:focus {
+	background: var(--sb-series-card-hover-bg);
+	box-shadow: var(--sb-series-card-hover-shadow);
+	transform: translateY(-2px);
+}
+
+.sb-series-grid__title {
+	margin: 0 0 0.5em 0;
+	font-size: 1.1em;
+	font-weight: 600;
+	color: var(--sb-series-title-color);
+}
+
+.sb-series-grid__count {
+	font-size: 0.9em;
+	color: var(--sb-series-count-color);
+	opacity: var(--sb-series-count-opacity);
+}
+
+.sb-series-grid__description {
+	margin: 0.75em 0 0 0;
+	font-size: 0.9em;
+	color: var(--sb-series-description-color);
+	opacity: var(--sb-series-description-opacity);
+	line-height: 1.5;
+}
+
+/* No series message */
+.sb-series-grid__no-series {
+	font-style: italic;
+	opacity: 0.7;
+}

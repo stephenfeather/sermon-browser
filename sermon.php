@@ -148,6 +148,9 @@ add_action('plugins_loaded', function () {
     $registry->addBlock('tag-cloud');
     $registry->addBlock('single-sermon');
     $registry->addBlock('sermon-list');
+    $registry->addBlock('preacher-list');
+    $registry->addBlock('series-grid');
+    $registry->addBlock('sermon-player');
     $registry->init();
 }, 20);
 

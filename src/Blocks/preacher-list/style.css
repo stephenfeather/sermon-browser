@@ -1,0 +1,99 @@
+/**
+ * Preacher List Block - Frontend Styles
+ *
+ * @package sermon-browser
+ */
+
+.sb-preacher-list {
+	--sb-preacher-link-color: inherit;
+	--sb-preacher-link-hover-color: currentColor;
+	--sb-preacher-count-color: inherit;
+	--sb-preacher-count-opacity: 0.7;
+	--sb-preacher-card-bg: #f9f9f9;
+	--sb-preacher-card-hover-bg: #f0f0f0;
+	--sb-preacher-card-border-radius: 4px;
+	--sb-preacher-card-padding: 1em;
+	--sb-preacher-grid-gap: 1em;
+	--sb-preacher-grid-min-width: 200px;
+}
+
+/* List Layout */
+.sb-preacher-list--list .sb-preacher-list__items {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.sb-preacher-list--list .sb-preacher-list__item {
+	padding: 0.5em 0;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sb-preacher-list--list .sb-preacher-list__item:last-child {
+	border-bottom: none;
+}
+
+.sb-preacher-list--list .sb-preacher-list__link {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	color: var(--sb-preacher-link-color);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.sb-preacher-list--list .sb-preacher-list__link:hover,
+.sb-preacher-list--list .sb-preacher-list__link:focus {
+	color: var(--sb-preacher-link-hover-color);
+}
+
+.sb-preacher-list--list .sb-preacher-list__count {
+	color: var(--sb-preacher-count-color);
+	opacity: var(--sb-preacher-count-opacity);
+	font-size: 0.9em;
+	margin-left: 0.5em;
+}
+
+/* Grid Layout */
+.sb-preacher-list--grid .sb-preacher-list__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(var(--sb-preacher-grid-min-width), 1fr));
+	gap: var(--sb-preacher-grid-gap);
+}
+
+.sb-preacher-list--grid .sb-preacher-list__card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: var(--sb-preacher-card-padding);
+	background: var(--sb-preacher-card-bg);
+	border-radius: var(--sb-preacher-card-border-radius);
+	text-align: center;
+	text-decoration: none;
+	color: var(--sb-preacher-link-color);
+	transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.sb-preacher-list--grid .sb-preacher-list__card:hover,
+.sb-preacher-list--grid .sb-preacher-list__card:focus {
+	background: var(--sb-preacher-card-hover-bg);
+	transform: translateY(-2px);
+}
+
+.sb-preacher-list--grid .sb-preacher-list__name {
+	font-weight: 600;
+	margin-bottom: 0.25em;
+}
+
+.sb-preacher-list--grid .sb-preacher-list__count {
+	color: var(--sb-preacher-count-color);
+	opacity: var(--sb-preacher-count-opacity);
+	font-size: 0.85em;
+}
+
+/* No preachers message */
+.sb-preacher-list__no-preachers {
+	font-style: italic;
+	opacity: 0.7;
+}
