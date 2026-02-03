@@ -90,6 +90,10 @@ class LegacyAjaxHandler
     /**
      * Determine the operation type from POST parameters.
      *
+     * Security: This method only checks for parameter existence, not validity.
+     * File path validation is deferred to handleFile() after nonce verification
+     * to prevent timing-based information disclosure.
+     *
      * @return string|null The operation type or null if unknown.
      */
     private static function determineOperationType(): ?string
@@ -103,7 +107,9 @@ class LegacyAjaxHandler
         if (isset($_POST['ssname'])) {
             return 'series';
         }
-        if (isset($_POST['fname']) && validate_file(sb_get_option('upload_dir') . $_POST['fname']) === 0) {
+        // Security: Only check parameter existence here; validate_file() is called
+        // in handleFile() after nonce verification to prevent timing attacks.
+        if (isset($_POST['fname'])) {
             return 'file';
         }
         if (isset($_POST['fetch'])) {
@@ -211,6 +217,15 @@ class LegacyAjaxHandler
      */
     private static function handleFile(): void
     {
+        // Security: Validate file path after nonce verification (moved from determineOperationType).
+        if (validate_file(sb_get_option('upload_dir') . $_POST['fname']) !== 0) {
+            wp_die(
+                esc_html__('Invalid file path.', 'sermon-browser'),
+                esc_html__('Security Error', 'sermon-browser'),
+                ['response' => 403]
+            );
+        }
+
         $fname = sanitize_file_name($_POST['fname']);
 
         if (!isset($_POST['fid'])) {
