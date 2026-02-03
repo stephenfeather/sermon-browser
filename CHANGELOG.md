@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-02-03
+
+### Added
+- Comprehensive test coverage across the codebase (18 new test classes added)
+- Test coverage reporting with detailed HTML coverage reports
+- 100% test coverage for multiple critical classes including:
+  - Admin\AdminController
+  - Admin\Pages\HelpPage
+  - Admin\Pages\DropdownFilterRenderer
+  - Admin\Pages\PreachersPage
+  - Admin\Pages\SermonEditorPage
+  - Admin\Pages\FilesPage
+  - Admin\Ajax\LegacyAjaxHandler
+  - Frontend\FilterRenderer
+  - Frontend\BibleText
+  - Install\DefaultTemplates
+  - Services\Container
+  - Utilities\HelperFunctions
+
+### Changed
+- Improved test coverage across all major components
+- Repository classes now at 93% coverage
+- Admin pages now have comprehensive test coverage
+- Frontend components fully tested
+
+### Fixed
+- Test coverage gaps identified and addressed
+- Improved reliability through expanded test suite
+
 ## [0.6.0-beta-1] - 2026-02-02
 
 ### Security
@@ -86,7 +115,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial tagged release with basic functionality.
 
-[Unreleased]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-beta-1...HEAD
+[Unreleased]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-beta-1...v0.6.0
 [0.6.0-beta-1]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-alpha-1...v0.6.0-beta-1
 [0.6.0-alpha-1]: https://github.com/stephenfeather/sermon-browser/compare/v0.5.0...v0.6.0-alpha-1
 [0.5.0]: https://github.com/stephenfeather/sermon-browser/releases/tag/v0.5.0
