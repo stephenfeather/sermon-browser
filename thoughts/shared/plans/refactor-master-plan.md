@@ -1,24 +1,25 @@
 # Sermon Browser Comprehensive Refactor Plan
 
 **Generated:** 2026-01-29
-**Last Updated:** 2026-01-31
-**Plugin Version:** 0.5.1-dev
+**Last Updated:** 2026-02-03
+**Plugin Version:** 0.7.0
 **Target WordPress:** 6.0+
 **Target PHP:** 8.0+
 
 ## Current Status Summary
 
-| Phase | Status | Notes |
-|-------|--------|-------|
-| Phase 1: Repository Layer | ✅ COMPLETE | Facades + AJAX handlers done |
-| Phase 2: Split Monoliths | ✅ COMPLETE | Admin pages extracted + wired |
-| Phase 3: JS Modernization | ✅ COMPLETE | Legacy JS removed (673 lines) |
-| Phase 4: REST API | ✅ COMPLETE | 167 tests, all endpoints |
-| Phase 5: Gutenberg Blocks | ⏳ READY | All prerequisites complete |
-| Phase 6: Remove eval() | ✅ COMPLETE | Security fix, 108 new tests |
-| Phase 7: Empty sb-includes/ | ✅ COMPLETE | Directory deleted, all code in src/ |
+| Phase | Status | Version | Notes |
+|-------|--------|---------|-------|
+| Phase 1: Repository Layer | ✅ COMPLETE | v0.6.0 | Facades + AJAX handlers done |
+| Phase 2: Split Monoliths | ✅ COMPLETE | v0.6.0 | Admin pages extracted + wired |
+| Phase 3: JS Modernization | ✅ COMPLETE | v0.6.0 | Legacy JS removed (673 lines) |
+| Phase 4: REST API | ✅ COMPLETE | v0.6.0 | 167 tests, all endpoints |
+| Phase 5: Gutenberg Blocks | ✅ COMPLETE | v0.7.0 | All 6 blocks: sermon-list, single-sermon, sermon-player, preacher-list, series-grid, tag-cloud |
+| Phase 6: Remove eval() | ✅ COMPLETE | v0.6.0 | Security fix, 108 new tests |
+| Phase 7: Empty sb-includes/ | ✅ COMPLETE | v0.6.0 | Directory deleted, all code in src/ |
+| Phase 8: Security Concerns | ⏳ PLANNED | v0.8.0 | Aegis audit: 2 HIGH, 4 MEDIUM, 3 LOW |
 
-**Tests:** 430 passing (Repository + AJAX + REST + Templates + Utilities)
+**Tests:** 1,289 passing (3,616 assertions, 59% line coverage)
 
 ## Workflow Requirements
 
@@ -1144,21 +1145,38 @@ Migrate all code from `sb-includes/` to PSR-4 classes under `src/`, then delete 
 
 ---
 
-## Next Steps
+## Release Roadmap
 
-### Immediate Priority
+### v0.6.0
+- ✅ Phase 1: Repository Layer
+- ✅ Phase 2: Split Monoliths
+- ✅ Phase 3: JS Modernization
+- ✅ Phase 4: REST API
+- ✅ Phase 6: Remove eval() Templates
+- ✅ Phase 7: Empty sb-includes/
+- 1,289 tests, 59% line coverage
 
-1. **Address Blocker/Critical issues** - 4 blockers + 59 critical issues
-2. **Security fixes** - 7 vulnerabilities to address
+### v0.7.0 (Current Release)
+- ✅ Phase 5: Gutenberg Blocks (all 6 complete)
+  - sermon-list, single-sermon, sermon-player
+  - preacher-list, series-grid, tag-cloud
+  - Server-side rendering with `@wordpress/scripts` build
+  - Shortcodes remain for backward compatibility
 
-### Ready to Start
+### v0.8.0 (Security Hardening)
+- Phase 8: Resolve Security Concerns (from aegis audit 2026-02-03)
+  - **HIGH:** Fix XSS in SermonWidget (lines 82, 134, 186, 199) - add `esc_html()`
+  - **HIGH:** Update phpunit to 10.5.62+ (CVE-2026-24765)
+  - **MEDIUM:** Refactor Upgrader.php - use `$wpdb->prepare()` for all queries
+  - **MEDIUM:** Refactor PodcastFeed.php - replace `esc_sql()` with `prepare()`
+  - **MEDIUM:** Add sanitization to SermonEditorPage description collection
+  - **MEDIUM:** Validate index names in Upgrader before DROP INDEX
+  - **LOW:** FilterRenderer superglobal access cleanup
+  - See `.claude/cache/agents/aegis/output-20260203.md` for full assessment
 
-3. **Phase 5: Gutenberg Blocks** - The only remaining phase
-   - Requires `@wordpress/scripts` build pipeline
-   - Create block equivalents for shortcodes
-   - See Phase 5 section for full scope
+---
 
-### Completed Cleanup
+## Completed Cleanup
 
 - ✅ **Deleted `dictionary.php`** (79 lines) - no longer needed after Phase 6
   - Removed `_output` option generation from TemplatesPage, sb-install, upgrade
@@ -1172,4 +1190,4 @@ Migrate all code from `sb-includes/` to PSR-4 classes under `src/`, then delete 
 
 ---
 
-*Last updated: 2026-02-01 (SonarQube status updated: 1,489 issues, 259 violations)*
+*Last updated: 2026-02-03 (v0.6.0 released, roadmap updated for v0.7.0/v0.8.0)*

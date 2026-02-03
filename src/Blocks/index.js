@@ -13,3 +13,5 @@ import './sermon-list';
 import './preacher-list';
 import './series-grid';
 import './sermon-player';
+import './recent-sermons';
+import './popular-sermons';

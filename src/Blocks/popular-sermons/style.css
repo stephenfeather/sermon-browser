@@ -1,0 +1,90 @@
+/**
+ * Popular Content Block Styles
+ *
+ * @package sermon-browser
+ */
+
+.sb-popular-content {
+	margin-block: 1em;
+}
+
+/* List layout */
+.sb-popular-content__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.sb-popular-content__item {
+	padding: 0.5em 0;
+	border-bottom: 1px solid currentColor;
+	opacity: 0.2;
+	border-bottom-color: currentColor;
+}
+
+.sb-popular-content__item:last-child {
+	border-bottom: none;
+}
+
+.sb-popular-content__link {
+	text-decoration: none;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.sb-popular-content__link:hover .sb-popular-content__name {
+	text-decoration: underline;
+}
+
+.sb-popular-content__name {
+	flex: 1;
+}
+
+.sb-popular-content__count {
+	font-size: 0.85em;
+	opacity: 0.7;
+}
+
+/* Grid layout */
+.sb-popular-content__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 1em;
+}
+
+.sb-popular-content__card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 1em;
+	border: 1px solid currentColor;
+	opacity: 0.2;
+	border-color: currentColor;
+	border-radius: 4px;
+	text-decoration: none;
+	text-align: center;
+	transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.sb-popular-content__card:hover {
+	transform: translateY(-2px);
+}
+
+.sb-popular-content__card .sb-popular-content__name {
+	font-weight: 600;
+	margin-bottom: 0.25em;
+}
+
+.sb-popular-content__card .sb-popular-content__count {
+	font-size: 0.8em;
+	opacity: 0.7;
+}
+
+.sb-popular-content__no-items {
+	color: currentColor;
+	opacity: 0.6;
+	font-style: italic;
+}

@@ -1,0 +1,64 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "sermon-browser/recent-sermons",
+	"version": "0.7.0",
+	"title": "Recent Sermons",
+	"category": "widgets",
+	"icon": "playlist-audio",
+	"description": "Display a list of recent sermons with optional filtering.",
+	"keywords": ["sermon", "recent", "latest", "list"],
+	"textdomain": "sermon-browser",
+	"attributes": {
+		"limit": {
+			"type": "number",
+			"default": 5
+		},
+		"showPreacher": {
+			"type": "boolean",
+			"default": true
+		},
+		"showDate": {
+			"type": "boolean",
+			"default": true
+		},
+		"showSeries": {
+			"type": "boolean",
+			"default": false
+		},
+		"showPassage": {
+			"type": "boolean",
+			"default": false
+		},
+		"preacherId": {
+			"type": "number",
+			"default": 0
+		},
+		"seriesId": {
+			"type": "number",
+			"default": 0
+		},
+		"serviceId": {
+			"type": "number",
+			"default": 0
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"color": {
+			"text": true,
+			"background": true,
+			"link": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true
+		}
+	},
+	"render": "file:./render.php"
+}

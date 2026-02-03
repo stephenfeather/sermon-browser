@@ -1,0 +1,66 @@
+/**
+ * Recent Sermons Block Styles
+ *
+ * @package sermon-browser
+ */
+
+.sb-recent-sermons {
+	margin-block: 1em;
+}
+
+.sb-recent-sermons__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.sb-recent-sermons__item {
+	padding: 0.5em 0;
+	border-bottom: 1px solid currentColor;
+	opacity: 0.2;
+	border-bottom-color: currentColor;
+}
+
+.sb-recent-sermons__item:last-child {
+	border-bottom: none;
+}
+
+.sb-recent-sermons__link {
+	text-decoration: none;
+}
+
+.sb-recent-sermons__link:hover .sb-recent-sermons__title {
+	text-decoration: underline;
+}
+
+.sb-recent-sermons__title {
+	font-weight: 600;
+}
+
+.sb-recent-sermons__passage {
+	font-style: italic;
+	opacity: 0.8;
+}
+
+.sb-recent-sermons__preacher,
+.sb-recent-sermons__series,
+.sb-recent-sermons__date {
+	font-size: 0.9em;
+	opacity: 0.8;
+}
+
+.sb-recent-sermons__preacher a,
+.sb-recent-sermons__series a {
+	text-decoration: none;
+}
+
+.sb-recent-sermons__preacher a:hover,
+.sb-recent-sermons__series a:hover {
+	text-decoration: underline;
+}
+
+.sb-recent-sermons__no-sermons {
+	color: currentColor;
+	opacity: 0.6;
+	font-style: italic;
+}

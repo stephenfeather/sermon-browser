@@ -13,6 +13,8 @@ use WP_Widget;
  * Modern WP_Widget class for displaying a cloud of sermon tags
  * in WordPress sidebars and widget areas.
  *
+ * @deprecated 0.7.0 Use the sermon-browser/tag-cloud Gutenberg block instead.
+ *
  * @extends WP_Widget<array{title?: string}>
  *
  * @since 0.46.0
@@ -80,6 +82,12 @@ class TagCloudWidget extends WP_Widget
     {
         $title = $instance['title'] ?? __(Constants::WIDGET_TAG_CLOUD_TITLE, 'sermon-browser');
         ?>
+        <div class="notice notice-warning inline" style="margin: 10px 0; padding: 10px;">
+            <p>
+                <strong><?php esc_html_e('Deprecated:', 'sermon-browser'); ?></strong>
+                <?php esc_html_e('This widget is deprecated. Please use the "Tag Cloud" Gutenberg block instead.', 'sermon-browser'); ?>
+            </p>
+        </div>
         <p>
             <label for="<?php echo esc_attr($this->get_field_id('title')); ?>">
                 <?php esc_html_e('Title:', 'sermon-browser'); ?>

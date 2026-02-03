@@ -1,0 +1,50 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "sermon-browser/popular-sermons",
+	"version": "0.7.0",
+	"title": "Popular Content",
+	"category": "widgets",
+	"icon": "star-filled",
+	"description": "Display popular sermons, series, or preachers based on view count.",
+	"keywords": ["sermon", "popular", "trending", "series", "preacher"],
+	"textdomain": "sermon-browser",
+	"attributes": {
+		"limit": {
+			"type": "number",
+			"default": 5
+		},
+		"contentType": {
+			"type": "string",
+			"default": "sermons",
+			"enum": ["sermons", "series", "preachers"]
+		},
+		"showCount": {
+			"type": "boolean",
+			"default": false
+		},
+		"layout": {
+			"type": "string",
+			"default": "list",
+			"enum": ["list", "grid"]
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"color": {
+			"text": true,
+			"background": true,
+			"link": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true
+		}
+	},
+	"render": "file:./render.php"
+}
