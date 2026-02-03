@@ -163,6 +163,11 @@ add_action('plugins_loaded', function () {
 // Register block patterns (Phase 4).
 require_once __DIR__ . '/src/Blocks/patterns/index.php';
 
+// Register FSE (Full Site Editing) support (Phase 6).
+add_action('plugins_loaded', function () {
+    \SermonBrowser\Blocks\FSESupport::getInstance()->init();
+}, 25);
+
 // Phase 6: Template migration on plugin activation.
 register_activation_hook(__FILE__, function () {
     $migrator = new \SermonBrowser\Templates\TemplateMigrator();
