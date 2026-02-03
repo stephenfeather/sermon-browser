@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SermonBrowser\Http\Handler;
 
 use SermonBrowser\Facades\File;
+use SermonBrowser\Http\SecurityHeaders;
 
 /**
  * Shared functionality for HTTP request handlers.
@@ -57,5 +58,18 @@ trait HandlerTrait
         if (!(current_user_can('edit_posts') || current_user_can('publish_posts'))) {
             File::incrementCountByName($name);
         }
+    }
+
+    /**
+     * Send security headers for file responses.
+     *
+     * Adds X-Content-Type-Options and X-Frame-Options headers
+     * to protect against MIME sniffing and clickjacking.
+     *
+     * @since 0.7.1
+     */
+    protected static function sendSecurityHeaders(): void
+    {
+        SecurityHeaders::send();
     }
 }

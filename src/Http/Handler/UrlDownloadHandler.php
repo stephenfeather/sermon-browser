@@ -43,6 +43,7 @@ class UrlDownloadHandler
             self::urlNotFound(esc_html($requestedUrl));
         }
 
+        self::sendSecurityHeaders();
         self::sendHeaders($file->name, $downloadedFile);
         self::incrementDownloadCount($file->name);
 

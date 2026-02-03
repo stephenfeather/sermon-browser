@@ -39,6 +39,7 @@ class FileDownloadHandler
         $fileName = $file->name;
         $filePath = SB_ABSPATH . sb_get_option('upload_dir') . $fileName;
 
+        self::sendSecurityHeaders();
         self::sendHeaders($fileName, $filePath);
         self::incrementDownloadCount($fileName);
 

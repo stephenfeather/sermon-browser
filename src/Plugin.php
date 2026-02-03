@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace SermonBrowser;
 
+use SermonBrowser\Http\SecurityHeaders;
+
 /**
  * Class Plugin
  *
@@ -93,6 +95,9 @@ class Plugin
         add_action('plugins_loaded', 'sb_hijack');
         add_action('init', 'sb_sermon_init');
         add_action('widgets_init', 'sb_widget_sermon_init');
+
+        // Register security headers for admin and REST API.
+        SecurityHeaders::register();
 
         // Register admin controller for menu handling (Phase 2).
         if (is_admin()) {
