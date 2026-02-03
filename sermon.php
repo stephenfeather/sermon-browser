@@ -153,6 +153,10 @@ add_action('plugins_loaded', function () {
     $registry->addBlock('sermon-player');
     $registry->addBlock('recent-sermons');
     $registry->addBlock('popular-sermons');
+    $registry->addBlock('sermon-grid');
+    $registry->addBlock('profile-block');
+    $registry->addBlock('sermon-media');
+    $registry->addBlock('sermon-filters');
     $registry->init();
 }, 20);
 

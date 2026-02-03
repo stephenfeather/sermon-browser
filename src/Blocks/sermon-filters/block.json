@@ -1,0 +1,69 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "sermon-browser/sermon-filters",
+	"version": "0.8.0",
+	"title": "Sermon Filters",
+	"category": "widgets",
+	"icon": "filter",
+	"description": "Add sermon filters that work independently of the sermon list.",
+	"keywords": ["sermon", "filter", "search", "categories"],
+	"textdomain": "sermon-browser",
+	"attributes": {
+		"filterType": {
+			"type": "string",
+			"default": "oneclick",
+			"enum": ["oneclick", "dropdown"]
+		},
+		"showPreachers": {
+			"type": "boolean",
+			"default": true
+		},
+		"showSeries": {
+			"type": "boolean",
+			"default": true
+		},
+		"showServices": {
+			"type": "boolean",
+			"default": true
+		},
+		"showBooks": {
+			"type": "boolean",
+			"default": true
+		},
+		"showTags": {
+			"type": "boolean",
+			"default": false
+		},
+		"showDateRange": {
+			"type": "boolean",
+			"default": false
+		},
+		"showSearch": {
+			"type": "boolean",
+			"default": false
+		},
+		"targetUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"layout": {
+			"type": "string",
+			"default": "horizontal",
+			"enum": ["horizontal", "vertical", "grid"]
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"color": {
+			"text": true,
+			"background": true
+		}
+	},
+	"render": "file:./render.php"
+}

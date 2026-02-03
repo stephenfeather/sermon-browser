@@ -15,3 +15,7 @@ import './series-grid';
 import './sermon-player';
 import './recent-sermons';
 import './popular-sermons';
+import './sermon-grid';
+import './profile-block';
+import './sermon-media';
+import './sermon-filters';

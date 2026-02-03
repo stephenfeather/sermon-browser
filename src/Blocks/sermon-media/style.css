@@ -1,0 +1,190 @@
+/**
+ * Sermon Media Block - Frontend Styles
+ *
+ * @package sermon-browser
+ */
+
+.sb-sermon-media {
+	--sb-media-title-color: inherit;
+	--sb-media-meta-color: inherit;
+	--sb-media-meta-opacity: 0.7;
+	--sb-media-meta-gap: 1em;
+	--sb-media-link-color: inherit;
+	--sb-media-link-hover-color: currentColor;
+	--sb-media-download-bg: #f5f5f5;
+	--sb-media-download-hover-bg: #e8e8e8;
+	--sb-media-download-border-radius: 4px;
+	--sb-media-download-padding: 0.5em 1em;
+	--sb-media-spacing: 1em;
+	max-width: 100%;
+}
+
+/* Player styles - Minimal */
+.sb-sermon-media--minimal .sb-sermon-media__audio audio,
+.sb-sermon-media--minimal .sb-sermon-media__video video {
+	width: 100%;
+}
+
+/* Player styles - Default */
+.sb-sermon-media--default .sb-sermon-media__audio,
+.sb-sermon-media--default .sb-sermon-media__video {
+	background: #f5f5f5;
+	padding: 1rem;
+	border-radius: 4px;
+	margin-bottom: var(--sb-media-spacing);
+}
+
+.sb-sermon-media--default .sb-sermon-media__audio audio,
+.sb-sermon-media--default .sb-sermon-media__video video {
+	width: 100%;
+}
+
+/* Player styles - Full */
+.sb-sermon-media--full {
+	background: #1a1a1a;
+	padding: 1.5rem;
+	border-radius: 8px;
+	color: #fff;
+}
+
+.sb-sermon-media--full .sb-sermon-media__audio,
+.sb-sermon-media--full .sb-sermon-media__video {
+	margin-bottom: var(--sb-media-spacing);
+}
+
+.sb-sermon-media--full .sb-sermon-media__audio audio,
+.sb-sermon-media--full .sb-sermon-media__video video {
+	width: 100%;
+}
+
+/* Title */
+.sb-sermon-media__title {
+	margin: 0 0 0.5rem;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: var(--sb-media-title-color);
+}
+
+.sb-sermon-media__title a {
+	color: inherit;
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.sb-sermon-media__title a:hover,
+.sb-sermon-media__title a:focus {
+	color: var(--sb-media-link-hover-color);
+	text-decoration: underline;
+}
+
+.sb-sermon-media--full .sb-sermon-media__title {
+	color: #fff;
+}
+
+/* Meta */
+.sb-sermon-media__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--sb-media-meta-gap);
+	font-size: 0.85rem;
+	opacity: 0.8;
+	margin-bottom: 1rem;
+	color: var(--sb-media-meta-color);
+}
+
+.sb-sermon-media__date::after {
+	content: '\2022';
+	margin-left: var(--sb-media-meta-gap);
+}
+
+.sb-sermon-media__meta > *:last-child::after {
+	content: none;
+}
+
+/* Audio player */
+.sb-sermon-media__audio audio {
+	width: 100%;
+	margin-bottom: 0.5rem;
+}
+
+/* Video player */
+.sb-sermon-media__video video {
+	width: 100%;
+	max-height: 500px;
+	background: #000;
+	margin-bottom: 0.5rem;
+}
+
+/* Downloads */
+.sb-sermon-media__downloads {
+	display: flex;
+	gap: 1rem;
+	margin-top: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.sb-sermon-media__download-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.9rem;
+	text-decoration: none;
+	padding: var(--sb-media-download-padding);
+	background: var(--sb-media-download-bg);
+	border-radius: var(--sb-media-download-border-radius);
+	color: var(--sb-media-link-color);
+	transition: background-color 0.2s ease;
+}
+
+.sb-sermon-media__download-link:hover,
+.sb-sermon-media__download-link:focus {
+	text-decoration: underline;
+	background: var(--sb-media-download-hover-bg);
+}
+
+.sb-sermon-media__download-link .dashicons {
+	font-size: 1.1em;
+	width: auto;
+	height: auto;
+}
+
+/* Full style download links */
+.sb-sermon-media--full .sb-sermon-media__download-link {
+	color: #fff;
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.sb-sermon-media--full .sb-sermon-media__download-link:hover,
+.sb-sermon-media--full .sb-sermon-media__download-link:focus {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+/* No media message */
+.sb-sermon-media__no-media,
+.sb-sermon-media__no-sermon {
+	font-style: italic;
+	opacity: 0.7;
+}
+
+/* Editor preview styles */
+.sb-sermon-media__placeholder {
+	display: flex;
+	align-items: center;
+	gap: 0.75em;
+	padding: 1em;
+	background: #f0f0f0;
+	border-radius: 4px;
+	margin-bottom: var(--sb-media-spacing);
+}
+
+.sb-sermon-media__placeholder .dashicons {
+	font-size: 24px;
+	width: 24px;
+	height: 24px;
+}
+
+.sb-sermon-media__type-indicator {
+	margin: 0;
+	font-style: italic;
+	opacity: 0.8;
+}

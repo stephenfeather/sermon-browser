@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "sermon-browser/profile-block",
+	"version": "0.8.0",
+	"title": "Preacher/Series Profile",
+	"category": "widgets",
+	"icon": "id-alt",
+	"description": "Display a preacher or series profile with image and recent sermons.",
+	"keywords": ["sermon", "preacher", "series", "profile", "speaker"],
+	"textdomain": "sermon-browser",
+	"attributes": {
+		"profileType": {
+			"type": "string",
+			"default": "preacher",
+			"enum": ["preacher", "series"]
+		},
+		"profileId": {
+			"type": "number",
+			"default": 0
+		},
+		"showImage": {
+			"type": "boolean",
+			"default": true
+		},
+		"showBio": {
+			"type": "boolean",
+			"default": true
+		},
+		"showSermons": {
+			"type": "boolean",
+			"default": true
+		},
+		"sermonLimit": {
+			"type": "number",
+			"default": 5
+		},
+		"layout": {
+			"type": "string",
+			"default": "horizontal",
+			"enum": ["horizontal", "vertical"]
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		},
+		"color": {
+			"text": true,
+			"background": true
+		}
+	},
+	"render": "file:./render.php"
+}

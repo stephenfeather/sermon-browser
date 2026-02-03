@@ -1,0 +1,127 @@
+/**
+ * Profile Block Styles
+ *
+ * @package sermon-browser
+ */
+
+.sb-profile-block {
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 1.5rem;
+	background: #fff;
+}
+
+.sb-profile-block--horizontal .sb-profile-block__content {
+	display: flex;
+	gap: 1.5rem;
+	align-items: flex-start;
+}
+
+.sb-profile-block--vertical .sb-profile-block__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.sb-profile-block__image {
+	flex-shrink: 0;
+}
+
+.sb-profile-block__image img {
+	width: 150px;
+	height: 150px;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.sb-profile-block--vertical .sb-profile-block__image img {
+	width: 200px;
+	height: 200px;
+}
+
+.sb-profile-block__info {
+	flex: 1;
+}
+
+.sb-profile-block__name {
+	margin: 0 0 0.5rem;
+	font-size: 1.5rem;
+}
+
+.sb-profile-block__name a {
+	text-decoration: none;
+	color: inherit;
+}
+
+.sb-profile-block__name a:hover {
+	text-decoration: underline;
+}
+
+.sb-profile-block__bio {
+	color: #666;
+	line-height: 1.6;
+	margin-bottom: 1rem;
+}
+
+.sb-profile-block__sermons h4 {
+	margin: 0 0 0.5rem;
+	font-size: 1rem;
+	color: #333;
+}
+
+.sb-profile-block__sermons ul {
+	margin: 0;
+	padding-left: 1.25rem;
+	list-style: disc;
+}
+
+.sb-profile-block__sermons li {
+	margin-bottom: 0.25rem;
+}
+
+.sb-profile-block__sermons a {
+	text-decoration: none;
+	color: inherit;
+}
+
+.sb-profile-block__sermons a:hover {
+	text-decoration: underline;
+}
+
+.sb-profile-block__sermon-date {
+	color: #999;
+	font-size: 0.875em;
+	margin-left: 0.5rem;
+}
+
+.sb-profile-block__sermon-date::before {
+	content: "\2014";
+	margin-right: 0.5rem;
+}
+
+.sb-profile-block__not-found {
+	color: #666;
+	font-style: italic;
+	text-align: center;
+	padding: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+	.sb-profile-block--horizontal .sb-profile-block__content {
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+
+	.sb-profile-block__sermon-date {
+		display: block;
+		margin-left: 0;
+		margin-top: 0.25rem;
+	}
+
+	.sb-profile-block__sermon-date::before {
+		display: none;
+	}
+}

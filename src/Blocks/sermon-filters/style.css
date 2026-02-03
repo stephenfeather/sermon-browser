@@ -1,0 +1,260 @@
+/**
+ * Sermon Filters Block Styles
+ *
+ * @package sermon-browser
+ * @since 0.8.0
+ */
+
+.sb-sermon-filters {
+	margin-bottom: 1.5rem;
+}
+
+/* Layout variations */
+.sb-sermon-filters--horizontal {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: flex-start;
+}
+
+.sb-sermon-filters--vertical {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.sb-sermon-filters--grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 1rem;
+}
+
+/* Filter group */
+.sb-sermon-filters__group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.sb-sermon-filters__label {
+	font-weight: 600;
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: inherit;
+}
+
+/* Oneclick buttons */
+.sb-sermon-filters__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.sb-sermon-filters__button {
+	display: inline-block;
+	padding: 0.4rem 0.8rem;
+	background: #f0f0f0;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	text-decoration: none;
+	color: #333;
+	font-size: 0.9rem;
+	transition: all 0.2s ease;
+	cursor: pointer;
+}
+
+.sb-sermon-filters__button:hover {
+	background: #e0e0e0;
+	color: #000;
+	text-decoration: none;
+}
+
+.sb-sermon-filters__button:focus {
+	outline: 2px solid #0073aa;
+	outline-offset: 2px;
+}
+
+.sb-sermon-filters__button--active {
+	background: #0073aa;
+	border-color: #0073aa;
+	color: #fff;
+}
+
+.sb-sermon-filters__button--active:hover {
+	background: #005a87;
+	border-color: #005a87;
+	color: #fff;
+}
+
+.sb-sermon-filters__button--clear {
+	background: transparent;
+	border-style: dashed;
+	color: #666;
+}
+
+.sb-sermon-filters__button--clear:hover {
+	background: #f5f5f5;
+	color: #333;
+}
+
+.sb-sermon-filters__button--more {
+	background: transparent;
+	border: none;
+	color: #666;
+	font-style: italic;
+}
+
+.sb-sermon-filters__count {
+	font-size: 0.8em;
+	opacity: 0.8;
+}
+
+/* Dropdown style */
+.sb-sermon-filters__select {
+	width: 100%;
+	max-width: 300px;
+	padding: 0.5rem;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	font-size: 0.9rem;
+	background-color: #fff;
+	cursor: pointer;
+}
+
+.sb-sermon-filters__select:hover {
+	border-color: #999;
+}
+
+.sb-sermon-filters__select:focus {
+	outline: 2px solid #0073aa;
+	outline-offset: 2px;
+	border-color: #0073aa;
+}
+
+/* Search input */
+.sb-sermon-filters__search {
+	display: flex;
+	gap: 0.5rem;
+	max-width: 400px;
+}
+
+.sb-sermon-filters__search-input {
+	flex: 1;
+	padding: 0.5rem;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	font-size: 0.9rem;
+}
+
+.sb-sermon-filters__search-input:focus {
+	outline: 2px solid #0073aa;
+	outline-offset: 2px;
+	border-color: #0073aa;
+}
+
+.sb-sermon-filters__search-button {
+	padding: 0.5rem 1rem;
+	background: #0073aa;
+	color: #fff;
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: 0.9rem;
+	transition: background 0.2s ease;
+}
+
+.sb-sermon-filters__search-button:hover {
+	background: #005a87;
+}
+
+.sb-sermon-filters__search-button:focus {
+	outline: 2px solid #0073aa;
+	outline-offset: 2px;
+}
+
+/* Date range */
+.sb-sermon-filters__date-range {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.sb-sermon-filters__date-input {
+	padding: 0.5rem;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	font-size: 0.9rem;
+}
+
+.sb-sermon-filters__date-input:focus {
+	outline: 2px solid #0073aa;
+	outline-offset: 2px;
+	border-color: #0073aa;
+}
+
+.sb-sermon-filters__date-separator {
+	color: #666;
+	font-size: 0.9rem;
+}
+
+.sb-sermon-filters__date-button {
+	padding: 0.5rem 1rem;
+	background: #0073aa;
+	color: #fff;
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: 0.9rem;
+	transition: background 0.2s ease;
+}
+
+.sb-sermon-filters__date-button:hover {
+	background: #005a87;
+}
+
+.sb-sermon-filters__date-button:focus {
+	outline: 2px solid #0073aa;
+	outline-offset: 2px;
+}
+
+/* Empty state */
+.sb-sermon-filters__no-filters {
+	color: #666;
+	font-style: italic;
+	margin: 0;
+}
+
+/* Editor preview styles */
+.editor-styles-wrapper .sb-sermon-filters__button {
+	pointer-events: none;
+}
+
+.editor-styles-wrapper .sb-sermon-filters__select {
+	pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+	.sb-sermon-filters--horizontal {
+		flex-direction: column;
+	}
+
+	.sb-sermon-filters__search {
+		flex-direction: column;
+	}
+
+	.sb-sermon-filters__date-range {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.sb-sermon-filters__date-separator {
+		text-align: center;
+	}
+
+	.sb-sermon-filters__select {
+		max-width: none;
+	}
+}

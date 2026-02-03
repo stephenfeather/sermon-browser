@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "sermon-browser/sermon-media",
+	"version": "0.8.0",
+	"title": "Sermon Media",
+	"category": "widgets",
+	"icon": "format-video",
+	"description": "Embed audio or video player for a sermon with style options.",
+	"keywords": ["sermon", "audio", "video", "media", "player"],
+	"textdomain": "sermon-browser",
+	"attributes": {
+		"sermonId": {
+			"type": "number",
+			"default": 0
+		},
+		"useLatest": {
+			"type": "boolean",
+			"default": false
+		},
+		"mediaType": {
+			"type": "string",
+			"default": "audio",
+			"enum": ["audio", "video", "both"]
+		},
+		"showDownload": {
+			"type": "boolean",
+			"default": true
+		},
+		"playerStyle": {
+			"type": "string",
+			"default": "default",
+			"enum": ["default", "minimal", "full"]
+		},
+		"autoplay": {
+			"type": "boolean",
+			"default": false
+		},
+		"showTitle": {
+			"type": "boolean",
+			"default": false
+		},
+		"showMeta": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"render": "file:./render.php"
+}

@@ -1,0 +1,122 @@
+/**
+ * Sermon Grid Block - Frontend Styles
+ *
+ * @package sermon-browser
+ */
+
+.sb-sermon-grid {
+	--sb-sermon-grid-columns: 3;
+	--sb-sermon-grid-gap: 1.5rem;
+	--sb-sermon-card-bg: #fff;
+	--sb-sermon-card-border: #ddd;
+	--sb-sermon-card-border-radius: 4px;
+	--sb-sermon-card-padding: 1rem;
+	--sb-sermon-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	--sb-sermon-card-hover-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sb-sermon-grid__grid {
+	display: grid;
+	grid-template-columns: repeat(var(--sb-sermon-grid-columns), 1fr);
+	gap: var(--sb-sermon-grid-gap);
+}
+
+/* Responsive grid */
+@media (max-width: 768px) {
+	.sb-sermon-grid__grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 480px) {
+	.sb-sermon-grid__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.sb-sermon-grid__card {
+	background: var(--sb-sermon-card-bg);
+	border: 1px solid var(--sb-sermon-card-border);
+	border-radius: var(--sb-sermon-card-border-radius);
+	padding: var(--sb-sermon-card-padding);
+	box-shadow: var(--sb-sermon-card-shadow);
+	transition: box-shadow 0.2s ease;
+}
+
+.sb-sermon-grid__card:hover {
+	box-shadow: var(--sb-sermon-card-hover-shadow);
+}
+
+/* Cards layout variant */
+.sb-sermon-grid--cards .sb-sermon-grid__card {
+	display: flex;
+	flex-direction: column;
+}
+
+.sb-sermon-grid__thumbnail {
+	width: 100%;
+	height: auto;
+	margin-bottom: 0.75rem;
+	border-radius: 2px;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+}
+
+.sb-sermon-grid__title {
+	margin: 0 0 0.5rem;
+	font-size: 1.1rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.sb-sermon-grid__title a {
+	text-decoration: none;
+	color: inherit;
+}
+
+.sb-sermon-grid__title a:hover {
+	text-decoration: underline;
+}
+
+.sb-sermon-grid__meta {
+	font-size: 0.85rem;
+	color: #666;
+	margin-bottom: 0.5rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.sb-sermon-grid__meta span:not(:last-child)::after {
+	content: " \00B7 ";
+	margin-left: 0.25rem;
+}
+
+.sb-sermon-grid__preacher,
+.sb-sermon-grid__date {
+	display: inline;
+}
+
+.sb-sermon-grid__series a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.sb-sermon-grid__series a:hover {
+	text-decoration: underline;
+}
+
+.sb-sermon-grid__excerpt {
+	font-size: 0.9rem;
+	color: #444;
+	line-height: 1.5;
+	margin: 0;
+}
+
+/* No sermons message */
+.sb-sermon-grid__no-sermons {
+	font-style: italic;
+	opacity: 0.7;
+	text-align: center;
+	padding: 2rem;
+}
