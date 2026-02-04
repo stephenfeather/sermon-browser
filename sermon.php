@@ -627,19 +627,37 @@ function sb_render_sermon_list($atts)
 /**
  * Resolve sort order from request and attributes.
  *
+ * Validates sort column against whitelist to prevent SQL injection.
+ * Column names cannot be parameterized in ORDER BY clauses, so
+ * whitelist validation is required (esc_sql is insufficient).
+ *
  * @param array $atts Shortcode attributes.
  * @return array Sort order with 'by' and 'dir' keys.
  */
 function sb_resolve_sort_order($atts)
 {
-    $sort_criteria = isset($_REQUEST['sortby'])
-        ? esc_sql($_REQUEST['sortby'])
-        : 'm.datetime';
+    // Whitelist of valid sort columns (must match SermonRepository::findForFrontendListing)
+    $valid_sort_columns = [
+        'm.id', 'm.title', 'm.datetime', 'm.start', 'm.end',
+        'p.id', 'p.name', 's.id', 's.name', 'ss.id', 'ss.name',
+    ];
 
+    // Validate sortby against whitelist
+    $sort_criteria = 'm.datetime';
+    if (isset($_REQUEST['sortby'])) {
+        $requested_sort = sanitize_text_field(wp_unslash($_REQUEST['sortby']));
+        if (in_array($requested_sort, $valid_sort_columns, true)) {
+            $sort_criteria = $requested_sort;
+        }
+    }
+
+    // Validate direction - only allow 'asc' or 'desc'
+    $dir = ($sort_criteria === 'm.datetime') ? 'desc' : 'asc';
     if (!empty($atts['dir'])) {
-        $dir = esc_sql($atts['dir']);
-    } else {
-        $dir = ($sort_criteria == 'm.datetime') ? 'desc' : 'asc';
+        $requested_dir = strtolower(sanitize_text_field($atts['dir']));
+        if ($requested_dir === 'asc' || $requested_dir === 'desc') {
+            $dir = $requested_dir;
+        }
     }
 
     return ['by' => $sort_criteria, 'dir' => $dir];
