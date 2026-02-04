@@ -185,6 +185,7 @@ class HelperFunctions
         }
 
         // Attempt to unserialize with class instantiation disabled
+        // nosemgrep: php.lang.security.unserialize-use - This is the secure wrapper with format validation and allowed_classes=false
         $result = @unserialize($data, ['allowed_classes' => false]);
 
         // Ensure result is an array
