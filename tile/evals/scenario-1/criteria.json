@@ -1,0 +1,36 @@
+{
+  "context": "This criteria evaluates how effectively the engineer uses the sermon-browser plugin's API to build a WordPress widget that filters and displays sermons with Bible text integration. The focus is entirely on correct usage of the plugin's functions, classes, and facades.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Sermon Retrieval",
+      "description": "Uses the correct function or facade to retrieve sermons. Should use either sb_get_sermons() global function or SermonBrowser\\Facades\\Sermon::findForFrontendListing() with appropriate filter array, order array, page, and limit parameters.",
+      "max_score": 25
+    },
+    {
+      "name": "Filtering Implementation",
+      "description": "Correctly implements sermon filtering by constructing the filter array with appropriate keys. Should use 'preacher_id' key for preacher filtering, 'series_id' key for series filtering, and pass hideEmpty parameter correctly for audio file filtering.",
+      "max_score": 20
+    },
+    {
+      "name": "Sorting Configuration",
+      "description": "Properly configures sermon ordering using the order array parameter. Should use array with 'column' key (e.g., 'date') and 'direction' key ('ASC' or 'DESC') to control newest/oldest first sorting.",
+      "max_score": 15
+    },
+    {
+      "name": "Bible Text Retrieval",
+      "description": "Uses the correct function to retrieve Bible text. Should use sb_add_bible_text() global function or BibleText::getBibleText() method with start reference, end reference, and version ('kjv') parameters.",
+      "max_score": 20
+    },
+    {
+      "name": "URL Generation",
+      "description": "Uses sermon-browser's URL building functions to generate proper sermon and preacher links. Should use sb_print_sermon_link() or sb_build_url() for sermon URLs, and sb_print_preacher_link() or similar for preacher URLs.",
+      "max_score": 10
+    },
+    {
+      "name": "Audio File Access",
+      "description": "Accesses audio files using the correct method. Should use sb_first_mp3() global function or access the 'files' property from sermon data and filter for audio files.",
+      "max_score": 10
+    }
+  ]
+}

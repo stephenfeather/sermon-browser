@@ -1,0 +1,8 @@
+{
+  "name": "inventory-feeds-management/sermon-browser-blocks",
+  "version": "0.8.0",
+  "docs": "docs/index.md",
+  "describes": "pkg:composer/sermon-browser/sermon-browser@0.8.0",
+  "summary": "Sermon Browser is a comprehensive WordPress plugin that enables churches to upload, manage, and display sermons on their websites with full podcasting capabilities.",
+  "private": true
+}
