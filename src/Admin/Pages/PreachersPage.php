@@ -103,7 +103,7 @@ class PreachersPage
         // Handle remove checkbox.
         if (isset($_POST['remove'])) {
             Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => '']);
-            @unlink(SB_ABSPATH . sb_get_option('upload_dir') . Constants::IMAGES_PATH . sanitize_file_name($_POST['old']));
+            $this->safeUnlinkImage($_POST['old'] ?? '');
         } elseif ($pid === 0) {
             // Insert new preacher.
             Preacher::create(['name' => $name, 'description' => $description, 'image' => $filename]);
@@ -112,8 +112,8 @@ class PreachersPage
             Preacher::update($pid, ['name' => $name, 'description' => $description, 'image' => $filename]);
 
             // Delete old image if changed.
-            if ($_POST['old'] !== $filename) {
-                @unlink(SB_ABSPATH . sb_get_option('upload_dir') . Constants::IMAGES_PATH . sanitize_file_name($_POST['old']));
+            if (($_POST['old'] ?? '') !== $filename) {
+                $this->safeUnlinkImage($_POST['old'] ?? '');
             }
         }
 
@@ -205,11 +205,57 @@ class PreachersPage
         // Get and delete image.
         $p = Preacher::find($pid);
         if ($p && $p->image) {
-            @unlink(SB_ABSPATH . sb_get_option('upload_dir') . Constants::IMAGES_PATH . $p->image);
+            $this->safeUnlinkImage($p->image);
         }
 
         // Delete preacher.
         Preacher::delete($pid);
+    }
+
+    /**
+     * Safely delete an image file from the images directory.
+     *
+     * Validates that the file is within the expected directory to prevent
+     * path traversal attacks before deletion.
+     *
+     * @param string $filename The filename to delete.
+     * @return bool True if file was deleted or didn't exist, false on error.
+     */
+    private function safeUnlinkImage(string $filename): bool
+    {
+        if (empty($filename)) {
+            return true;
+        }
+
+        // Sanitize and get only the basename to prevent path traversal.
+        $safeFilename = basename(sanitize_file_name($filename));
+        if (empty($safeFilename)) {
+            return true;
+        }
+
+        // Build the expected directory path.
+        $imagesDir = SB_ABSPATH . sb_get_option('upload_dir') . Constants::IMAGES_PATH;
+        $filePath = $imagesDir . $safeFilename;
+
+        // Verify the file exists.
+        if (!file_exists($filePath)) {
+            return true;
+        }
+
+        // Resolve real paths to prevent symlink attacks.
+        $realImagesDir = realpath($imagesDir);
+        $realFilePath = realpath($filePath);
+
+        // Ensure resolved paths are valid and file is within images directory.
+        if (
+            $realImagesDir === false ||
+            $realFilePath === false ||
+            strpos($realFilePath, $realImagesDir) !== 0
+        ) {
+            return false;
+        }
+
+        return @unlink($realFilePath);
     }
 
     /**
