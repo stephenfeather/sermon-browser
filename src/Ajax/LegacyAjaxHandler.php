@@ -252,13 +252,47 @@ class LegacyAjaxHandler
     private static function handleFileDelete(int $fid, string $fname): void
     {
         $filePath = SB_ABSPATH . sb_get_option('upload_dir') . $fname;
-        if (!file_exists($filePath) || unlink($filePath)) {
+        if (self::safeUnlinkFile($filePath)) {
             File::delete($fid);
             echo 'deleted';
             wp_die();
         }
         echo 'failed';
         wp_die();
+    }
+
+    /**
+     * Safely delete a file from the upload directory.
+     *
+     * Validates that the file is within the expected directory to prevent
+     * path traversal attacks before deletion.
+     *
+     * @param string $filePath The file path to delete.
+     * @return bool True if file was deleted or didn't exist, false on error.
+     */
+    private static function safeUnlinkFile(string $filePath): bool
+    {
+        if (!file_exists($filePath)) {
+            return true;
+        }
+
+        // Get expected upload directory.
+        $uploadDir = SB_ABSPATH . sb_get_option('upload_dir');
+
+        // Resolve real paths to prevent symlink attacks.
+        $realUploadDir = realpath($uploadDir);
+        $realFilePath = realpath($filePath);
+
+        // Ensure resolved paths are valid and file is within upload directory.
+        if (
+            $realUploadDir === false ||
+            $realFilePath === false ||
+            strpos($realFilePath, $realUploadDir) !== 0
+        ) {
+            return false;
+        }
+
+        return @unlink($realFilePath);
     }
 
     /**
