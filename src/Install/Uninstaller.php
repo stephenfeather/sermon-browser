@@ -65,11 +65,51 @@ class Uninstaller
         if ($handle) {
             while (false !== ($file = readdir($handle))) {
                 if ($file !== "." && $file !== "..") {
-                    @unlink($dir . $file);
+                    self::safeUnlinkFile($dir, $file);
                 }
             }
             closedir($handle);
         }
+    }
+
+    /**
+     * Safely delete a file from a directory.
+     *
+     * Validates that the file is within the expected directory to prevent
+     * path traversal attacks before deletion.
+     *
+     * @param string $dir  The directory path.
+     * @param string $file The filename to delete.
+     * @return bool True if file was deleted or didn't exist, false on error.
+     */
+    private static function safeUnlinkFile(string $dir, string $file): bool
+    {
+        // Use only the basename to prevent path traversal.
+        $safeFilename = basename($file);
+        if (empty($safeFilename)) {
+            return true;
+        }
+
+        $filePath = $dir . $safeFilename;
+
+        if (!file_exists($filePath)) {
+            return true;
+        }
+
+        // Resolve real paths to prevent symlink attacks.
+        $realDir = realpath($dir);
+        $realFilePath = realpath($filePath);
+
+        // Ensure resolved paths are valid and file is within directory.
+        if (
+            $realDir === false ||
+            $realFilePath === false ||
+            strpos($realFilePath, $realDir) !== 0
+        ) {
+            return false;
+        }
+
+        return @unlink($realFilePath);
     }
 
     /**
