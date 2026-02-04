@@ -7,6 +7,8 @@
  * @package sermon-browser
  */
 
+import DOMPurify from 'dompurify';
+
 ( function () {
 	'use strict';
 
@@ -320,7 +322,7 @@
 
 			if ( data.html ) {
 				const tempDiv = document.createElement( 'div' );
-				tempDiv.innerHTML = data.html;
+				tempDiv.innerHTML = DOMPurify.sanitize( data.html );
 
 				// Insert each child after the insert target.
 				while ( tempDiv.firstChild ) {
@@ -347,7 +349,7 @@
 			}
 
 			if ( this.config.showPagination && data.pagination ) {
-				this.container.insertAdjacentHTML( 'beforeend', data.pagination );
+				this.container.insertAdjacentHTML( 'beforeend', DOMPurify.sanitize( data.pagination ) );
 			}
 
 			// Update reference to results container.

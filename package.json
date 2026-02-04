@@ -7,6 +7,9 @@
     "start": "wp-scripts start src/Blocks/index.js src/Blocks/sermon-list/frontend.js --output-path=build/blocks",
     "lint:js": "wp-scripts lint-js src/Blocks"
   },
+  "dependencies": {
+    "dompurify": "^3.0.6"
+  },
   "devDependencies": {
     "@wordpress/scripts": "^27.0.0"
   }
