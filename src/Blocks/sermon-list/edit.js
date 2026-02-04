@@ -28,12 +28,22 @@ export default function Edit( { attributes, setAttributes } ) {
 		showPagination,
 		orderBy,
 		order,
+		showBooks,
+		showTags,
+		showDateRange,
+		showSearch,
+		bookId,
+		tagSlug,
+		startDate,
+		endDate,
 	} = attributes;
 
 	const [ sermons, setSermons ] = useState( [] );
 	const [ preachers, setPreachers ] = useState( [] );
 	const [ series, setSeries ] = useState( [] );
 	const [ services, setServices ] = useState( [] );
+	const [ books, setBooks ] = useState( [] );
+	const [ tags, setTags ] = useState( [] );
 	const [ isLoading, setIsLoading ] = useState( true );
 	const [ totalCount, setTotalCount ] = useState( 0 );
 
@@ -41,16 +51,20 @@ export default function Edit( { attributes, setAttributes } ) {
 	useEffect( () => {
 		const fetchOptions = async () => {
 			try {
-				const [ preacherData, seriesData, servicesData ] =
+				const [ preacherData, seriesData, servicesData, booksData, tagsData ] =
 					await Promise.all( [
 						apiFetch( { path: '/sermon-browser/v1/preachers' } ),
 						apiFetch( { path: '/sermon-browser/v1/series' } ),
 						apiFetch( { path: '/sermon-browser/v1/services' } ),
+						apiFetch( { path: '/sermon-browser/v1/books' } ),
+						apiFetch( { path: '/sermon-browser/v1/tags' } ),
 					] );
 
 				setPreachers( preacherData || [] );
 				setSeries( seriesData || [] );
 				setServices( servicesData || [] );
+				setBooks( booksData || [] );
+				setTags( tagsData || [] );
 			} catch {
 				// Silently fail - options won't be available
 			}
@@ -110,6 +124,16 @@ export default function Edit( { attributes, setAttributes } ) {
 	const serviceOptions = [
 		{ label: __( 'All Services', 'sermon-browser' ), value: 0 },
 		...services.map( ( s ) => ( { label: s.name, value: s.id } ) ),
+	];
+
+	const bookOptions = [
+		{ label: __( 'All Books', 'sermon-browser' ), value: '' },
+		...books.map( ( b ) => ( { label: b.name, value: b.name } ) ),
+	];
+
+	const tagOptions = [
+		{ label: __( 'All Tags', 'sermon-browser' ), value: '' },
+		...tags.map( ( t ) => ( { label: t.name, value: t.name } ) ),
 	];
 
 	// Preview component
@@ -203,6 +227,10 @@ export default function Edit( { attributes, setAttributes } ) {
 									value: 'dropdown',
 								},
 								{
+									label: __( 'One-click Buttons', 'sermon-browser' ),
+									value: 'oneclick',
+								},
+								{
 									label: __( 'None', 'sermon-browser' ),
 									value: 'none',
 								},
@@ -220,6 +248,42 @@ export default function Edit( { attributes, setAttributes } ) {
 						}
 					/>
 				</PanelBody>
+
+				{ showFilters && filterType !== 'none' && (
+					<PanelBody
+						title={ __( 'Filter Options', 'sermon-browser' ) }
+						initialOpen={ false }
+					>
+						<ToggleControl
+							label={ __( 'Show Books', 'sermon-browser' ) }
+							checked={ showBooks }
+							onChange={ ( value ) =>
+								setAttributes( { showBooks: value } )
+							}
+						/>
+						<ToggleControl
+							label={ __( 'Show Tags', 'sermon-browser' ) }
+							checked={ showTags }
+							onChange={ ( value ) =>
+								setAttributes( { showTags: value } )
+							}
+						/>
+						<ToggleControl
+							label={ __( 'Show Date Range', 'sermon-browser' ) }
+							checked={ showDateRange }
+							onChange={ ( value ) =>
+								setAttributes( { showDateRange: value } )
+							}
+						/>
+						<ToggleControl
+							label={ __( 'Show Search', 'sermon-browser' ) }
+							checked={ showSearch }
+							onChange={ ( value ) =>
+								setAttributes( { showSearch: value } )
+							}
+						/>
+					</PanelBody>
+				) }
 
 				<PanelBody
 					title={ __( 'Default Filters', 'sermon-browser' ) }
@@ -249,6 +313,42 @@ export default function Edit( { attributes, setAttributes } ) {
 							setAttributes( { serviceId: Number.parseInt( value, 10 ) } )
 						}
 					/>
+					<SelectControl
+						label={ __( 'Filter by book', 'sermon-browser' ) }
+						value={ bookId }
+						options={ bookOptions }
+						onChange={ ( value ) =>
+							setAttributes( { bookId: value } )
+						}
+					/>
+					<SelectControl
+						label={ __( 'Filter by tag', 'sermon-browser' ) }
+						value={ tagSlug }
+						options={ tagOptions }
+						onChange={ ( value ) =>
+							setAttributes( { tagSlug: value } )
+						}
+					/>
+					<div className="sb-sermon-list__date-range-controls">
+						<label>{ __( 'Start Date', 'sermon-browser' ) }</label>
+						<input
+							type="date"
+							value={ startDate }
+							onChange={ ( e ) =>
+								setAttributes( { startDate: e.target.value } )
+							}
+						/>
+					</div>
+					<div className="sb-sermon-list__date-range-controls">
+						<label>{ __( 'End Date', 'sermon-browser' ) }</label>
+						<input
+							type="date"
+							value={ endDate }
+							onChange={ ( e ) =>
+								setAttributes( { endDate: e.target.value } )
+							}
+						/>
+					</div>
 				</PanelBody>
 			</InspectorControls>
 

@@ -32,7 +32,40 @@
 		},
 		"filterType": {
 			"type": "string",
-			"default": "dropdown"
+			"default": "dropdown",
+			"enum": ["dropdown", "oneclick", "none"]
+		},
+		"showBooks": {
+			"type": "boolean",
+			"default": false
+		},
+		"showTags": {
+			"type": "boolean",
+			"default": false
+		},
+		"showDateRange": {
+			"type": "boolean",
+			"default": false
+		},
+		"showSearch": {
+			"type": "boolean",
+			"default": false
+		},
+		"bookId": {
+			"type": "string",
+			"default": ""
+		},
+		"tagSlug": {
+			"type": "string",
+			"default": ""
+		},
+		"startDate": {
+			"type": "string",
+			"default": ""
+		},
+		"endDate": {
+			"type": "string",
+			"default": ""
 		},
 		"showPagination": {
 			"type": "boolean",
