@@ -139,9 +139,41 @@ class SermonId3Importer
         fclose($tempfile);
 
         $id3_raw_tags = $getID3->analyze(realpath($tempfilename));
-        unlink($tempfilename);
+        $this->safeUnlinkTempFile($tempfilename, $sermonUploadDir);
 
         return $id3_raw_tags;
+    }
+
+    /**
+     * Safely delete a temporary file from the upload directory.
+     *
+     * Validates that the file is within the expected directory to prevent
+     * path traversal attacks before deletion.
+     *
+     * @param string $filePath  The file path to delete.
+     * @param string $uploadDir The expected upload directory.
+     * @return bool True if file was deleted or didn't exist, false on error.
+     */
+    private function safeUnlinkTempFile(string $filePath, string $uploadDir): bool
+    {
+        if (!file_exists($filePath)) {
+            return true;
+        }
+
+        // Resolve real paths to prevent symlink attacks.
+        $realUploadDir = realpath($uploadDir);
+        $realFilePath = realpath($filePath);
+
+        // Ensure resolved paths are valid and file is within upload directory.
+        if (
+            $realUploadDir === false ||
+            $realFilePath === false ||
+            strpos($realFilePath, $realUploadDir) !== 0
+        ) {
+            return false;
+        }
+
+        return @unlink($realFilePath);
     }
 
     /**
