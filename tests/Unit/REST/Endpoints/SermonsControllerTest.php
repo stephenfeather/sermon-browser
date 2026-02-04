@@ -677,4 +677,278 @@ class SermonsControllerTest extends TestCase
 
         $this->assertTrue($result);
     }
+
+    // =========================================================================
+    // GET /sermons/render Tests (Dynamic Filtering)
+    // =========================================================================
+
+    /**
+     * Test register_routes registers GET /sermons/render route.
+     */
+    public function testRegisterRoutesRegistersRenderRoute(): void
+    {
+        $registeredRoutes = [];
+
+        Functions\expect('register_rest_route')
+            ->atLeast()
+            ->times(1)
+            ->andReturnUsing(function ($namespace, $route, $args) use (&$registeredRoutes) {
+                $registeredRoutes[] = ['namespace' => $namespace, 'route' => $route, 'args' => $args];
+                return true;
+            });
+
+        $this->controller->register_routes();
+
+        // Check that /sermons/render route was registered.
+        $renderRoute = array_filter($registeredRoutes, fn($r) => $r['route'] === '/sermons/render');
+        $this->assertNotEmpty($renderRoute, 'GET /sermons/render route should be registered');
+    }
+
+    /**
+     * Test render_sermon_list returns HTML response.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testRenderSermonListReturnsHtmlResponse(): void
+    {
+        // Mock sb_get_sermons function.
+        Functions\expect('sb_get_sermons')
+            ->once()
+            ->andReturn([
+                (object) [
+                    'id' => 1,
+                    'title' => 'Test Sermon',
+                    'datetime' => '2026-01-15 10:00:00',
+                    'preacher' => 'John Doe',
+                    'series' => 'Romans',
+                    'description' => 'A test description for the sermon.',
+                ],
+            ]);
+
+        // Mock global record_count.
+        $GLOBALS['record_count'] = 1;
+
+        // Mock WordPress functions used in render.
+        Functions\expect('esc_html_e')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function ($text) {
+                echo $text;
+            });
+
+        Functions\expect('esc_html__')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        Functions\expect('_n')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function ($single, $plural, $count) {
+                return $count === 1 ? $single : $plural;
+            });
+
+        Functions\expect('esc_html')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        Functions\expect('esc_url')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        Functions\expect('esc_attr')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        Functions\expect('esc_attr_e')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function ($text) {
+                echo $text;
+            });
+
+        Functions\expect('wp_date')
+            ->zeroOrMoreTimes()
+            ->andReturn('January 15, 2026');
+
+        Functions\expect('get_option')
+            ->zeroOrMoreTimes()
+            ->andReturn('F j, Y');
+
+        Functions\expect('wp_trim_words')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        // Mock UrlBuilder::build to avoid WP_Query dependency.
+        Mockery::mock('alias:SermonBrowser\Frontend\UrlBuilder')
+            ->shouldReceive('build')
+            ->zeroOrMoreTimes()
+            ->andReturn('/sermons/1');
+
+        $controller = new SermonsController();
+        $request = new WP_REST_Request('GET', '/sermon-browser/v1/sermons/render');
+        $request->set_param('page', 1);
+        $request->set_param('per_page', 10);
+
+        $response = $controller->render_sermon_list($request);
+
+        $this->assertInstanceOf(\WP_REST_Response::class, $response);
+        $data = $response->get_data();
+
+        $this->assertArrayHasKey('html', $data);
+        $this->assertArrayHasKey('pagination', $data);
+        $this->assertArrayHasKey('total', $data);
+        $this->assertArrayHasKey('totalPages', $data);
+        $this->assertArrayHasKey('page', $data);
+
+        $this->assertEquals(1, $data['total']);
+        $this->assertEquals(1, $data['page']);
+        $this->assertStringContainsString('sb-sermon-list__results', $data['html']);
+    }
+
+    /**
+     * Test render_sermon_list returns no results HTML when empty.
+     */
+    public function testRenderSermonListReturnsNoResultsWhenEmpty(): void
+    {
+        // Mock sb_get_sermons function to return empty.
+        Functions\expect('sb_get_sermons')
+            ->once()
+            ->andReturn([]);
+
+        // Mock global record_count.
+        $GLOBALS['record_count'] = 0;
+
+        Functions\expect('esc_html_e')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function ($text) {
+                echo $text;
+            });
+
+        $request = new WP_REST_Request('GET', '/sermon-browser/v1/sermons/render');
+        $request->set_param('page', 1);
+        $request->set_param('per_page', 10);
+
+        $response = $this->controller->render_sermon_list($request);
+
+        $data = $response->get_data();
+
+        $this->assertEquals(0, $data['total']);
+        $this->assertStringContainsString('sb-sermon-list__no-results', $data['html']);
+    }
+
+    /**
+     * Test render_sermon_list applies filters from request params.
+     */
+    public function testRenderSermonListAppliesFilters(): void
+    {
+        Functions\expect('sb_get_sermons')
+            ->once()
+            ->withArgs(function ($filter, $sortOrder, $page, $limit) {
+                return $filter['preacher'] === 5
+                    && $filter['series'] === 3
+                    && $filter['book'] === 'Genesis';
+            })
+            ->andReturn([]);
+
+        $GLOBALS['record_count'] = 0;
+
+        Functions\expect('esc_html_e')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function ($text) {
+                echo $text;
+            });
+
+        $request = new WP_REST_Request('GET', '/sermon-browser/v1/sermons/render');
+        $request->set_param('preacher', 5);
+        $request->set_param('series', 3);
+        $request->set_param('book', 'Genesis');
+        $request->set_param('page', 1);
+        $request->set_param('per_page', 10);
+
+        $this->controller->render_sermon_list($request);
+    }
+
+    /**
+     * Test render_sermon_list includes pagination when needed.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testRenderSermonListIncludesPaginationWhenNeeded(): void
+    {
+        Functions\expect('sb_get_sermons')
+            ->once()
+            ->andReturn([
+                (object) [
+                    'id' => 1,
+                    'title' => 'Test Sermon',
+                    'datetime' => '2026-01-15 10:00:00',
+                    'preacher' => 'John Doe',
+                    'series' => 'Romans',
+                    'description' => '',
+                ],
+            ]);
+
+        // More records than per_page to trigger pagination.
+        $GLOBALS['record_count'] = 25;
+
+        Functions\expect('esc_html_e')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function ($text) {
+                echo $text;
+            });
+
+        Functions\expect('esc_html__')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        Functions\expect('_n')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function ($single, $plural, $count) {
+                return $count === 1 ? $single : $plural;
+            });
+
+        Functions\expect('esc_html')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        Functions\expect('esc_url')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        Functions\expect('esc_attr')
+            ->zeroOrMoreTimes()
+            ->andReturnFirstArg();
+
+        Functions\expect('esc_attr_e')
+            ->zeroOrMoreTimes()
+            ->andReturnUsing(function ($text) {
+                echo $text;
+            });
+
+        Functions\expect('wp_date')
+            ->zeroOrMoreTimes()
+            ->andReturn('January 15, 2026');
+
+        Functions\expect('get_option')
+            ->zeroOrMoreTimes()
+            ->andReturn('F j, Y');
+
+        // Mock UrlBuilder::build to avoid WP_Query dependency.
+        Mockery::mock('alias:SermonBrowser\Frontend\UrlBuilder')
+            ->shouldReceive('build')
+            ->zeroOrMoreTimes()
+            ->andReturn('/sermons/1');
+
+        $controller = new SermonsController();
+        $request = new WP_REST_Request('GET', '/sermon-browser/v1/sermons/render');
+        $request->set_param('page', 1);
+        $request->set_param('per_page', 10);
+
+        $response = $controller->render_sermon_list($request);
+        $data = $response->get_data();
+
+        $this->assertEquals(25, $data['total']);
+        $this->assertEquals(3, $data['totalPages']);
+        $this->assertStringContainsString('sb-sermon-list__pagination', $data['pagination']);
+        $this->assertStringContainsString('data-page="2"', $data['pagination']);
+    }
 }

@@ -78,6 +78,10 @@
 		"order": {
 			"type": "string",
 			"default": "desc"
+		},
+		"enableDynamicFiltering": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"supports": {
@@ -97,5 +101,6 @@
 			"lineHeight": true
 		}
 	},
+	"viewScript": "file:../../frontend.js",
 	"render": "file:./render.php"
 }

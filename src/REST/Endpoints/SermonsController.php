@@ -62,6 +62,20 @@ class SermonsController extends RestController
             ]
         );
 
+        // GET /sermons/render - Render sermon list HTML for dynamic filtering.
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/render',
+            [
+                [
+                    'methods' => 'GET',
+                    'callback' => [$this, 'render_sermon_list'],
+                    'permission_callback' => [$this, 'get_items_permissions_check'],
+                    'args' => $this->get_render_args(),
+                ],
+            ]
+        );
+
         // GET/PUT/DELETE /sermons/{id} - Single sermon operations.
         register_rest_route(
             $this->namespace,
@@ -101,6 +115,86 @@ class SermonsController extends RestController
                 ],
             ]
         );
+    }
+
+    /**
+     * Get the arguments for the render endpoint.
+     *
+     * @return array<string, array<string, mixed>> Render arguments.
+     */
+    protected function get_render_args(): array
+    {
+        return [
+            'page' => [
+                'description' => __('Current page of the collection.', 'sermon-browser'),
+                'type' => 'integer',
+                'default' => 1,
+                'minimum' => 1,
+                'sanitize_callback' => 'absint',
+            ],
+            'per_page' => [
+                'description' => __('Maximum number of items to return per page.', 'sermon-browser'),
+                'type' => 'integer',
+                'default' => 10,
+                'minimum' => 1,
+                'maximum' => 100,
+                'sanitize_callback' => 'absint',
+            ],
+            'preacher' => [
+                'description' => __('Filter by preacher ID.', 'sermon-browser'),
+                'type' => 'integer',
+                'sanitize_callback' => 'absint',
+            ],
+            'series' => [
+                'description' => __('Filter by series ID.', 'sermon-browser'),
+                'type' => 'integer',
+                'sanitize_callback' => 'absint',
+            ],
+            'service' => [
+                'description' => __('Filter by service ID.', 'sermon-browser'),
+                'type' => 'integer',
+                'sanitize_callback' => 'absint',
+            ],
+            'book' => [
+                'description' => __('Filter by Bible book name.', 'sermon-browser'),
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'stag' => [
+                'description' => __('Filter by tag slug.', 'sermon-browser'),
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'date' => [
+                'description' => __('Filter by start date (YYYY-MM-DD).', 'sermon-browser'),
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'enddate' => [
+                'description' => __('Filter by end date (YYYY-MM-DD).', 'sermon-browser'),
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'title' => [
+                'description' => __('Filter by title search.', 'sermon-browser'),
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'orderby' => [
+                'description' => __('Sort by field.', 'sermon-browser'),
+                'type' => 'string',
+                'default' => 'datetime',
+                'enum' => ['datetime', 'title', 'preacher', 'series'],
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'order' => [
+                'description' => __('Sort direction.', 'sermon-browser'),
+                'type' => 'string',
+                'default' => 'desc',
+                'enum' => ['asc', 'desc'],
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+        ];
     }
 
     /**
@@ -359,6 +453,164 @@ class SermonsController extends RestController
         $total = count($data);
 
         return $this->prepare_pagination_response($response, $total, $limit);
+    }
+
+    /**
+     * Render sermon list HTML for dynamic filtering.
+     *
+     * Returns pre-rendered HTML that can be used to update the DOM
+     * without client-side templating.
+     *
+     * @param WP_REST_Request $request The request object.
+     * @return WP_REST_Response The response with rendered HTML.
+     */
+    public function render_sermon_list($request): WP_REST_Response
+    {
+        $page = (int) ($request->get_param('page') ?? 1);
+        $limit = (int) ($request->get_param('per_page') ?? 10);
+
+        // Build filter from request params.
+        $filter = [
+            'preacher' => (int) ($request->get_param('preacher') ?? 0),
+            'series' => (int) ($request->get_param('series') ?? 0),
+            'service' => (int) ($request->get_param('service') ?? 0),
+            'book' => $request->get_param('book') ?? '',
+            'tag' => $request->get_param('stag') ?? '',
+            'date' => $request->get_param('date') ?? '',
+            'enddate' => $request->get_param('enddate') ?? '',
+            'title' => $request->get_param('title') ?? '',
+        ];
+
+        // Map orderBy to database column.
+        $orderBy = $request->get_param('orderby') ?? 'datetime';
+        $orderByMap = [
+            'datetime' => 'm.datetime',
+            'title' => 'm.title',
+            'preacher' => 'p.name',
+            'series' => 'ss.name',
+        ];
+        $sortBy = $orderByMap[$orderBy] ?? 'm.datetime';
+
+        $sortOrder = [
+            'by' => $sortBy,
+            'dir' => strtolower($request->get_param('order') ?? 'desc') === 'asc' ? 'asc' : 'desc',
+        ];
+
+        // Fetch sermons using the existing function.
+        global $record_count;
+        $sermons = sb_get_sermons($filter, $sortOrder, $page, $limit);
+
+        // Start output buffering to capture rendered HTML.
+        ob_start();
+
+        if (empty($sermons)) {
+            ?>
+            <p class="sb-sermon-list__no-results">
+                <?php esc_html_e('No sermons found.', 'sermon-browser'); ?>
+            </p>
+            <?php
+        } else {
+            ?>
+            <div class="sb-sermon-list__results">
+                <p class="sb-sermon-list__count">
+                    <?php
+                    printf(
+                        /* translators: %d: number of sermons */
+                        _n('%d sermon found', '%d sermons found', $record_count, 'sermon-browser'),
+                        $record_count
+                    );
+                    ?>
+                </p>
+
+                <ul class="sb-sermon-list__items">
+                    <?php foreach ($sermons as $sermon) : ?>
+                        <li class="sb-sermon-list__item">
+                            <article class="sb-sermon-list__sermon">
+                                <h3 class="sb-sermon-list__sermon-title">
+                                    <a href="<?php echo esc_url(\SermonBrowser\Frontend\UrlBuilder::build(['sermon_id' => $sermon->id])); ?>">
+                                        <?php echo esc_html($sermon->title); ?>
+                                    </a>
+                                </h3>
+
+                                <div class="sb-sermon-list__sermon-meta">
+                                    <?php if (!empty($sermon->datetime)) : ?>
+                                        <span class="sb-sermon-list__sermon-date">
+                                            <?php echo esc_html(wp_date(get_option('date_format'), strtotime($sermon->datetime))); ?>
+                                        </span>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($sermon->preacher)) : ?>
+                                        <span class="sb-sermon-list__sermon-preacher">
+                                            <?php echo esc_html($sermon->preacher); ?>
+                                        </span>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($sermon->series)) : ?>
+                                        <span class="sb-sermon-list__sermon-series">
+                                            <?php echo esc_html($sermon->series); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if (!empty($sermon->description)) : ?>
+                                    <div class="sb-sermon-list__sermon-excerpt">
+                                        <?php echo esc_html(wp_trim_words($sermon->description, 30)); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </article>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php
+        }
+
+        $resultsHtml = ob_get_clean();
+
+        // Generate pagination HTML.
+        ob_start();
+
+        if ($record_count > $limit) {
+            $totalPages = (int) ceil($record_count / $limit);
+            ?>
+            <nav class="sb-sermon-list__pagination" aria-label="<?php esc_attr_e('Sermon pagination', 'sermon-browser'); ?>">
+                <?php if ($page > 1) : ?>
+                    <button type="button" class="sb-sermon-list__pagination-prev" data-page="<?php echo esc_attr($page - 1); ?>">
+                        &laquo; <?php esc_html_e('Previous', 'sermon-browser'); ?>
+                    </button>
+                <?php endif; ?>
+
+                <span class="sb-sermon-list__pagination-info">
+                    <?php
+                    printf(
+                        /* translators: 1: current page, 2: total pages */
+                        esc_html__('Page %1$d of %2$d', 'sermon-browser'),
+                        $page,
+                        $totalPages
+                    );
+                    ?>
+                </span>
+
+                <?php if ($page < $totalPages) : ?>
+                    <button type="button" class="sb-sermon-list__pagination-next" data-page="<?php echo esc_attr($page + 1); ?>">
+                        <?php esc_html_e('Next', 'sermon-browser'); ?> &raquo;
+                    </button>
+                <?php endif; ?>
+            </nav>
+            <?php
+        }
+
+        $paginationHtml = ob_get_clean();
+
+        $response = new WP_REST_Response([
+            'html' => $resultsHtml,
+            'pagination' => $paginationHtml,
+            'total' => $record_count,
+            'totalPages' => $limit > 0 ? (int) ceil($record_count / $limit) : 0,
+            'page' => $page,
+        ]);
+
+        return $this->add_rate_limit_headers($response, $request);
     }
 
     /**

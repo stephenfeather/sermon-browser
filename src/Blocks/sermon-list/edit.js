@@ -36,6 +36,7 @@ export default function Edit( { attributes, setAttributes } ) {
 		tagSlug,
 		startDate,
 		endDate,
+		enableDynamicFiltering,
 	} = attributes;
 
 	const [ sermons, setSermons ] = useState( [] );
@@ -247,6 +248,19 @@ export default function Edit( { attributes, setAttributes } ) {
 							setAttributes( { showPagination: value } )
 						}
 					/>
+					{ showFilters && filterType !== 'none' && (
+						<ToggleControl
+							label={ __( 'Dynamic filtering', 'sermon-browser' ) }
+							help={ __(
+								'Update results without reloading the page.',
+								'sermon-browser'
+							) }
+							checked={ enableDynamicFiltering }
+							onChange={ ( value ) =>
+								setAttributes( { enableDynamicFiltering: value } )
+							}
+						/>
+					) }
 				</PanelBody>
 
 				{ showFilters && filterType !== 'none' && (

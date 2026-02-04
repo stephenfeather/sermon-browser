@@ -74,9 +74,35 @@ $page = max(1, $page);
 global $record_count;
 $sermons = sb_get_sermons($filter, $sort_order, $page, $limit);
 
-$wrapper_attributes = get_block_wrapper_attributes([
-    'class' => 'sb-sermon-list',
-]);
+// Check if dynamic filtering is enabled.
+$enable_dynamic_filtering = isset($attributes['enableDynamicFiltering']) ? (bool) $attributes['enableDynamicFiltering'] : false;
+
+// Build data attributes for JavaScript.
+$data_attributes = [];
+if ($enable_dynamic_filtering) {
+    $data_attributes = [
+        'data-dynamic-filtering' => 'true',
+        'data-limit' => $limit,
+        'data-order-by' => $order_by,
+        'data-order' => $order,
+        'data-show-pagination' => $show_pagination ? 'true' : 'false',
+        'data-preacher-id' => $preacher_id,
+        'data-series-id' => $series_id,
+        'data-service-id' => $service_id,
+        'data-rest-url' => esc_url(rest_url('sermon-browser/v1/sermons/render')),
+        'data-nonce' => wp_create_nonce('wp_rest'),
+    ];
+}
+
+$wrapper_classes = ['sb-sermon-list'];
+if ($enable_dynamic_filtering) {
+    $wrapper_classes[] = 'sb-sermon-list--dynamic';
+}
+
+$wrapper_attributes = get_block_wrapper_attributes(array_merge(
+    ['class' => implode(' ', $wrapper_classes)],
+    $data_attributes
+));
 
 ?>
 <div <?php echo $wrapper_attributes; ?>>

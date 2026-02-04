@@ -3,8 +3,8 @@
   "version": "0.6.0-beta-1",
   "description": "Gutenberg blocks for Sermon Browser",
   "scripts": {
-    "build": "wp-scripts build src/Blocks/index.js --output-path=build/blocks",
-    "start": "wp-scripts start src/Blocks/index.js --output-path=build/blocks",
+    "build": "wp-scripts build src/Blocks/index.js src/Blocks/sermon-list/frontend.js --output-path=build/blocks",
+    "start": "wp-scripts start src/Blocks/index.js src/Blocks/sermon-list/frontend.js --output-path=build/blocks",
     "lint:js": "wp-scripts lint-js src/Blocks"
   },
   "devDependencies": {
