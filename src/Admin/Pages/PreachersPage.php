@@ -180,6 +180,18 @@ class PreachersPage
             return;
         }
 
+        // Security: Verify nonce to prevent CSRF attacks.
+        if (
+            !isset($_GET['_wpnonce']) ||
+            !wp_verify_nonce($_GET['_wpnonce'], 'sb_delete_preacher')
+        ) {
+            wp_die(
+                __('Security check failed. Please try again.', 'sermon-browser'),
+                __('Security Error', 'sermon-browser'),
+                ['response' => 403]
+            );
+        }
+
         $pid = (int) $_GET['pid'];
 
         // Check if preacher has sermons.
@@ -369,7 +381,10 @@ class PreachersPage
     private function renderActions(object $preacher, int $totalPreachers): void
     {
         $editUrl = admin_url('admin.php?page=sermon-browser/preachers.php&act=edit&pid=' . $preacher->id);
-        $deleteUrl = admin_url('admin.php?page=sermon-browser/preachers.php&act=kill&pid=' . $preacher->id);
+        $deleteUrl = wp_nonce_url(
+            admin_url('admin.php?page=sermon-browser/preachers.php&act=kill&pid=' . $preacher->id),
+            'sb_delete_preacher'
+        );
 
         echo '<a href="' . esc_url($editUrl) . '">' . __('Edit', 'sermon-browser') . '</a>';
 

@@ -85,6 +85,7 @@ class PreachersPageTest extends TestCase
             'sb_get_option' => static fn($key) => ($key === 'upload_dir') ? 'wp-content/uploads/sermons/' : '',
             'sanitize_textarea_field' => static fn($text) => strip_tags((string) $text),
             'sanitize_file_name' => static fn($text) => preg_replace('/[^a-zA-Z0-9._-]/', '', $text),
+            'wp_nonce_url' => static fn(string $url, string $action) => $url . '&_wpnonce=test_nonce',
         ]);
     }
 
@@ -652,16 +653,91 @@ class PreachersPageTest extends TestCase
     // =========================================================================
 
     /**
+     * Test delete action dies when nonce verification fails (CSRF protection).
+     */
+    public function testDeleteActionDiesWhenNonceVerificationFails(): void
+    {
+        $_GET['act'] = 'kill';
+        $_GET['pid'] = '2';
+        $_GET['_wpnonce'] = 'invalid_nonce';
+
+        Functions\expect('current_user_can')
+            ->once()
+            ->with('manage_categories')
+            ->andReturn(true);
+
+        Functions\expect('wp_verify_nonce')
+            ->once()
+            ->with('invalid_nonce', 'sb_delete_preacher')
+            ->andReturn(false);
+
+        Functions\expect('wp_die')
+            ->once()
+            ->with(
+                Mockery::type('string'),
+                Mockery::type('string'),
+                Mockery::type('array')
+            )
+            ->andReturnUsing(static function ($message): void {
+                throw new WpDieException($message);
+            });
+
+        $this->expectException(WpDieException::class);
+        $this->expectExceptionMessage('Security check failed');
+
+        $page = $this->createPage();
+        $page->render();
+    }
+
+    /**
+     * Test delete action dies when nonce is missing (CSRF protection).
+     */
+    public function testDeleteActionDiesWhenNonceMissing(): void
+    {
+        $_GET['act'] = 'kill';
+        $_GET['pid'] = '2';
+        // No nonce provided
+
+        Functions\expect('current_user_can')
+            ->once()
+            ->with('manage_categories')
+            ->andReturn(true);
+
+        Functions\expect('wp_die')
+            ->once()
+            ->with(
+                Mockery::type('string'),
+                Mockery::type('string'),
+                Mockery::type('array')
+            )
+            ->andReturnUsing(static function ($message): void {
+                throw new WpDieException($message);
+            });
+
+        $this->expectException(WpDieException::class);
+        $this->expectExceptionMessage('Security check failed');
+
+        $page = $this->createPage();
+        $page->render();
+    }
+
+    /**
      * Test delete action removes preacher when no sermons exist.
      */
     public function testDeleteActionRemovesPreacherWhenNoSermons(): void
     {
         $_GET['act'] = 'kill';
         $_GET['pid'] = '2';
+        $_GET['_wpnonce'] = 'valid_nonce';
 
         Functions\expect('current_user_can')
             ->once()
             ->with('manage_categories')
+            ->andReturn(true);
+
+        Functions\expect('wp_verify_nonce')
+            ->once()
+            ->with('valid_nonce', 'sb_delete_preacher')
             ->andReturn(true);
 
         Functions\expect('sb_do_alerts')->once();
@@ -699,10 +775,16 @@ class PreachersPageTest extends TestCase
     {
         $_GET['act'] = 'kill';
         $_GET['pid'] = '1';
+        $_GET['_wpnonce'] = 'valid_nonce';
 
         Functions\expect('current_user_can')
             ->once()
             ->with('manage_categories')
+            ->andReturn(true);
+
+        Functions\expect('wp_verify_nonce')
+            ->once()
+            ->with('valid_nonce', 'sb_delete_preacher')
             ->andReturn(true);
 
         Functions\expect('sb_do_alerts')->once();
@@ -741,10 +823,16 @@ class PreachersPageTest extends TestCase
     {
         $_GET['act'] = 'kill';
         $_GET['pid'] = '1';
+        $_GET['_wpnonce'] = 'valid_nonce';
 
         Functions\expect('current_user_can')
             ->once()
             ->with('manage_categories')
+            ->andReturn(true);
+
+        Functions\expect('wp_verify_nonce')
+            ->once()
+            ->with('valid_nonce', 'sb_delete_preacher')
             ->andReturn(true);
 
         Functions\expect('sb_do_alerts')->once();
