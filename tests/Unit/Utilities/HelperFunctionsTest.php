@@ -259,4 +259,74 @@ class HelperFunctionsTest extends TestCase
 
         $this->assertSame('', $result);
     }
+
+    /**
+     * Test safeUnserialize with valid serialized array.
+     */
+    public function testSafeUnserializeWithValidArray(): void
+    {
+        $data = serialize([1, 'Genesis', 3]);
+
+        $result = HelperFunctions::safeUnserialize($data);
+
+        $this->assertSame([1, 'Genesis', 3], $result);
+    }
+
+    /**
+     * Test safeUnserialize with empty string returns null.
+     */
+    public function testSafeUnserializeWithEmptyString(): void
+    {
+        $result = HelperFunctions::safeUnserialize('');
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test safeUnserialize with invalid format returns null.
+     */
+    public function testSafeUnserializeWithInvalidFormat(): void
+    {
+        $result = HelperFunctions::safeUnserialize('not a serialized string');
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test safeUnserialize rejects serialized objects.
+     */
+    public function testSafeUnserializeRejectsObjects(): void
+    {
+        // Serialized stdClass object starts with 'O:' not 'a:'
+        $objectData = 'O:8:"stdClass":1:{s:4:"name";s:4:"test";}';
+
+        $result = HelperFunctions::safeUnserialize($objectData);
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test safeUnserialize with nested array.
+     */
+    public function testSafeUnserializeWithNestedArray(): void
+    {
+        $data = serialize(['book' => 'Genesis', 'chapters' => [1, 2, 3]]);
+
+        $result = HelperFunctions::safeUnserialize($data);
+
+        $this->assertSame(['book' => 'Genesis', 'chapters' => [1, 2, 3]], $result);
+    }
+
+    /**
+     * Test safeUnserialize with malformed serialized data returns null.
+     */
+    public function testSafeUnserializeWithMalformedData(): void
+    {
+        // Looks like it starts with array format but is corrupted
+        $malformed = 'a:2:{corrupted data';
+
+        $result = HelperFunctions::safeUnserialize($malformed);
+
+        $this->assertNull($result);
+    }
 }

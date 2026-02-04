@@ -87,10 +87,31 @@ class UrlDownloadHandler
     /**
      * Clean up the temporary downloaded file.
      *
+     * Validates that the file is in a temp directory before deletion
+     * to prevent path traversal attacks.
+     *
      * @param string $filePath Path to the temporary file.
      */
     private static function cleanup(string $filePath): void
     {
-        @unlink($filePath);
+        if (!file_exists($filePath)) {
+            return;
+        }
+
+        // Resolve real path to prevent symlink attacks.
+        $realFilePath = realpath($filePath);
+        if ($realFilePath === false) {
+            return;
+        }
+
+        // Get system temp directory.
+        $tempDir = realpath(sys_get_temp_dir());
+
+        // Verify file is within temp directory.
+        if ($tempDir === false || strpos($realFilePath, $tempDir) !== 0) {
+            return;
+        }
+
+        @unlink($realFilePath);
     }
 }

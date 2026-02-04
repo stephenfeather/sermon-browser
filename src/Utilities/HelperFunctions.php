@@ -163,4 +163,35 @@ class HelperFunctions
 
         return fclose($handle);
     }
+
+    /**
+     * Safely unserialize data with validation.
+     *
+     * This function provides a secure alternative to direct unserialize() calls
+     * by validating input and restricting class instantiation.
+     *
+     * @param string $data The serialized data string.
+     * @return array<int|string, mixed>|null The unserialized array, or null on failure.
+     */
+    public static function safeUnserialize(string $data): ?array
+    {
+        if (empty($data)) {
+            return null;
+        }
+
+        // Validate that string looks like a serialized array (starts with 'a:')
+        if (!preg_match('/^a:\d+:\{/', $data)) {
+            return null;
+        }
+
+        // Attempt to unserialize with class instantiation disabled
+        $result = @unserialize($data, ['allowed_classes' => false]);
+
+        // Ensure result is an array
+        if (!is_array($result)) {
+            return null;
+        }
+
+        return $result;
+    }
 }
