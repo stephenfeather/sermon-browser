@@ -71,6 +71,40 @@ class FileAjax extends AjaxHandler
     }
 
     /**
+     * Safely delete a file from the upload directory.
+     *
+     * Validates that the file is within the expected directory to prevent
+     * path traversal attacks before deletion.
+     *
+     * @param string $filePath The file path to delete.
+     * @return bool True if file was deleted or didn't exist, false on error.
+     */
+    private function safeUnlinkFile(string $filePath): bool
+    {
+        if (!file_exists($filePath)) {
+            return true;
+        }
+
+        // Get expected upload directory.
+        $uploadDir = SB_ABSPATH . $this->getUploadDir();
+
+        // Resolve real paths to prevent symlink attacks.
+        $realUploadDir = realpath($uploadDir);
+        $realFilePath = realpath($filePath);
+
+        // Ensure resolved paths are valid and file is within upload directory.
+        if (
+            $realUploadDir === false ||
+            $realFilePath === false ||
+            strpos($realFilePath, $realUploadDir) !== 0
+        ) {
+            return false;
+        }
+
+        return @unlink($realFilePath);
+    }
+
+    /**
      * Check if file extension is allowed (for multisite).
      *
      * @param string $filename The filename to check.
@@ -194,8 +228,8 @@ class FileAjax extends AjaxHandler
 
         $filePath = $this->getFilePath($filename);
 
-        // Delete the physical file (if it exists)
-        if (file_exists($filePath) && !unlink($filePath)) {
+        // Delete the physical file (with path traversal protection)
+        if (!$this->safeUnlinkFile($filePath)) {
             $this->error(__('Failed to delete file.', 'sermon-browser'));
         }
 
