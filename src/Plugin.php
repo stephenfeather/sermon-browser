@@ -35,7 +35,7 @@ class Plugin
      *
      * @var string
      */
-    public const VERSION = '0.7.0';
+    public const VERSION = '0.8.0';
 
     /**
      * Database schema version.

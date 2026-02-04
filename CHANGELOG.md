@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-02-03
+
+### Security
+- Fixed SQL injection vulnerability in sermon sorting
+- Fixed SSRF vulnerability in file download handler
+- Added CSRF protection to preacher delete action
+- Added XSS escaping in templates
+- Added path traversal protection
+- Added security headers (X-Content-Type-Options, X-Frame-Options)
+- Added rate limiting to REST API endpoints
+
+### Added
+- Full Site Editing (FSE) support with block templates
+- New Gutenberg blocks:
+  - Sermon Grid block: Display sermons in responsive grid layout
+  - Profile Block: Display preacher/speaker profiles
+  - Sermon Media block: Media player for sermon audio/video
+  - Sermon Filters block: Dynamic AJAX-powered sermon filtering
+- 5 block patterns for common sermon layouts
+- Dynamic AJAX-powered sermon filtering
+
+### Changed
+- Upgraded to PHPUnit v11 with ParaTest for parallel testing
+
 ## [0.7.0] - 2026-02-03
 
 ### Added
@@ -124,7 +148,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial tagged release with basic functionality.
 
-[Unreleased]: https://github.com/stephenfeather/sermon-browser/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/stephenfeather/sermon-browser/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/stephenfeather/sermon-browser/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-beta-1...v0.6.0
 [0.6.0-beta-1]: https://github.com/stephenfeather/sermon-browser/compare/v0.6.0-alpha-1...v0.6.0-beta-1
