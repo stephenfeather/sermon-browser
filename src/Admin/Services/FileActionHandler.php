@@ -112,30 +112,63 @@ class FileActionHandler
             return;
         }
 
-        $file = @fopen(SB_ABSPATH . sb_get_option('upload_dir') . $filename, 'wb');
-        $remote_file = @fopen($url, 'r');
+        // Security: Use WordPress HTTP API for safe remote requests (protects against SSRF).
+        // wp_safe_remote_get() blocks internal IP ranges, limits redirects to safe hosts,
+        // and respects WordPress HTTP timeout settings.
+        $response = wp_safe_remote_get($url, [
+            'timeout' => 30,
+            'redirection' => 5,
+        ]);
 
-        if ($file && $remote_file) {
-            $remote_contents = '';
-            while (!feof($remote_file)) {
-                $remote_contents .= fread($remote_file, 8192);
-            }
-            fwrite($file, $remote_contents);
-            fclose($remote_file);
-            fclose($file);
-
-            $fileId = File::create([
-                'type' => 'file',
-                'name' => $filename,
-                'sermon_id' => 0,
-                'count' => 0,
-                'ccount' => 0,
-            ]);
-
-            echo "<script>document.location = '" .
-                admin_url(Constants::NEW_SERMON_GETID3 . $fileId) .
-                "';</script>";
+        if (is_wp_error($response)) {
+            echo '<div id="message" class="updated fade"><p><b>' .
+                esc_html__('Could not download file: ', 'sermon-browser') .
+                esc_html($response->get_error_message()) .
+                '</b></div>';
+            return;
         }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code !== 200) {
+            echo '<div id="message" class="updated fade"><p><b>' .
+                esc_html__('Failed to download file. Server returned status: ', 'sermon-browser') .
+                esc_html($status_code) .
+                '</b></div>';
+            return;
+        }
+
+        $remote_contents = wp_remote_retrieve_body($response);
+        if (empty($remote_contents)) {
+            echo '<div id="message" class="updated fade"><p><b>' .
+                esc_html__('Downloaded file is empty.', 'sermon-browser') .
+                '</b></div>';
+            return;
+        }
+
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+        $bytes_written = file_put_contents(
+            SB_ABSPATH . sb_get_option('upload_dir') . $filename,
+            $remote_contents
+        );
+
+        if ($bytes_written === false) {
+            echo '<div id="message" class="updated fade"><p><b>' .
+                esc_html__('Failed to save downloaded file.', 'sermon-browser') .
+                '</b></div>';
+            return;
+        }
+
+        $fileId = File::create([
+            'type' => 'file',
+            'name' => $filename,
+            'sermon_id' => 0,
+            'count' => 0,
+            'ccount' => 0,
+        ]);
+
+        echo "<script>document.location = '" .
+            admin_url(Constants::NEW_SERMON_GETID3 . $fileId) .
+            "';</script>";
     }
 
     /**

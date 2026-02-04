@@ -214,6 +214,48 @@ class FileActionHandlerTest extends TestCase
     }
 
     /**
+     * Verify that downloadRemoteFile uses wp_safe_remote_get for SSRF protection.
+     *
+     * This test uses static analysis to ensure the security fix is in place.
+     * wp_safe_remote_get blocks internal IP ranges and limits redirects to safe hosts.
+     */
+    public function testDownloadRemoteFileUsesSafeRemoteGet(): void
+    {
+        $sourceFile = __DIR__ . '/../../../../src/Admin/Services/FileActionHandler.php';
+        $source = file_get_contents($sourceFile);
+
+        // Verify that wp_safe_remote_get is used instead of fopen for remote files
+        $this->assertStringContainsString(
+            'wp_safe_remote_get($url',
+            $source,
+            'downloadRemoteFile must use wp_safe_remote_get() to protect against SSRF attacks'
+        );
+
+        // Verify that raw fopen is NOT used for remote URLs (SSRF vulnerability)
+        // The pattern we're checking is fopen($url which would be the vulnerable pattern
+        $this->assertStringNotContainsString(
+            'fopen($url',
+            $source,
+            'downloadRemoteFile must NOT use fopen() for remote URLs - use wp_safe_remote_get() instead'
+        );
+    }
+
+    /**
+     * Verify that downloadRemoteFile contains SSRF protection comment.
+     */
+    public function testDownloadRemoteFileHasSsrfProtectionComment(): void
+    {
+        $sourceFile = __DIR__ . '/../../../../src/Admin/Services/FileActionHandler.php';
+        $source = file_get_contents($sourceFile);
+
+        $this->assertStringContainsString(
+            'protects against SSRF',
+            $source,
+            'downloadRemoteFile should document SSRF protection'
+        );
+    }
+
+    /**
      * Clean up after tests.
      */
     protected function tearDown(): void
