@@ -36,7 +36,7 @@ class BibleText
     public static function downloadPage(string $pageUrl, array|string $headers = []): ?string
     {
         $headerArray = is_string($headers) ? ['Authorization' => $headers] : $headers;
-        $response = wp_remote_get($pageUrl, ['headers' => $headerArray]);
+        $response = wp_safe_remote_get($pageUrl, ['headers' => $headerArray]);
 
         if (is_array($response) && isset($response['body'])) {
             return $response['body'];

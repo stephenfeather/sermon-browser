@@ -81,7 +81,7 @@ class BibleTextTest extends TestCase
     {
         $expectedBody = '<html>Content</html>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->with('https://example.com', ['headers' => []])
             ->andReturn(['body' => $expectedBody, 'response' => ['code' => 200]]);
@@ -98,7 +98,7 @@ class BibleTextTest extends TestCase
     {
         $token = 'Token abc123';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->with('https://api.example.com', ['headers' => ['Authorization' => $token]])
             ->andReturn(['body' => 'OK']);
@@ -115,7 +115,7 @@ class BibleTextTest extends TestCase
     {
         $headers = ['Accept' => 'application/json', 'X-Custom' => 'value'];
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->with('https://api.example.com', ['headers' => $headers])
             ->andReturn(['body' => '{"data": true}']);
@@ -133,7 +133,7 @@ class BibleTextTest extends TestCase
         $wpError = new \stdClass();
         $wpError->errors = ['http_request_failed' => ['Connection timed out']];
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn($wpError);
 
@@ -147,7 +147,7 @@ class BibleTextTest extends TestCase
      */
     public function testDownloadPageReturnsNullWhenBodyMissing(): void
     {
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['response' => ['code' => 200]]);
 
@@ -376,7 +376,7 @@ class BibleTextTest extends TestCase
             ->andReturn('');
 
         // No ESV key, so it falls back to KJV (addOtherBibles)
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(null);
 
@@ -397,7 +397,7 @@ class BibleTextTest extends TestCase
     {
         $this->mockDefaults();
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(null);
 
@@ -417,7 +417,7 @@ class BibleTextTest extends TestCase
     {
         $this->mockDefaults();
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(null);
 
@@ -450,7 +450,7 @@ class BibleTextTest extends TestCase
             'passages' => ['<p>For God so loved the world...</p>']
         ]);
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturnUsing(function ($url, $args) use ($apiResponse) {
                 $this->assertStringContainsString('api.esv.org', $url);
@@ -480,7 +480,7 @@ class BibleTextTest extends TestCase
             ->andReturn('');
 
         // KJV fallback call
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(null);
 
@@ -507,7 +507,7 @@ class BibleTextTest extends TestCase
 
         // First call: ESV API returns invalid JSON
         // Second call: KJV fallback
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->twice()
             ->andReturn(['body' => 'not valid json'], null);
 
@@ -531,7 +531,7 @@ class BibleTextTest extends TestCase
             ->with('esv_api_key')
             ->andReturn('test-api-key');
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->twice()
             ->andReturn(['body' => '{"error": "not found"}'], null);
 
@@ -559,7 +559,7 @@ class BibleTextTest extends TestCase
             'passages' => ['<p>Part 1</p>', '<p>Part 2</p>']
         ]);
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $apiResponse]);
 
@@ -624,7 +624,7 @@ class BibleTextTest extends TestCase
                 </item>
             </bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturnUsing(function ($url) use ($xmlResponse) {
                 $this->assertStringContainsString('labs.bible.org', $url);
@@ -650,7 +650,7 @@ class BibleTextTest extends TestCase
     {
         $this->mockDefaults();
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(null);
 
@@ -683,7 +683,7 @@ class BibleTextTest extends TestCase
                 </item>
             </bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $xmlResponse]);
 
@@ -717,7 +717,7 @@ class BibleTextTest extends TestCase
                 </item>
             </bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $xmlResponse]);
 
@@ -746,7 +746,7 @@ class BibleTextTest extends TestCase
                 </item>
             </bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $xmlResponse]);
 
@@ -767,7 +767,7 @@ class BibleTextTest extends TestCase
 
         $xmlResponse = '<?xml version="1.0"?><bible></bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $xmlResponse]);
 
@@ -819,7 +819,7 @@ class BibleTextTest extends TestCase
                 </range>
             </bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturnUsing(function ($url) use ($xmlResponse) {
                 $this->assertStringContainsString('api.preachingcentral.com', $url);
@@ -846,7 +846,7 @@ class BibleTextTest extends TestCase
     {
         $this->mockDefaults();
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(null);
 
@@ -866,7 +866,7 @@ class BibleTextTest extends TestCase
     {
         $this->mockDefaults();
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturnUsing(function ($url) {
                 $this->assertStringContainsString('Psalms+23', $url);
@@ -903,7 +903,7 @@ class BibleTextTest extends TestCase
                 </range>
             </bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $xmlResponse]);
 
@@ -940,7 +940,7 @@ class BibleTextTest extends TestCase
                 </range>
             </bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $xmlResponse]);
 
@@ -963,7 +963,7 @@ class BibleTextTest extends TestCase
 
         $xmlResponse = '<?xml version="1.0"?><bible><range></range></bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $xmlResponse]);
 
@@ -986,7 +986,7 @@ class BibleTextTest extends TestCase
 
         $xmlResponse = '<?xml version="1.0"?><bible><range></range></bible>';
 
-        Functions\expect('wp_remote_get')
+        Functions\expect('wp_safe_remote_get')
             ->once()
             ->andReturn(['body' => $xmlResponse]);
 

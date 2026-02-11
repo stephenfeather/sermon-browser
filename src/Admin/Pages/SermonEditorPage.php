@@ -1074,12 +1074,12 @@ class SermonEditorPage
             if ($i != 0) : ?>
                         addPassage();
             <?php endif ?>
-                    start1.push("<?php echo $startArr[$i]['book'] ?>");
-                    start2.push("<?php echo $startArr[$i]['chapter'] ?>");
-                    start3.push("<?php echo $startArr[$i]['verse'] ?>");
-                    end1.push("<?php echo $endArr[$i]['book'] ?>");
-                    end2.push("<?php echo $endArr[$i]['chapter'] ?>");
-                    end3.push("<?php echo $endArr[$i]['verse'] ?>");
+                    start1.push("<?php echo esc_js($startArr[$i]['book']); ?>");
+                    start2.push("<?php echo esc_js($startArr[$i]['chapter']); ?>");
+                    start3.push("<?php echo esc_js($startArr[$i]['verse']); ?>");
+                    end1.push("<?php echo esc_js($endArr[$i]['book']); ?>");
+                    end2.push("<?php echo esc_js($endArr[$i]['chapter']); ?>");
+                    end3.push("<?php echo esc_js($endArr[$i]['verse']); ?>");
         <?php endfor;
     }
 
